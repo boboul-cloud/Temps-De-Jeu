@@ -91,10 +91,32 @@ struct SettingsView: View {
     @State private var showTerms = false
     @State private var showPrivacy = false
     @State private var showPremiumStatus = false
+    @State private var showUserGuide = false
 
     var body: some View {
         NavigationStack {
             List {
+                // Mode d'emploi
+                Section {
+                    Button {
+                        showUserGuide = true
+                    } label: {
+                        Label {
+                            VStack(alignment: .leading, spacing: 2) {
+                                Text("Mode d'emploi")
+                                Text("Apprenez à utiliser l'app")
+                                    .font(.caption)
+                                    .foregroundStyle(.secondary)
+                            }
+                        } icon: {
+                            Image(systemName: "book.fill")
+                                .foregroundStyle(.green)
+                        }
+                    }
+                } header: {
+                    Text("Aide")
+                }
+                
                 // Statut Premium
                 Section {
                     Button {
@@ -219,6 +241,9 @@ struct SettingsView: View {
             }
             .sheet(isPresented: $showPremiumStatus) {
                 PremiumStatusView()
+            }
+            .sheet(isPresented: $showUserGuide) {
+                UserGuideView()
             }
         }
     }
