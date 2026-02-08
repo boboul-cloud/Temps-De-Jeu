@@ -7,10 +7,18 @@
 
 import SwiftUI
 
+// MARK: - URLs Web
+
+private enum LegalURLs {
+    static let terms = URL(string: "https://boboul-cloud.github.io/Temps-De-Jeu/terms.html")!
+    static let privacy = URL(string: "https://boboul-cloud.github.io/Temps-De-Jeu/privacy.html")!
+}
+
 // MARK: - Conditions Générales d'Utilisation
 
 struct TermsOfUseView: View {
     @Environment(\.dismiss) private var dismiss
+    @Environment(\.openURL) private var openURL
 
     var body: some View {
         NavigationStack {
@@ -53,8 +61,24 @@ struct TermsOfUseView: View {
                         sectionTitle("9. Droit applicable")
                         sectionText("Les présentes conditions sont régies par le droit français. Tout litige sera soumis aux tribunaux compétents de Paris, France.")
                     }
+                    
+                    // Bouton pour voir la version web complète
+                    Button {
+                        openURL(LegalURLs.terms)
+                    } label: {
+                        HStack {
+                            Image(systemName: "safari")
+                            Text("Voir sur le web")
+                        }
+                        .frame(maxWidth: .infinity)
+                        .padding()
+                        .background(Color.green.opacity(0.1))
+                        .foregroundStyle(.green)
+                        .cornerRadius(12)
+                    }
+                    .padding(.top, 10)
 
-                    Text("Dernière mise à jour : 7 février 2026")
+                    Text("Dernière mise à jour : 8 février 2026")
                         .font(.caption2)
                         .foregroundStyle(.tertiary)
                         .padding(.top, 10)
@@ -87,11 +111,30 @@ struct TermsOfUseView: View {
 
 struct PrivacyPolicyView: View {
     @Environment(\.dismiss) private var dismiss
+    @Environment(\.openURL) private var openURL
 
     var body: some View {
         NavigationStack {
             ScrollView {
                 VStack(alignment: .leading, spacing: 20) {
+                    // Résumé en highlight
+                    HStack(spacing: 12) {
+                        Image(systemName: "hand.raised.fill")
+                            .font(.title2)
+                            .foregroundStyle(.green)
+                        VStack(alignment: .leading, spacing: 4) {
+                            Text("Vos données restent privées")
+                                .font(.headline)
+                            Text("Aucune donnée n'est collectée ni transmise à des serveurs externes.")
+                                .font(.subheadline)
+                                .foregroundStyle(.secondary)
+                        }
+                    }
+                    .padding()
+                    .frame(maxWidth: .infinity, alignment: .leading)
+                    .background(Color.green.opacity(0.1))
+                    .cornerRadius(12)
+                    
                     Group {
                         sectionTitle("1. Introduction")
                         sectionText("La présente politique de confidentialité décrit comment l'application Temps De Jeu traite vos données. Nous accordons une grande importance à la protection de votre vie privée.")
@@ -133,8 +176,24 @@ struct PrivacyPolicyView: View {
                         sectionTitle("8. Contact")
                         sectionText("Pour toute question relative à la protection de vos données personnelles : bob.oulhen@gmail.com")
                     }
+                    
+                    // Bouton pour voir la version web complète
+                    Button {
+                        openURL(LegalURLs.privacy)
+                    } label: {
+                        HStack {
+                            Image(systemName: "safari")
+                            Text("Voir sur le web")
+                        }
+                        .frame(maxWidth: .infinity)
+                        .padding()
+                        .background(Color.green.opacity(0.1))
+                        .foregroundStyle(.green)
+                        .cornerRadius(12)
+                    }
+                    .padding(.top, 10)
 
-                    Text("Dernière mise à jour : 7 février 2026")
+                    Text("Dernière mise à jour : 8 février 2026")
                         .font(.caption2)
                         .foregroundStyle(.tertiary)
                         .padding(.top, 10)
