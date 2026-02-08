@@ -9,9 +9,15 @@ import SwiftUI
 
 @main
 struct Temps_De_JeuApp: App {
+    @StateObject private var deepLinkManager = DeepLinkManager.shared
+
     var body: some Scene {
         WindowGroup {
             ContentView()
+                .environmentObject(deepLinkManager)
+                .onOpenURL { url in
+                    deepLinkManager.handleURL(url)
+                }
         }
     }
 }
