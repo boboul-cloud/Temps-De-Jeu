@@ -8,16 +8,20 @@
 import SwiftUI
 import UniformTypeIdentifiers
 
+/// Wrapper identifiable pour les items de partage
+struct ExportShareItemsWrapper: Identifiable {
+    let id = UUID()
+    let items: [Any]
+}
+
 /// Vue principale d'export / import
 struct ExportImportView: View {
     @State private var players: [Player] = []
     @State private var matches: [Match] = []
     @State private var allCards: [CardEvent] = []
 
-    // Shares
-    @State private var showShareSheet = false
-    @State private var shareItems: [Any] = []
-    @State private var shareMessage: String?
+    // Share - utilise une struct identifiable pour éviter la page blanche
+    @State private var shareItemsWrapper: ExportShareItemsWrapper?
 
     // Import
     @State private var showImportPicker = false
@@ -30,12 +34,17 @@ struct ExportImportView: View {
     @State private var alertMessage = ""
     @State private var showAlert = false
 
-    // PDF Preview
-    @State private var showPDFPreview = false
-    @State private var previewPDFData: Data?
-    @State private var previewPDFTitle = ""
+    // PDF Preview - utilise une struct identifiable pour éviter la page blanche
+    @State private var pdfPreviewItem: PDFPreviewItem?
 
     @State private var isLoaded = false
+    
+    /// Structure pour l'item de preview PDF
+    struct PDFPreviewItem: Identifiable {
+        let id = UUID()
+        let data: Data
+        let title: String
+    }
 
     enum ImportMode: String, CaseIterable {
         case merge = "Fusionner"
@@ -82,7 +91,7 @@ struct ExportImportView: View {
 
                 // PDF
                 Button {
-                    exportPlayersPDF()
+                    previewPlayersPDF()
                 } label: {
                     Label {
                         VStack(alignment: .leading, spacing: 2) {
@@ -126,9 +135,9 @@ struct ExportImportView: View {
 
             // MARK: - Export Stats
             Section {
-                // PDF stats globales
+                // PDF stats globales — preview avant export
                 Button {
-                    exportStatsPDF()
+                    previewStatsPDF()
                 } label: {
                     Label {
                         VStack(alignment: .leading, spacing: 2) {
@@ -158,9 +167,7 @@ struct ExportImportView: View {
                                 let data = ExportService.shared.generateMatchPDF(match: match)
                                 let h = match.homeTeam.isEmpty ? "Match" : match.homeTeam
                                 let a = match.awayTeam.isEmpty ? "" : " vs \(match.awayTeam)"
-                                previewPDFData = data
-                                previewPDFTitle = "\(h)\(a)"
-                                showPDFPreview = true
+                                pdfPreviewItem = PDFPreviewItem(data: data, title: "\(h)\(a)")
                             } label: {
                                 VStack(alignment: .leading, spacing: 2) {
                                     let h = match.homeTeam.isEmpty ? "Domicile" : match.homeTeam
@@ -190,9 +197,7 @@ struct ExportImportView: View {
                                 let data = ExportService.shared.generateMatchPDF(match: match)
                                 let h = match.homeTeam.isEmpty ? "Match" : match.homeTeam
                                 let a = match.awayTeam.isEmpty ? "" : " vs \(match.awayTeam)"
-                                previewPDFData = data
-                                previewPDFTitle = "\(h)\(a)"
-                                showPDFPreview = true
+                                pdfPreviewItem = PDFPreviewItem(data: data, title: "\(h)\(a)")
                             } label: {
                                 Image(systemName: "doc.richtext")
                                     .foregroundStyle(.orange)
@@ -206,13 +211,11 @@ struct ExportImportView: View {
             }
         }
         .listStyle(.insetGrouped)
-        .sheet(isPresented: $showShareSheet) {
-            ActivityView(activityItems: shareItems)
+        .sheet(item: $shareItemsWrapper) { wrapper in
+            ActivityView(activityItems: wrapper.items)
         }
-        .sheet(isPresented: $showPDFPreview) {
-            if let data = previewPDFData {
-                PDFPreviewView(pdfData: data, title: previewPDFTitle)
-            }
+        .sheet(item: $pdfPreviewItem) { item in
+            PDFPreviewView(pdfData: item.data, title: item.title)
         }
         .fileImporter(
             isPresented: $showImportPicker,
@@ -255,28 +258,32 @@ struct ExportImportView: View {
         let tempURL = FileManager.default.temporaryDirectory.appendingPathComponent(fileName)
         do {
             try data.write(to: tempURL)
-            shareItems = [tempURL]
-            DispatchQueue.main.asyncAfter(deadline: .now() + 0.1) {
-                showShareSheet = true
-            }
+            shareItemsWrapper = ExportShareItemsWrapper(items: [tempURL])
         } catch {
             showAlertWith(title: "Erreur", message: error.localizedDescription)
         }
     }
 
+    private func previewPlayersPDF() {
+        let data = ExportService.shared.generatePlayersPDF(players: players, allCards: allCards, matches: matches)
+        pdfPreviewItem = PDFPreviewItem(data: data, title: "Effectif")
+    }
+
     private func exportPlayersPDF() {
-        let data = ExportService.shared.generatePlayersPDF(players: players, allCards: allCards)
+        let data = ExportService.shared.generatePlayersPDF(players: players, allCards: allCards, matches: matches)
         let fileName = "effectif_\(formattedDateForFile()).pdf"
         let tempURL = FileManager.default.temporaryDirectory.appendingPathComponent(fileName)
         do {
             try data.write(to: tempURL)
-            shareItems = [tempURL]
-            DispatchQueue.main.asyncAfter(deadline: .now() + 0.1) {
-                showShareSheet = true
-            }
+            shareItemsWrapper = ExportShareItemsWrapper(items: [tempURL])
         } catch {
             showAlertWith(title: "Erreur", message: error.localizedDescription)
         }
+    }
+
+    private func previewStatsPDF() {
+        let data = ExportService.shared.generateStatsPDF(matches: matches, players: players)
+        pdfPreviewItem = PDFPreviewItem(data: data, title: "Rapport Statistiques")
     }
 
     private func exportStatsPDF() {
@@ -285,10 +292,7 @@ struct ExportImportView: View {
         let tempURL = FileManager.default.temporaryDirectory.appendingPathComponent(fileName)
         do {
             try data.write(to: tempURL)
-            shareItems = [tempURL]
-            DispatchQueue.main.asyncAfter(deadline: .now() + 0.1) {
-                showShareSheet = true
-            }
+            shareItemsWrapper = ExportShareItemsWrapper(items: [tempURL])
         } catch {
             showAlertWith(title: "Erreur", message: error.localizedDescription)
         }
@@ -303,10 +307,7 @@ struct ExportImportView: View {
         let tempURL = FileManager.default.temporaryDirectory.appendingPathComponent(fileName)
         do {
             try data.write(to: tempURL)
-            shareItems = [tempURL]
-            DispatchQueue.main.asyncAfter(deadline: .now() + 0.1) {
-                showShareSheet = true
-            }
+            shareItemsWrapper = ExportShareItemsWrapper(items: [tempURL])
         } catch {
             showAlertWith(title: "Erreur", message: error.localizedDescription)
         }

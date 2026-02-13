@@ -82,6 +82,7 @@ class DeepLinkManager: ObservableObject {
         previousUnavailableIds: [UUID] = [],
         previousChain: [String] = []
     ) -> URL? {
+        // Exclure les photos pour réduire la taille du lien
         guard let jsonData = ExportService.shared.exportRoster(
             allPlayers: allPlayers,
             selectedPlayerIds: selectedPlayerIds,
@@ -89,7 +90,8 @@ class DeepLinkManager: ObservableObject {
             competition: competition,
             matchDate: matchDate,
             previousUnavailableIds: previousUnavailableIds,
-            previousChain: previousChain
+            previousChain: previousChain,
+            excludePhotos: true
         ) else { return nil }
 
         // Compresser les données

@@ -96,6 +96,7 @@ struct Match: Identifiable, Codable {
     var goals: [GoalEvent]
     var cards: [CardEvent]
     var substitutions: [SubstitutionEvent]
+    var fouls: [FoulEvent]
     var matchRoster: [MatchPlayer]
     var tempExpulsions: [TempExpulsion]
 
@@ -115,6 +116,7 @@ struct Match: Identifiable, Codable {
         goals: [GoalEvent] = [],
         cards: [CardEvent] = [],
         substitutions: [SubstitutionEvent] = [],
+        fouls: [FoulEvent] = [],
         matchRoster: [MatchPlayer] = [],
         tempExpulsions: [TempExpulsion] = []
     ) {
@@ -133,6 +135,7 @@ struct Match: Identifiable, Codable {
         self.goals = goals
         self.cards = cards
         self.substitutions = substitutions
+        self.fouls = fouls
         self.matchRoster = matchRoster
         self.tempExpulsions = tempExpulsions
     }
@@ -154,6 +157,7 @@ struct Match: Identifiable, Codable {
         goals = try container.decodeIfPresent([GoalEvent].self, forKey: .goals) ?? []
         cards = try container.decodeIfPresent([CardEvent].self, forKey: .cards) ?? []
         substitutions = try container.decodeIfPresent([SubstitutionEvent].self, forKey: .substitutions) ?? []
+        fouls = try container.decodeIfPresent([FoulEvent].self, forKey: .fouls) ?? []
         matchRoster = try container.decodeIfPresent([MatchPlayer].self, forKey: .matchRoster) ?? []
         tempExpulsions = try container.decodeIfPresent([TempExpulsion].self, forKey: .tempExpulsions) ?? []
         isMyTeamHome = try container.decodeIfPresent(Bool.self, forKey: .isMyTeamHome) ?? true

@@ -152,12 +152,8 @@ struct MatchRosterView: View {
                                             .font(.title2)
                                             .foregroundStyle(.red.opacity(0.5))
 
-                                        Image(systemName: "tshirt")
-                                            .font(.headline)
-                                            .foregroundColor(.gray.opacity(0.4))
-                                            .frame(width: 36, height: 36)
-                                            .background(Color(.systemGray5))
-                                            .clipShape(Circle())
+                                        PlayerAvatar(player: player, size: 36, showPositionColor: false)
+                                            .opacity(0.6)
 
                                         VStack(alignment: .leading, spacing: 2) {
                                             Text(player.fullName.isEmpty ? "Joueur" : player.fullName)
@@ -191,9 +187,18 @@ struct MatchRosterView: View {
                             Section {
                                 ForEach(absentPlayers) { player in
                                     HStack(spacing: 12) {
-                                        Image(systemName: player.availability.icon)
-                                            .font(.title2)
-                                            .foregroundStyle(colorForAvailability(player.availability))
+                                        ZStack(alignment: .bottomTrailing) {
+                                            PlayerAvatar(player: player, size: 36, showPositionColor: false)
+                                                .opacity(0.6)
+                                            
+                                            Image(systemName: player.availability.icon)
+                                                .font(.system(size: 12, weight: .bold))
+                                                .foregroundStyle(.white)
+                                                .padding(3)
+                                                .background(colorForAvailability(player.availability))
+                                                .clipShape(Circle())
+                                                .offset(x: 4, y: 4)
+                                        }
 
                                         VStack(alignment: .leading, spacing: 2) {
                                             Text(player.fullName.isEmpty ? "Joueur" : player.fullName)
@@ -348,27 +353,31 @@ struct MatchPlayerSelectionRow: View {
                 }
                 .buttonStyle(.plain)
 
-                // Numéro de maillot (tapable pour modifier)
+                // Avatar du joueur avec numéro en overlay si sélectionné
                 Button {
                     if isSelected {
                         numberText = "\(matchPlayer?.shirtNumber ?? 0)"
                         editingNumber.toggle()
                     }
                 } label: {
-                    if isSelected, let mp = matchPlayer {
-                        Text("\(mp.shirtNumber)")
-                            .font(.system(.headline, design: .rounded))
-                            .foregroundColor(.white)
-                            .frame(width: 36, height: 36)
-                            .background(positionColor)
-                            .clipShape(Circle())
-                    } else {
-                        Image(systemName: "tshirt")
-                            .font(.headline)
-                            .foregroundColor(.gray)
-                            .frame(width: 36, height: 36)
-                            .background(Color(.systemGray5))
-                            .clipShape(Circle())
+                    ZStack(alignment: .bottomTrailing) {
+                        PlayerAvatar(player: player, size: 40)
+                            .opacity(isSelected ? 1.0 : 0.7)
+                        
+                        // Badge numéro si sélectionné
+                        if isSelected, let mp = matchPlayer {
+                            Text("\(mp.shirtNumber)")
+                                .font(.system(size: 12, weight: .bold, design: .rounded))
+                                .foregroundColor(.white)
+                                .frame(width: 20, height: 20)
+                                .background(positionColor)
+                                .clipShape(Circle())
+                                .overlay(
+                                    Circle()
+                                        .stroke(Color(.systemBackground), lineWidth: 2)
+                                )
+                                .offset(x: 4, y: 4)
+                        }
                     }
                 }
                 .buttonStyle(.plain)

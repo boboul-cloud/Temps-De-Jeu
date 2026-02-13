@@ -19,6 +19,7 @@ struct MatchView: View {
     @State private var showScoreSheet = false
     @State private var showCardSheet = false
     @State private var showSubSheet = false
+    @State private var showFoulSheet = false
     @State private var showCardsList = false
     @State private var pendingStoppageType: StoppageType?
     @State private var pendingIsChain = false
@@ -91,19 +92,21 @@ struct MatchView: View {
             .navigationBarTitleDisplayMode(.inline)
             .toolbar {
                 ToolbarItem(placement: .topBarLeading) {
-                    HStack(spacing: 12) {
-                        Button {
-                            showTimeline = true
-                        } label: {
-                            Image(systemName: "timeline.selection")
-                                .foregroundStyle(.white)
-                        }
+                    Button {
+                        showTimeline = true
+                    } label: {
+                        Image(systemName: "timeline.selection")
+                            .foregroundStyle(.white)
+                    }
+                }
+                ToolbarItem(placement: .topBarTrailing) {
+                    HStack(spacing: 40) {
                         Button {
                             showCardsList = true
                         } label: {
                             HStack(spacing: 3) {
                                 RoundedRectangle(cornerRadius: 2)
-                                    .fill(.yellow)
+                                    .fill(Color.cardYellow)
                                     .frame(width: 10, height: 14)
                                 if !viewModel.match.cards.isEmpty {
                                     Text("\(viewModel.match.cards.count)")
@@ -112,14 +115,12 @@ struct MatchView: View {
                                 }
                             }
                         }
-                    }
-                }
-                ToolbarItem(placement: .topBarTrailing) {
-                    Button {
-                        showStats = true
-                    } label: {
-                        Image(systemName: "chart.bar.fill")
-                            .foregroundStyle(.white)
+                        Button {
+                            showStats = true
+                        } label: {
+                            Image(systemName: "chart.bar.fill")
+                                .foregroundStyle(.white)
+                        }
                     }
                 }
             }
@@ -139,6 +140,10 @@ struct MatchView: View {
             }
             .sheet(isPresented: $showSubSheet) {
                 SubstitutionSheet(viewModel: viewModel)
+                    .presentationDetents([.height(350)])
+            }
+            .sheet(isPresented: $showFoulSheet) {
+                FoulSheet(viewModel: viewModel)
                     .presentationDetents([.height(350)])
             }
             .sheet(isPresented: $showCardsList) {
@@ -306,7 +311,7 @@ struct MatchView: View {
                 } label: {
                     HStack(spacing: 4) {
                         RoundedRectangle(cornerRadius: 2)
-                            .fill(.yellow)
+                            .fill(Color.cardYellow)
                             .frame(width: 12, height: 16)
                         Text("Carton")
                             .font(.caption.bold())
@@ -326,6 +331,26 @@ struct MatchView: View {
                             .font(.caption)
                         Text("Rempl.")
                             .font(.caption.bold())
+                    }
+                    .padding(.horizontal, 12)
+                    .padding(.vertical, 6)
+                    .background(Color.white.opacity(0.2))
+                    .cornerRadius(8)
+                    .foregroundStyle(.white)
+                }
+
+                Button {
+                    showFoulSheet = true
+                } label: {
+                    HStack(spacing: 4) {
+                        Image(systemName: "exclamationmark.triangle.fill")
+                            .font(.caption)
+                        Text("Faute")
+                            .font(.caption.bold())
+                        if !viewModel.match.fouls.isEmpty {
+                            Text("\(viewModel.match.fouls.count)")
+                                .font(.caption2.bold())
+                        }
                     }
                     .padding(.horizontal, 12)
                     .padding(.vertical, 6)
@@ -493,9 +518,9 @@ struct MatchView: View {
                 color: .green
             )
             StatPill(
-                label: "Rempl.",
-                value: "\(viewModel.match.stoppages.filter { $0.type == .remplacement && $0.period == viewModel.currentPeriod }.count)",
-                color: .purple
+                label: "Fautes",
+                value: "\(viewModel.match.fouls.filter { $0.period == viewModel.currentPeriod }.count)",
+                color: .orange
             )
         }
     }
@@ -1027,7 +1052,7 @@ struct CardTypeButton: View {
                     .overlay(
                         Group {
                             if type == .secondYellow {
-                                RoundedRectangle(cornerRadius: 3).fill(.red).frame(width: 14, height: 38).offset(x: 7)
+                                RoundedRectangle(cornerRadius: 3).fill(Color.cardRed).frame(width: 14, height: 38).offset(x: 7)
                             } else if type == .white {
                                 RoundedRectangle(cornerRadius: 3).stroke(Color.gray, lineWidth: 1)
                             }
@@ -1049,10 +1074,10 @@ struct CardTypeButton: View {
 
     private var cardColor: Color {
         switch type {
-        case .yellow: return .yellow
-        case .red: return .red
-        case .secondYellow: return .orange
-        case .white: return .white
+        case .yellow: return .cardYellow
+        case .red: return .cardRed
+        case .secondYellow: return .cardOrange
+        case .white: return .cardWhite
         }
     }
 }
@@ -1174,6 +1199,93 @@ struct SubstitutionSheet: View {
                     .cornerRadius(12)
             }
             .disabled(playerOut.isEmpty || playerIn.isEmpty)
+            .padding(.horizontal)
+        }
+        .padding()
+        .onAppear { viewModel.loadMatchRoster() }
+    }
+}
+
+// MARK: - Foul Sheet
+
+struct FoulSheet: View {
+    @ObservedObject var viewModel: MatchViewModel
+    @Environment(\.dismiss) private var dismiss
+    @State private var playerName = ""
+    @State private var selectedPlayerId: UUID?
+
+    var body: some View {
+        VStack(spacing: 20) {
+            Text("Faute")
+                .font(.headline)
+
+            HStack(spacing: 8) {
+                Image(systemName: "exclamationmark.triangle.fill")
+                    .font(.title2)
+                    .foregroundStyle(.orange)
+                Text("Attribuer une faute à un joueur")
+                    .font(.subheadline)
+                    .foregroundStyle(.secondary)
+            }
+
+            TextField("Nom du joueur", text: $playerName)
+                .textFieldStyle(.roundedBorder)
+                .padding(.horizontal)
+                .onChange(of: playerName) {
+                    if let id = selectedPlayerId,
+                       let mp = viewModel.allMatchPlayers.first(where: { $0.id == id }),
+                       playerName != mp.displayName {
+                        selectedPlayerId = nil
+                    }
+                }
+
+            // Liste rapide des joueurs de l'effectif
+            if !viewModel.matchRoster.isEmpty {
+                ScrollView(.horizontal, showsIndicators: false) {
+                    HStack(spacing: 8) {
+                        ForEach(viewModel.allMatchPlayers) { player in
+                            let fouls = viewModel.foulCount(for: player.id)
+                            Button {
+                                playerName = player.displayName
+                                selectedPlayerId = player.id
+                            } label: {
+                                HStack(spacing: 4) {
+                                    Text("#\(player.shirtNumber) \(player.displayName)")
+                                        .font(.caption)
+                                    if fouls > 0 {
+                                        Text("\(fouls)")
+                                            .font(.caption2.bold())
+                                            .foregroundStyle(.white)
+                                            .frame(width: 18, height: 18)
+                                            .background(Color.orange)
+                                            .clipShape(Circle())
+                                    }
+                                }
+                                .padding(.horizontal, 10)
+                                .padding(.vertical, 6)
+                                .background(selectedPlayerId == player.id ? Color.orange.opacity(0.25) : Color(.systemGray5))
+                                .cornerRadius(8)
+                            }
+                        }
+                    }
+                    .padding(.horizontal)
+                }
+            }
+
+            Button {
+                guard !playerName.isEmpty else { return }
+                viewModel.addFoul(playerName: playerName, playerId: selectedPlayerId)
+                dismiss()
+            } label: {
+                Text("Confirmer la faute")
+                    .font(.headline)
+                    .frame(maxWidth: .infinity)
+                    .padding(.vertical, 12)
+                    .background(playerName.isEmpty ? Color.gray : Color.orange)
+                    .foregroundColor(.white)
+                    .cornerRadius(12)
+            }
+            .disabled(playerName.isEmpty)
             .padding(.horizontal)
         }
         .padding()

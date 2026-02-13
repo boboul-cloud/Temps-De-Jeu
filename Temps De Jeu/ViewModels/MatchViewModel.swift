@@ -562,6 +562,31 @@ class MatchViewModel: ObservableObject {
         }
     }
 
+    // MARK: - Fautes
+
+    func addFoul(playerName: String, playerId: UUID? = nil) {
+        let foul = FoulEvent(
+            playerName: playerName,
+            playerId: playerId,
+            minute: elapsedTime,
+            period: currentPeriod
+        )
+        match.fouls.append(foul)
+
+        // Haptic feedback
+        let impactFeedback = UIImpactFeedbackGenerator(style: .medium)
+        impactFeedback.impactOccurred()
+    }
+
+    func removeFoul(_ foul: FoulEvent) {
+        match.fouls.removeAll { $0.id == foul.id }
+    }
+
+    /// Nombre de fautes pour un joueur donné
+    func foulCount(for playerId: UUID) -> Int {
+        match.fouls.filter { $0.playerId == playerId }.count
+    }
+
     // MARK: - Remplacements
 
     func addSubstitution(playerOut: String, playerIn: String, playerOutId: UUID? = nil, playerInId: UUID? = nil) {
@@ -600,6 +625,13 @@ class MatchViewModel: ObservableObject {
     func setMatchRoster(_ roster: [MatchPlayer]) {
         matchRoster = roster
         match.matchRoster = roster
+        saveDraft()
+    }
+
+    /// Supprimer la composition (réinitialiser le roster)
+    func clearMatchRoster() {
+        matchRoster = []
+        match.matchRoster = []
         saveDraft()
     }
 

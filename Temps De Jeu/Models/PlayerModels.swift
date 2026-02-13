@@ -69,25 +69,29 @@ struct Player: Identifiable, Codable, Hashable {
     var lastName: String
     var position: PlayerPosition
     var availability: PlayerAvailability
+    var photoData: Data?  // Photo du joueur (JPEG compressée)
 
     init(
         id: UUID = UUID(),
         firstName: String = "",
         lastName: String = "",
         position: PlayerPosition = .milieu,
-        availability: PlayerAvailability = .disponible
+        availability: PlayerAvailability = .disponible,
+        photoData: Data? = nil
     ) {
         self.id = id
         self.firstName = firstName
         self.lastName = lastName
         self.position = position
         self.availability = availability
+        self.photoData = photoData
     }
 
     // Backward compat: ignore defaultNumber if present in saved data
     // + availability optionnel (ancien format sans ce champ)
+    // + photoData optionnel (nouveau champ)
     enum CodingKeys: String, CodingKey {
-        case id, firstName, lastName, position, availability
+        case id, firstName, lastName, position, availability, photoData
     }
 
     init(from decoder: Decoder) throws {
@@ -97,6 +101,7 @@ struct Player: Identifiable, Codable, Hashable {
         lastName = try container.decode(String.self, forKey: .lastName)
         position = try container.decode(PlayerPosition.self, forKey: .position)
         availability = try container.decodeIfPresent(PlayerAvailability.self, forKey: .availability) ?? .disponible
+        photoData = try container.decodeIfPresent(Data.self, forKey: .photoData)
     }
 
     var displayName: String {
@@ -240,8 +245,9 @@ struct CardEvent: Identifiable, Codable {
     var matchId: UUID?        // Référence au Match.id
     var matchLabel: String?   // Ex: "PSG - OM" pour affichage
     var matchDate: Date?      // Date du match
+    var isServed: Bool        // Carton purgé (supprimé de la section cartons mais conservé dans stats/rapports)
 
-    init(id: UUID = UUID(), type: CardType, playerName: String, playerId: UUID? = nil, minute: TimeInterval, period: MatchPeriod, timestamp: Date = Date(), matchId: UUID? = nil, matchLabel: String? = nil, matchDate: Date? = nil) {
+    init(id: UUID = UUID(), type: CardType, playerName: String, playerId: UUID? = nil, minute: TimeInterval, period: MatchPeriod, timestamp: Date = Date(), matchId: UUID? = nil, matchLabel: String? = nil, matchDate: Date? = nil, isServed: Bool = false) {
         self.id = id
         self.type = type
         self.playerName = playerName
@@ -252,6 +258,42 @@ struct CardEvent: Identifiable, Codable {
         self.matchId = matchId
         self.matchLabel = matchLabel
         self.matchDate = matchDate
+        self.isServed = isServed
+    }
+
+    // Backward compatibility: isServed optionnel (ancien format)
+    init(from decoder: Decoder) throws {
+        let container = try decoder.container(keyedBy: CodingKeys.self)
+        id = try container.decode(UUID.self, forKey: .id)
+        type = try container.decode(CardType.self, forKey: .type)
+        playerName = try container.decode(String.self, forKey: .playerName)
+        playerId = try container.decodeIfPresent(UUID.self, forKey: .playerId)
+        minute = try container.decode(TimeInterval.self, forKey: .minute)
+        period = try container.decode(MatchPeriod.self, forKey: .period)
+        timestamp = try container.decode(Date.self, forKey: .timestamp)
+        matchId = try container.decodeIfPresent(UUID.self, forKey: .matchId)
+        matchLabel = try container.decodeIfPresent(String.self, forKey: .matchLabel)
+        matchDate = try container.decodeIfPresent(Date.self, forKey: .matchDate)
+        isServed = try container.decodeIfPresent(Bool.self, forKey: .isServed) ?? false
+    }
+}
+
+/// Événement faute
+struct FoulEvent: Identifiable, Codable {
+    let id: UUID
+    var playerName: String
+    var playerId: UUID?
+    var minute: TimeInterval
+    var period: MatchPeriod
+    var timestamp: Date
+
+    init(id: UUID = UUID(), playerName: String, playerId: UUID? = nil, minute: TimeInterval, period: MatchPeriod, timestamp: Date = Date()) {
+        self.id = id
+        self.playerName = playerName
+        self.playerId = playerId
+        self.minute = minute
+        self.period = period
+        self.timestamp = timestamp
     }
 }
 

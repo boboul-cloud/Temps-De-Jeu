@@ -11,11 +11,12 @@ import SwiftUI
 struct StatisticsView: View {
     @ObservedObject var viewModel: MatchViewModel
     @Environment(\.dismiss) private var dismiss
+    @State private var isLoaded = false
 
     var body: some View {
         NavigationStack {
             ScrollView {
-                VStack(spacing: 20) {
+                LazyVStack(spacing: 20) {
                     // Résumé global
                     globalSummaryCard
 
@@ -25,10 +26,25 @@ struct StatisticsView: View {
                     // Détail par période
                     periodBreakdownCard
 
+                    // Buteurs
+                    scorersCard
+
+                    // Fautes par joueur
+                    foulBreakdownCard
+
                     // Liste des événements
                     eventListCard
                 }
                 .padding()
+                .frame(minHeight: 400)
+                .opacity(isLoaded ? 1 : 0)
+            }
+            .onAppear {
+                DispatchQueue.main.asyncAfter(deadline: .now() + 0.05) {
+                    withAnimation(.easeIn(duration: 0.15)) {
+                        isLoaded = true
+                    }
+                }
             }
             .navigationTitle("Statistiques")
             .navigationBarTitleDisplayMode(.inline)
@@ -225,6 +241,192 @@ struct StatisticsView: View {
                         .foregroundStyle(.secondary)
                 }
                 .padding(.vertical, 4)
+            }
+        }
+        .padding()
+        .background(Color(.systemGray6))
+        .cornerRadius(16)
+    }
+
+    // MARK: - Buteurs
+
+    /// Entrée stable pour le ForEach des buteurs
+    private struct ScorerEntry: Identifiable {
+        let id: String
+        let playerName: String
+        let goalMinutes: [GoalMinuteEntry]
+        let count: Int
+    }
+
+    private struct GoalMinuteEntry: Identifiable {
+        let id: UUID
+        let minute: Int
+    }
+
+    /// Données buteurs pré-calculées (hors du view body)
+    private var scorerEntries: [ScorerEntry] {
+        let myGoals = viewModel.match.goals.filter { $0.isHome == viewModel.match.isMyTeamHome && !$0.playerName.isEmpty }
+        let grouped = Dictionary(grouping: myGoals, by: { $0.playerName })
+        return grouped.map { name, goals in
+            ScorerEntry(
+                id: name,
+                playerName: name,
+                goalMinutes: goals.map { GoalMinuteEntry(id: $0.id, minute: Int($0.minute / 60)) },
+                count: goals.count
+            )
+        }
+        .sorted { $0.count != $1.count ? $0.count > $1.count : $0.playerName < $1.playerName }
+    }
+
+    private var myGoalsCount: Int {
+        viewModel.match.goals.filter { $0.isHome == viewModel.match.isMyTeamHome && !$0.playerName.isEmpty }.count
+    }
+
+    private var scorersCard: some View {
+        VStack(spacing: 12) {
+            SectionHeader(title: "Buteurs (\(myGoalsCount))", icon: "soccerball")
+
+            if scorerEntries.isEmpty {
+                Text("Aucun but enregistré")
+                    .font(.subheadline)
+                    .foregroundStyle(.secondary)
+                    .padding()
+            } else {
+                let maxGoals = scorerEntries.first?.count ?? 1
+
+                ForEach(scorerEntries) { scorer in
+                    HStack(spacing: 12) {
+                        Image(systemName: "soccerball")
+                            .foregroundStyle(.green)
+                            .frame(width: 24)
+
+                        VStack(alignment: .leading, spacing: 4) {
+                            HStack {
+                                Text(scorer.playerName)
+                                    .font(.subheadline.bold())
+                                Spacer()
+                                Text("\(scorer.count)")
+                                    .font(.subheadline.bold())
+                                    .foregroundStyle(.green)
+                                Text(scorer.count > 1 ? "buts" : "but")
+                                    .font(.caption)
+                                    .foregroundStyle(.secondary)
+                            }
+
+                            // Minutes des buts
+                            HStack(spacing: 6) {
+                                ForEach(scorer.goalMinutes) { gm in
+                                    Text("\(gm.minute)'")
+                                        .font(.system(size: 9, weight: .bold, design: .monospaced))
+                                        .padding(.horizontal, 6)
+                                        .padding(.vertical, 2)
+                                        .background(Color.green.opacity(0.15))
+                                        .cornerRadius(4)
+                                }
+                                Spacer()
+                            }
+
+                            GeometryReader { geo in
+                                RoundedRectangle(cornerRadius: 4)
+                                    .fill(Color.green.opacity(0.3))
+                                    .frame(width: geo.size.width * CGFloat(scorer.count) / CGFloat(maxGoals), height: 6)
+                            }
+                            .frame(height: 6)
+                        }
+                    }
+                }
+            }
+        }
+        .padding()
+        .background(Color(.systemGray6))
+        .cornerRadius(16)
+    }
+
+    // MARK: - Fautes par joueur
+
+    /// Entrée stable pour le ForEach des fautes
+    private struct FoulPlayerEntry: Identifiable {
+        let id: String
+        let playerName: String
+        let count: Int
+        let periodEntries: [FoulPeriodEntry]
+    }
+
+    /// Entrée stable pour le ForEach des périodes de fautes
+    private struct FoulPeriodEntry: Identifiable {
+        let id: String
+        let period: String
+        let count: Int
+    }
+
+    /// Données fautes pré-calculées (hors du view body)
+    private var foulEntries: [FoulPlayerEntry] {
+        let grouped = Dictionary(grouping: viewModel.match.fouls, by: { $0.playerName })
+        return grouped.map { name, fouls in
+            let byPeriod = Dictionary(grouping: fouls, by: { $0.period.shortName })
+            let periods = byPeriod.map { FoulPeriodEntry(id: $0.key, period: $0.key, count: $0.value.count) }
+                .sorted { $0.period < $1.period }
+            return FoulPlayerEntry(id: name, playerName: name, count: fouls.count, periodEntries: periods)
+        }
+        .sorted { $0.count != $1.count ? $0.count > $1.count : $0.playerName < $1.playerName }
+    }
+
+    private var foulBreakdownCard: some View {
+        VStack(spacing: 12) {
+            SectionHeader(title: "Fautes (\(viewModel.match.fouls.count))", icon: "exclamationmark.triangle.fill")
+
+            if foulEntries.isEmpty {
+                Text("Aucune faute enregistrée")
+                    .font(.subheadline)
+                    .foregroundStyle(.secondary)
+                    .padding()
+            } else {
+                let maxFouls = foulEntries.first?.count ?? 1
+
+                ForEach(foulEntries) { entry in
+                    HStack(spacing: 12) {
+                        Image(systemName: "person.fill")
+                            .foregroundStyle(.orange)
+                            .frame(width: 24)
+
+                        VStack(alignment: .leading, spacing: 4) {
+                            HStack {
+                                Text(entry.playerName)
+                                    .font(.subheadline.bold())
+                                Spacer()
+                                Text("\(entry.count)")
+                                    .font(.subheadline.bold())
+                                    .foregroundStyle(.orange)
+                                Text(entry.count > 1 ? "fautes" : "faute")
+                                    .font(.caption)
+                                    .foregroundStyle(.secondary)
+                            }
+
+                            HStack(spacing: 6) {
+                                ForEach(entry.periodEntries) { pe in
+                                    HStack(spacing: 3) {
+                                        Text(pe.period)
+                                            .font(.system(size: 9, weight: .bold))
+                                        Text("\(pe.count)")
+                                            .font(.system(size: 9, weight: .bold, design: .monospaced))
+                                    }
+                                    .padding(.horizontal, 6)
+                                    .padding(.vertical, 2)
+                                    .background(Color.orange.opacity(0.15))
+                                    .cornerRadius(4)
+                                }
+                                Spacer()
+                            }
+
+                            GeometryReader { geo in
+                                RoundedRectangle(cornerRadius: 4)
+                                    .fill(Color.orange.opacity(0.3))
+                                    .frame(width: geo.size.width * CGFloat(entry.count) / CGFloat(maxFouls), height: 6)
+                            }
+                            .frame(height: 6)
+                        }
+                    }
+                }
             }
         }
         .padding()

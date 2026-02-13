@@ -51,11 +51,13 @@ class DataManager {
         save([])
     }
 
-    /// Supprime un carton spécifique d'un match
+    /// Marque un carton comme purgé (conservé dans les stats et rapports)
     func deleteCard(cardId: UUID, fromMatchId matchId: UUID) {
         var matches = loadMatches()
         guard let idx = matches.firstIndex(where: { $0.id == matchId }) else { return }
-        matches[idx].cards.removeAll { $0.id == cardId }
+        if let cardIdx = matches[idx].cards.firstIndex(where: { $0.id == cardId }) {
+            matches[idx].cards[cardIdx].isServed = true
+        }
         save(matches)
     }
 

@@ -19,7 +19,7 @@ enum StoppageType: String, Codable, CaseIterable, Identifiable {
     case blessure = "Blessure / Soins"
     case varCheck = "VAR"
     case but = "But / Célébration"
-    case antiJeu = "Anti-jeu"
+    case antiJeu = "Hors-jeu"
     case autreArret = "Autre"
 
     var id: String { rawValue }

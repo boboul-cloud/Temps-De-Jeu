@@ -156,6 +156,27 @@ struct UserGuideView: View {
                     
                     Divider()
                     
+                    // 10. Présences aux entraînements
+                    guideSection(
+                        number: "10",
+                        title: "Présences aux entraînements",
+                        icon: "figure.run.circle.fill",
+                        color: .orange,
+                        steps: [
+                            "Allez dans l'onglet **Présences**",
+                            "Appuyez sur **⋯** puis **Nouvel entraînement**",
+                            "Choisissez la **date** de l'entraînement",
+                            "Cochez les **joueurs présents** dans la liste",
+                            "Utilisez **Tout sélectionner** pour pointer rapidement",
+                            "Ajoutez une note optionnelle (thème de l'entraînement)",
+                            "Appuyez sur un entraînement pour le modifier ou **exporter en PDF**",
+                            "Consultez les **Statistiques** pour voir le taux de présence par joueur",
+                            "**Exportez** les présences en PDF ou JSON sur une période"
+                        ]
+                    )
+                    
+                    Divider()
+                    
                     // Tips
                     tipsSection
                     

@@ -29,7 +29,8 @@ struct CardsManagementView: View {
     }
 
     private var filteredCards: [EnrichedCard] {
-        var cards = allCards
+        // Exclure les cartons purgés de l'historique actif
+        var cards = allCards.filter { !$0.card.isServed }
         // Filtrer par type
         switch filterType {
         case .yellow:
@@ -54,10 +55,15 @@ struct CardsManagementView: View {
         return cards
     }
 
-    /// Joueurs avec au moins un carton, triés par nb de cartons desc
+    /// Cartons actifs (non purgés) pour l'affichage
+    private var activeCards: [EnrichedCard] {
+        allCards.filter { !$0.card.isServed }
+    }
+
+    /// Joueurs avec au moins un carton actif, triés par nb de cartons desc
     private var playersWithCards: [(player: Player, yellow: Int, secondYellow: Int, red: Int, white: Int, total: Int)] {
         players.compactMap { player in
-            let playerCards = allCards.filter { $0.card.playerId == player.id }
+            let playerCards = activeCards.filter { $0.card.playerId == player.id }
             guard !playerCards.isEmpty else { return nil }
             let y = playerCards.filter { $0.card.type == .yellow }.count
             let sy = playerCards.filter { $0.card.type == .secondYellow }.count
@@ -68,10 +74,10 @@ struct CardsManagementView: View {
         .sorted { $0.total > $1.total }
     }
 
-    private var totalYellow: Int { allCards.filter { $0.card.type == .yellow }.count }
-    private var totalSecondYellow: Int { allCards.filter { $0.card.type == .secondYellow }.count }
-    private var totalRed: Int { allCards.filter { $0.card.type == .red }.count }
-    private var totalWhite: Int { allCards.filter { $0.card.type == .white }.count }
+    private var totalYellow: Int { activeCards.filter { $0.card.type == .yellow }.count }
+    private var totalSecondYellow: Int { activeCards.filter { $0.card.type == .secondYellow }.count }
+    private var totalRed: Int { activeCards.filter { $0.card.type == .red }.count }
+    private var totalWhite: Int { activeCards.filter { $0.card.type == .white }.count }
 
     var body: some View {
         NavigationStack {
@@ -79,10 +85,10 @@ struct CardsManagementView: View {
                 // Résumé global
                 Section {
                     HStack(spacing: 16) {
-                        CardStatBadge(icon: "rectangle.fill", label: "Jaunes", count: totalYellow, color: .yellow)
-                        CardStatBadge(icon: "rectangle.fill", label: "2è Jaunes", count: totalSecondYellow, color: .orange)
-                        CardStatBadge(icon: "rectangle.fill", label: "Rouges", count: totalRed, color: .red)
-                        CardStatBadge(icon: "rectangle.fill", label: "Blancs", count: totalWhite, color: .gray)
+                        CardStatBadge(icon: "rectangle.fill", label: "Jaunes", count: totalYellow, color: .cardYellow)
+                        CardStatBadge(icon: "rectangle.fill", label: "2è Jaunes", count: totalSecondYellow, color: .cardOrange)
+                        CardStatBadge(icon: "rectangle.fill", label: "Rouges", count: totalRed, color: .cardRed)
+                        CardStatBadge(icon: "rectangle.fill", label: "Blancs", count: totalWhite, color: .cardWhite)
                     }
                     .listRowBackground(Color.clear)
                 }
@@ -92,12 +98,7 @@ struct CardsManagementView: View {
                     Section {
                         ForEach(playersWithCards, id: \.player.id) { entry in
                             HStack(spacing: 12) {
-                                Text(String(entry.player.firstName.prefix(1)).uppercased())
-                                    .font(.system(.headline, design: .rounded))
-                                    .foregroundColor(.white)
-                                    .frame(width: 36, height: 36)
-                                    .background(positionColor(entry.player.position))
-                                    .clipShape(Circle())
+                                PlayerAvatar(player: entry.player, size: 40)
 
                                 VStack(alignment: .leading, spacing: 2) {
                                     Text(entry.player.fullName)
@@ -111,16 +112,16 @@ struct CardsManagementView: View {
 
                                 HStack(spacing: 6) {
                                     if entry.yellow > 0 {
-                                        CardBadge(count: entry.yellow, color: .yellow)
+                                        CardBadge(count: entry.yellow, color: .cardYellow)
                                     }
                                     if entry.secondYellow > 0 {
-                                        CardBadge(count: entry.secondYellow, color: .orange)
+                                        CardBadge(count: entry.secondYellow, color: .cardOrange)
                                     }
                                     if entry.red > 0 {
-                                        CardBadge(count: entry.red, color: .red)
+                                        CardBadge(count: entry.red, color: .cardRed)
                                     }
                                     if entry.white > 0 {
-                                        CardBadge(count: entry.white, color: .gray)
+                                        CardBadge(count: entry.white, color: .cardWhite)
                                     }
                                 }
                             }
@@ -164,12 +165,13 @@ struct CardsManagementView: View {
                                     Button(role: .destructive) {
                                         deleteCard(enriched)
                                     } label: {
-                                        Label("Supprimer", systemImage: "trash")
+                                        Label("Purger", systemImage: "checkmark.circle")
                                     }
+                                    .tint(.green)
                                 }
                         }
                     } header: {
-                        Text("Historique (\(filteredCards.count))")
+                        Text("En cours (\(filteredCards.count))")
                     }
                 }
             }
@@ -222,10 +224,10 @@ struct CardHistoryRow: View {
 
     private var cardColor: Color {
         switch card.type {
-        case .yellow: return .yellow
-        case .red: return .red
-        case .secondYellow: return .orange
-        case .white: return .gray
+        case .yellow: return .cardYellow
+        case .red: return .cardRed
+        case .secondYellow: return .cardOrange
+        case .white: return .cardWhite
         }
     }
 
@@ -245,7 +247,7 @@ struct CardHistoryRow: View {
                 .frame(width: 20, height: 28)
                 .overlay(
                     card.type == .secondYellow ?
-                    RoundedRectangle(cornerRadius: 3).fill(.red).frame(width: 10, height: 28).offset(x: 5)
+                    RoundedRectangle(cornerRadius: 3).fill(Color.cardRed).frame(width: 10, height: 28).offset(x: 5)
                     : nil
                 )
                 .clipShape(RoundedRectangle(cornerRadius: 3))
@@ -346,10 +348,10 @@ struct MatchCardsListView: View {
                         let reds = viewModel.match.cards.filter { $0.type == .red }.count
                         let whites = viewModel.match.cards.filter { $0.type == .white }.count
                         HStack(spacing: 16) {
-                            CardStatBadge(icon: "rectangle.fill", label: "Jaunes", count: yellows, color: .yellow)
-                            CardStatBadge(icon: "rectangle.fill", label: "2è Jaunes", count: secondYellows, color: .orange)
-                            CardStatBadge(icon: "rectangle.fill", label: "Rouges", count: reds, color: .red)
-                            CardStatBadge(icon: "rectangle.fill", label: "Blancs", count: whites, color: .gray)
+                            CardStatBadge(icon: "rectangle.fill", label: "Jaunes", count: yellows, color: .cardYellow)
+                            CardStatBadge(icon: "rectangle.fill", label: "2è Jaunes", count: secondYellows, color: .cardOrange)
+                            CardStatBadge(icon: "rectangle.fill", label: "Rouges", count: reds, color: .cardRed)
+                            CardStatBadge(icon: "rectangle.fill", label: "Blancs", count: whites, color: .cardWhite)
                         }
                         .listRowBackground(Color.clear)
                     }
@@ -390,10 +392,10 @@ struct MatchCardRow: View {
 
     private var cardColor: Color {
         switch card.type {
-        case .yellow: return .yellow
-        case .red: return .red
-        case .secondYellow: return .orange
-        case .white: return .gray
+        case .yellow: return .cardYellow
+        case .red: return .cardRed
+        case .secondYellow: return .cardOrange
+        case .white: return .cardWhite
         }
     }
 
@@ -404,7 +406,7 @@ struct MatchCardRow: View {
                 .frame(width: 20, height: 28)
                 .overlay(
                     card.type == .secondYellow ?
-                    RoundedRectangle(cornerRadius: 3).fill(.red).frame(width: 10, height: 28).offset(x: 5)
+                    RoundedRectangle(cornerRadius: 3).fill(Color.cardRed).frame(width: 10, height: 28).offset(x: 5)
                     : nil
                 )
                 .clipShape(RoundedRectangle(cornerRadius: 3))

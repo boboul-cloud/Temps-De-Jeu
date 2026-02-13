@@ -59,6 +59,7 @@ class ExportService {
     ///   - matchDate: date du match
     ///   - previousUnavailableIds: IDs des joueurs déjà pris par les équipes supérieures (cascade)
     ///   - previousChain: noms des équipes ayant déjà sélectionné
+    ///   - excludePhotos: exclure les photos des joueurs (pour liens iMessage)
     func exportRoster(
         allPlayers: [Player],
         selectedPlayerIds: Set<UUID>,
@@ -66,10 +67,24 @@ class ExportService {
         competition: String,
         matchDate: Date,
         previousUnavailableIds: [UUID] = [],
-        previousChain: [String] = []
+        previousChain: [String] = [],
+        excludePhotos: Bool = false
     ) -> Data? {
-        let selectedPlayers = allPlayers.filter { selectedPlayerIds.contains($0.id) }
-        let availablePlayers = allPlayers.filter { !selectedPlayerIds.contains($0.id) && !previousUnavailableIds.contains($0.id) }
+        // Fonction pour retirer les photos si nécessaire
+        let stripPhoto: (Player) -> Player = { player in
+            guard excludePhotos else { return player }
+            return Player(
+                id: player.id,
+                firstName: player.firstName,
+                lastName: player.lastName,
+                position: player.position,
+                availability: player.availability,
+                photoData: nil
+            )
+        }
+        
+        let selectedPlayers = allPlayers.filter { selectedPlayerIds.contains($0.id) }.map(stripPhoto)
+        let availablePlayers = allPlayers.filter { !selectedPlayerIds.contains($0.id) && !previousUnavailableIds.contains($0.id) }.map(stripPhoto)
 
         // Cumuler les indisponibles : anciens + nouveaux sélectionnés
         var allUnavailable = previousUnavailableIds
@@ -290,10 +305,20 @@ class ExportService {
                 currentY += 15
             }
 
+            // Styles orange pour remplaçants
+            let subSectionAttrs: [NSAttributedString.Key: Any] = [
+                .font: UIFont.systemFont(ofSize: 14, weight: .semibold),
+                .foregroundColor: UIColor.systemOrange
+            ]
+            let subNumberAttrs: [NSAttributedString.Key: Any] = [
+                .font: UIFont.systemFont(ofSize: 13, weight: .bold),
+                .foregroundColor: UIColor.systemOrange
+            ]
+
             // REMPLAÇANTS
             if !remplacants.isEmpty {
                 ensureSpace(30)
-                "REMPLAÇANTS (\(remplacants.count))".draw(at: CGPoint(x: margin, y: currentY), withAttributes: sectionAttrs)
+                "REMPLAÇANTS (\(remplacants.count))".draw(at: CGPoint(x: margin, y: currentY), withAttributes: subSectionAttrs)
                 currentY += 25
 
                 for player in remplacants {
@@ -301,7 +326,7 @@ class ExportService {
                     
                     // Numéro
                     let numStr = "#\(player.shirtNumber)"
-                    numStr.draw(at: CGPoint(x: margin, y: currentY), withAttributes: numberAttrs)
+                    numStr.draw(at: CGPoint(x: margin, y: currentY), withAttributes: subNumberAttrs)
                     
                     // Nom
                     let name = player.displayName.isEmpty ? "Joueur" : player.displayName
@@ -332,11 +357,30 @@ class ExportService {
 
     // MARK: - Export Joueurs PDF
 
-    func generatePlayersPDF(players: [Player], allCards: [CardEvent]) -> Data {
+    func generatePlayersPDF(players: [Player], allCards: [CardEvent], matches: [Match] = []) -> Data {
         let pageWidth: CGFloat = 595.0   // A4
         let pageHeight: CGFloat = 842.0
         let margin: CGFloat = 40.0
         let contentWidth = pageWidth - 2 * margin
+
+        // Pré-calculer les stats de temps de jeu par joueur (matchs terminés uniquement)
+        struct PlayerStats {
+            var totalTime: TimeInterval = 0
+            var matchCount: Int = 0
+            var averageTime: TimeInterval { matchCount > 0 ? totalTime / Double(matchCount) : 0 }
+        }
+        var statsById: [UUID: PlayerStats] = [:]
+        let finishedMatches = matches.filter { $0.isFinished }
+        for match in finishedMatches {
+            let playingTimes = match.playerPlayingTimes()
+            for pt in playingTimes {
+                guard pt.totalTime > 0 else { continue }
+                var s = statsById[pt.playerId] ?? PlayerStats()
+                s.totalTime += pt.totalTime
+                s.matchCount += 1
+                statsById[pt.playerId] = s
+            }
+        }
 
         let renderer = UIGraphicsPDFRenderer(bounds: CGRect(x: 0, y: 0, width: pageWidth, height: pageHeight))
 
@@ -387,11 +431,30 @@ class ExportService {
             let attaquants = players.filter { $0.position == .attaquant }.count
             let summary = "\(players.count) joueurs : \(gardiens) G · \(defenseurs) DEF · \(milieux) MIL · \(attaquants) ATT"
             summary.draw(at: CGPoint(x: margin, y: currentY), withAttributes: summaryAttrs)
-            currentY += 30
+            currentY += 20
+
+            if !finishedMatches.isEmpty {
+                "\(finishedMatches.count) match\(finishedMatches.count > 1 ? "s" : "") joué\(finishedMatches.count > 1 ? "s" : "")".draw(at: CGPoint(x: margin, y: currentY), withAttributes: summaryAttrs)
+                currentY += 20
+            }
+            currentY += 10
 
             // Ligne séparatrice
             drawLine(context: context.cgContext, y: currentY, margin: margin, width: contentWidth)
             currentY += 15
+
+            // En-têtes colonnes
+            let colHeaderAttrs: [NSAttributedString.Key: Any] = [
+                .font: UIFont.systemFont(ofSize: 9, weight: .semibold),
+                .foregroundColor: UIColor.gray
+            ]
+            if !finishedMatches.isEmpty {
+                "Matchs".draw(at: CGPoint(x: margin + 200, y: currentY), withAttributes: colHeaderAttrs)
+                "Tps cumulé".draw(at: CGPoint(x: margin + 260, y: currentY), withAttributes: colHeaderAttrs)
+                "Moy/match".draw(at: CGPoint(x: margin + 340, y: currentY), withAttributes: colHeaderAttrs)
+            }
+            "Cartons".draw(at: CGPoint(x: pageWidth - margin - 80, y: currentY), withAttributes: colHeaderAttrs)
+            currentY += 16
 
             // Tableau joueurs par position
             let positions: [(String, PlayerPosition)] = [
@@ -408,6 +471,10 @@ class ExportService {
             let rowAttrs: [NSAttributedString.Key: Any] = [
                 .font: UIFont.systemFont(ofSize: 12),
                 .foregroundColor: UIColor.black
+            ]
+            let statsAttrs: [NSAttributedString.Key: Any] = [
+                .font: UIFont.systemFont(ofSize: 10),
+                .foregroundColor: UIColor.darkGray
             ]
             let cardAttrs: [NSAttributedString.Key: Any] = [
                 .font: UIFont.systemFont(ofSize: 10),
@@ -431,6 +498,17 @@ class ExportService {
                     let name = player.fullName.isEmpty ? "Joueur" : player.fullName
                     name.draw(at: CGPoint(x: margin + 10, y: currentY), withAttributes: rowAttrs)
 
+                    // Temps de jeu cumulé, nb matchs, moyenne
+                    if let ps = statsById[player.id] {
+                        "\(ps.matchCount)".draw(at: CGPoint(x: margin + 210, y: currentY + 1), withAttributes: statsAttrs)
+                        TimeFormatters.formatTime(ps.totalTime).draw(at: CGPoint(x: margin + 270, y: currentY + 1), withAttributes: statsAttrs)
+                        TimeFormatters.formatTime(ps.averageTime).draw(at: CGPoint(x: margin + 350, y: currentY + 1), withAttributes: statsAttrs)
+                    } else if !finishedMatches.isEmpty {
+                        "0".draw(at: CGPoint(x: margin + 210, y: currentY + 1), withAttributes: statsAttrs)
+                        "00:00".draw(at: CGPoint(x: margin + 270, y: currentY + 1), withAttributes: statsAttrs)
+                        "00:00".draw(at: CGPoint(x: margin + 350, y: currentY + 1), withAttributes: statsAttrs)
+                    }
+
                     // Cartons du joueur
                     let playerCards = allCards.filter { $0.playerId == player.id }
                     if !playerCards.isEmpty {
@@ -444,7 +522,7 @@ class ExportService {
                         if r > 0 { parts.append("\(r) R") }
                         if w > 0 { parts.append("\(w) B") }
                         let cardStr = parts.joined(separator: " · ")
-                        cardStr.draw(at: CGPoint(x: pageWidth - margin - 100, y: currentY + 1), withAttributes: cardAttrs)
+                        cardStr.draw(at: CGPoint(x: pageWidth - margin - 80, y: currentY + 1), withAttributes: cardAttrs)
                     }
 
                     currentY += 20
@@ -644,6 +722,24 @@ class ExportService {
                 for sub in match.substitutions {
                     ensureSpace(20)
                     let line = "\(Int(sub.minute / 60))' \(sub.period.shortName) - \(sub.playerOut) ⇄ \(sub.playerIn)"
+                    line.draw(at: CGPoint(x: margin + 10, y: currentY), withAttributes: bodyAttrs)
+                    currentY += 18
+                }
+                currentY += 10
+            }
+
+            // --- FAUTES ---
+            if !match.fouls.isEmpty {
+                drawLine(context: context.cgContext, y: currentY, margin: margin, width: contentWidth)
+                currentY += 15
+                "Fautes (\(match.fouls.count))".draw(at: CGPoint(x: margin, y: currentY), withAttributes: headerAttrs)
+                currentY += 22
+
+                // Regrouper par joueur
+                let foulsByPlayer = Dictionary(grouping: match.fouls, by: { $0.playerName })
+                for (playerName, fouls) in foulsByPlayer.sorted(by: { $0.value.count > $1.value.count }) {
+                    ensureSpace(20)
+                    let line = "\(playerName) : \(fouls.count) faute\(fouls.count > 1 ? "s" : "")"
                     line.draw(at: CGPoint(x: margin + 10, y: currentY), withAttributes: bodyAttrs)
                     currentY += 18
                 }
@@ -953,6 +1049,341 @@ class ExportService {
             // Footer
             ensureSpace(40)
             currentY += 20
+            drawLine(context: context.cgContext, y: currentY, margin: margin, width: contentWidth)
+            currentY += 10
+            let footer = "Temps De Jeu · \(dateFormatter.string(from: Date()))"
+            let footerAttrs: [NSAttributedString.Key: Any] = [
+                .font: UIFont.systemFont(ofSize: 9),
+                .foregroundColor: UIColor.lightGray
+            ]
+            footer.draw(at: CGPoint(x: margin, y: currentY), withAttributes: footerAttrs)
+        }
+    }
+
+    // MARK: - Export Présences Entraînements JSON
+
+    func exportTrainingAttendanceJSON(
+        sessions: [TrainingSession],
+        playerStats: [PlayerAttendanceStats],
+        startDate: Date,
+        endDate: Date
+    ) -> Data? {
+        let export = TrainingAttendanceExport(
+            startDate: startDate,
+            endDate: endDate,
+            sessions: sessions,
+            playerStats: playerStats
+        )
+        
+        let encoder = JSONEncoder()
+        encoder.outputFormatting = [.prettyPrinted, .sortedKeys]
+        encoder.dateEncodingStrategy = .iso8601
+        return try? encoder.encode(export)
+    }
+
+    // MARK: - Export Présences Entraînements PDF
+
+    func generateTrainingAttendancePDF(
+        sessions: [TrainingSession],
+        playerStats: [PlayerAttendanceStats],
+        startDate: Date,
+        endDate: Date
+    ) -> Data {
+        let pageWidth: CGFloat = 595.0   // A4
+        let pageHeight: CGFloat = 842.0
+        let margin: CGFloat = 40.0
+        let contentWidth = pageWidth - 2 * margin
+
+        let renderer = UIGraphicsPDFRenderer(bounds: CGRect(x: 0, y: 0, width: pageWidth, height: pageHeight))
+
+        return renderer.pdfData { context in
+            var currentY: CGFloat = 0
+            var pageNumber = 1
+
+            func startNewPage() {
+                context.beginPage()
+                currentY = margin
+                pageNumber += 1
+            }
+
+            func ensureSpace(_ needed: CGFloat) {
+                if currentY + needed > pageHeight - margin {
+                    startNewPage()
+                }
+            }
+
+            // Première page
+            context.beginPage()
+            currentY = margin
+
+            // Titre
+            let titleAttrs: [NSAttributedString.Key: Any] = [
+                .font: UIFont.boldSystemFont(ofSize: 24),
+                .foregroundColor: UIColor.black
+            ]
+            let title = "Présences aux entraînements"
+            title.draw(at: CGPoint(x: margin, y: currentY), withAttributes: titleAttrs)
+            currentY += 35
+
+            // Période
+            let subtitleAttrs: [NSAttributedString.Key: Any] = [
+                .font: UIFont.systemFont(ofSize: 14),
+                .foregroundColor: UIColor.darkGray
+            ]
+            let period = "Du \(shortDateFormatter.string(from: startDate)) au \(shortDateFormatter.string(from: endDate))"
+            period.draw(at: CGPoint(x: margin, y: currentY), withAttributes: subtitleAttrs)
+            currentY += 25
+
+            // Résumé
+            let summaryAttrs: [NSAttributedString.Key: Any] = [
+                .font: UIFont.systemFont(ofSize: 12),
+                .foregroundColor: UIColor.black
+            ]
+            let totalSessions = sessions.count
+            let totalPresences = sessions.reduce(0) { $0 + $1.presentCount }
+            let totalPossible = sessions.reduce(0) { $0 + $1.totalCount }
+            let avgRate = totalPossible > 0 ? Double(totalPresences) / Double(totalPossible) * 100 : 0
+
+            let summary = "\(totalSessions) entraînements · Présence moyenne: \(Int(avgRate))%"
+            summary.draw(at: CGPoint(x: margin, y: currentY), withAttributes: summaryAttrs)
+            currentY += 30
+
+            drawLine(context: context.cgContext, y: currentY, margin: margin, width: contentWidth)
+            currentY += 15
+
+            // Statistiques par joueur
+            let headerAttrs: [NSAttributedString.Key: Any] = [
+                .font: UIFont.boldSystemFont(ofSize: 16),
+                .foregroundColor: UIColor.black
+            ]
+            "Statistiques par joueur".draw(at: CGPoint(x: margin, y: currentY), withAttributes: headerAttrs)
+            currentY += 25
+
+            let bodyAttrs: [NSAttributedString.Key: Any] = [
+                .font: UIFont.systemFont(ofSize: 11),
+                .foregroundColor: UIColor.black
+            ]
+            let bodyBoldAttrs: [NSAttributedString.Key: Any] = [
+                .font: UIFont.boldSystemFont(ofSize: 11),
+                .foregroundColor: UIColor.black
+            ]
+
+            // En-tête du tableau
+            ensureSpace(20)
+            let colWidths: [CGFloat] = [contentWidth * 0.5, contentWidth * 0.25, contentWidth * 0.25]
+            var x = margin
+            "Joueur".draw(at: CGPoint(x: x, y: currentY), withAttributes: bodyBoldAttrs)
+            x += colWidths[0]
+            "Présences".draw(at: CGPoint(x: x, y: currentY), withAttributes: bodyBoldAttrs)
+            x += colWidths[1]
+            "Taux".draw(at: CGPoint(x: x, y: currentY), withAttributes: bodyBoldAttrs)
+            currentY += 18
+
+            drawLine(context: context.cgContext, y: currentY, margin: margin, width: contentWidth)
+            currentY += 8
+
+            // Données des joueurs
+            for stat in playerStats.sorted(by: { $0.attendanceRate > $1.attendanceRate }) {
+                ensureSpace(18)
+                x = margin
+                stat.fullName.draw(at: CGPoint(x: x, y: currentY), withAttributes: bodyAttrs)
+                x += colWidths[0]
+                "\(stat.presentSessions)/\(stat.totalSessions)".draw(at: CGPoint(x: x, y: currentY), withAttributes: bodyAttrs)
+                x += colWidths[1]
+                
+                let rateColor: UIColor = stat.attendanceRate >= 75 ? .systemGreen : stat.attendanceRate >= 50 ? .systemOrange : .systemRed
+                let rateAttrs: [NSAttributedString.Key: Any] = [
+                    .font: UIFont.boldSystemFont(ofSize: 11),
+                    .foregroundColor: rateColor
+                ]
+                "\(Int(stat.attendanceRate))%".draw(at: CGPoint(x: x, y: currentY), withAttributes: rateAttrs)
+                currentY += 16
+            }
+
+            currentY += 20
+            drawLine(context: context.cgContext, y: currentY, margin: margin, width: contentWidth)
+            currentY += 15
+
+            // Détail par entraînement
+            ensureSpace(30)
+            "Détail par entraînement".draw(at: CGPoint(x: margin, y: currentY), withAttributes: headerAttrs)
+            currentY += 25
+
+            let smallAttrs: [NSAttributedString.Key: Any] = [
+                .font: UIFont.systemFont(ofSize: 10),
+                .foregroundColor: UIColor.darkGray
+            ]
+
+            for session in sessions.sorted(by: { $0.date > $1.date }) {
+                ensureSpace(50)
+                
+                // Date de l'entraînement
+                let dateStr = dateFormatter.string(from: session.date)
+                dateStr.draw(at: CGPoint(x: margin, y: currentY), withAttributes: bodyBoldAttrs)
+                currentY += 16
+                
+                // Résumé
+                let sessionRate = session.totalCount > 0 ? Double(session.presentCount) / Double(session.totalCount) * 100 : 0
+                let sessionSummary = "Présents: \(session.presentCount)/\(session.totalCount) (\(Int(sessionRate))%)"
+                sessionSummary.draw(at: CGPoint(x: margin + 10, y: currentY), withAttributes: smallAttrs)
+                currentY += 14
+                
+                // Notes
+                if !session.notes.isEmpty {
+                    "Note: \(session.notes)".draw(at: CGPoint(x: margin + 10, y: currentY), withAttributes: smallAttrs)
+                    currentY += 14
+                }
+                
+                // Liste des présents
+                let presentNames = session.attendances.filter { $0.isPresent }.map { $0.fullName }.joined(separator: ", ")
+                if !presentNames.isEmpty {
+                    let maxWidth = contentWidth - 20
+                    let presentText = "Présents: \(presentNames)"
+                    let presentAttrStr = NSAttributedString(string: presentText, attributes: smallAttrs)
+                    let textRect = CGRect(x: margin + 10, y: currentY, width: maxWidth, height: 100)
+                    presentAttrStr.draw(with: textRect, options: .usesLineFragmentOrigin, context: nil)
+                    let textHeight = presentAttrStr.boundingRect(with: CGSize(width: maxWidth, height: CGFloat.greatestFiniteMagnitude), options: .usesLineFragmentOrigin, context: nil).height
+                    currentY += textHeight + 10
+                }
+                
+                currentY += 8
+            }
+
+            // Footer
+            ensureSpace(40)
+            currentY += 20
+            drawLine(context: context.cgContext, y: currentY, margin: margin, width: contentWidth)
+            currentY += 10
+            let footer = "Temps De Jeu · \(dateFormatter.string(from: Date()))"
+            let footerAttrs: [NSAttributedString.Key: Any] = [
+                .font: UIFont.systemFont(ofSize: 9),
+                .foregroundColor: UIColor.lightGray
+            ]
+            footer.draw(at: CGPoint(x: margin, y: currentY), withAttributes: footerAttrs)
+        }
+    }
+
+    // MARK: - Export Session Individuelle PDF
+
+    /// Génère un PDF de la feuille de présence d'un entraînement
+    func generateTrainingSessionPDF(session: TrainingSession) -> Data {
+        let pageWidth: CGFloat = 595.0   // A4
+        let pageHeight: CGFloat = 842.0
+        let margin: CGFloat = 40.0
+        let contentWidth = pageWidth - 2 * margin
+
+        let renderer = UIGraphicsPDFRenderer(bounds: CGRect(x: 0, y: 0, width: pageWidth, height: pageHeight))
+
+        return renderer.pdfData { context in
+            var currentY: CGFloat = 0
+
+            func ensureSpace(_ needed: CGFloat) {
+                if currentY + needed > pageHeight - margin {
+                    context.beginPage()
+                    currentY = margin
+                }
+            }
+
+            // Première page
+            context.beginPage()
+            currentY = margin
+
+            // Titre
+            let titleAttrs: [NSAttributedString.Key: Any] = [
+                .font: UIFont.boldSystemFont(ofSize: 24),
+                .foregroundColor: UIColor.black
+            ]
+            "Feuille de présence".draw(at: CGPoint(x: margin, y: currentY), withAttributes: titleAttrs)
+            currentY += 35
+
+            // Date de l'entraînement
+            let subtitleAttrs: [NSAttributedString.Key: Any] = [
+                .font: UIFont.systemFont(ofSize: 16),
+                .foregroundColor: UIColor.darkGray
+            ]
+            let dateStr = dateFormatter.string(from: session.date)
+            dateStr.draw(at: CGPoint(x: margin, y: currentY), withAttributes: subtitleAttrs)
+            currentY += 30
+
+            // Notes si présentes
+            if !session.notes.isEmpty {
+                let notesAttrs: [NSAttributedString.Key: Any] = [
+                    .font: UIFont.italicSystemFont(ofSize: 12),
+                    .foregroundColor: UIColor.darkGray
+                ]
+                "Note: \(session.notes)".draw(at: CGPoint(x: margin, y: currentY), withAttributes: notesAttrs)
+                currentY += 25
+            }
+
+            // Résumé
+            let summaryAttrs: [NSAttributedString.Key: Any] = [
+                .font: UIFont.boldSystemFont(ofSize: 14),
+                .foregroundColor: UIColor.black
+            ]
+            let rate = session.totalCount > 0 ? Double(session.presentCount) / Double(session.totalCount) * 100 : 0
+            let summary = "Présents: \(session.presentCount)/\(session.totalCount) (\(Int(rate))%)"
+            summary.draw(at: CGPoint(x: margin, y: currentY), withAttributes: summaryAttrs)
+            currentY += 30
+
+            drawLine(context: context.cgContext, y: currentY, margin: margin, width: contentWidth)
+            currentY += 15
+
+            // Liste des présents
+            let headerAttrs: [NSAttributedString.Key: Any] = [
+                .font: UIFont.boldSystemFont(ofSize: 16),
+                .foregroundColor: UIColor(red: 0, green: 0.6, blue: 0, alpha: 1)
+            ]
+            "Joueurs présents".draw(at: CGPoint(x: margin, y: currentY), withAttributes: headerAttrs)
+            currentY += 25
+
+            let bodyAttrs: [NSAttributedString.Key: Any] = [
+                .font: UIFont.systemFont(ofSize: 12),
+                .foregroundColor: UIColor.black
+            ]
+
+            let presentPlayers = session.attendances.filter { $0.isPresent }.sorted { $0.lastName.localizedCompare($1.lastName) == .orderedAscending }
+            
+            for (index, attendance) in presentPlayers.enumerated() {
+                ensureSpace(20)
+                let line = "\(index + 1). \(attendance.fullName)"
+                line.draw(at: CGPoint(x: margin + 10, y: currentY), withAttributes: bodyAttrs)
+                currentY += 18
+            }
+
+            if presentPlayers.isEmpty {
+                "Aucun joueur présent".draw(at: CGPoint(x: margin + 10, y: currentY), withAttributes: bodyAttrs)
+                currentY += 18
+            }
+
+            currentY += 15
+            drawLine(context: context.cgContext, y: currentY, margin: margin, width: contentWidth)
+            currentY += 15
+
+            // Liste des absents
+            let absentHeaderAttrs: [NSAttributedString.Key: Any] = [
+                .font: UIFont.boldSystemFont(ofSize: 16),
+                .foregroundColor: UIColor.systemRed
+            ]
+            "Joueurs absents".draw(at: CGPoint(x: margin, y: currentY), withAttributes: absentHeaderAttrs)
+            currentY += 25
+
+            let absentPlayers = session.attendances.filter { !$0.isPresent }.sorted { $0.lastName.localizedCompare($1.lastName) == .orderedAscending }
+
+            for (index, attendance) in absentPlayers.enumerated() {
+                ensureSpace(20)
+                let line = "\(index + 1). \(attendance.fullName)"
+                line.draw(at: CGPoint(x: margin + 10, y: currentY), withAttributes: bodyAttrs)
+                currentY += 18
+            }
+
+            if absentPlayers.isEmpty {
+                "Aucun joueur absent".draw(at: CGPoint(x: margin + 10, y: currentY), withAttributes: bodyAttrs)
+                currentY += 18
+            }
+
+            // Footer
+            ensureSpace(40)
+            currentY += 30
             drawLine(context: context.cgContext, y: currentY, margin: margin, width: contentWidth)
             currentY += 10
             let footer = "Temps De Jeu · \(dateFormatter.string(from: Date()))"

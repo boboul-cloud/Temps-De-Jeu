@@ -22,6 +22,7 @@ struct MatchSetupView: View {
     @Binding var showMatch: Bool
     @State private var showPaywall = false
     @State private var showRosterSelection = false
+    @State private var showDeleteRosterConfirmation = false
     @State private var allPlayers: [Player] = []
 
     // Export / Import roster
@@ -31,10 +32,15 @@ struct MatchSetupView: View {
     @State private var unavailablePlayerIds: Set<UUID> = []
     @State private var importChain: [String] = []
 
-    // PDF Preview
-    @State private var showPDFPreview = false
-    @State private var previewPDFData: Data?
-    @State private var previewPDFTitle = ""
+    // PDF Preview - utilise une struct identifiable pour éviter la page blanche
+    @State private var pdfPreviewItem: MatchSetupPDFItem?
+    
+    /// Structure pour l'item de preview PDF
+    struct MatchSetupPDFItem: Identifiable {
+        let id = UUID()
+        let data: Data
+        let title: String
+    }
 
     // Alerts
     @State private var alertTitle = ""
@@ -161,12 +167,46 @@ struct MatchSetupView: View {
                                     }
                                 }
 
-                                Button {
-                                    showRosterSelection = true
-                                } label: {
-                                    Text("Modifier la composition")
-                                        .font(.caption.bold())
+                                // Liste compacte des remplaçants
+                                if !remp.isEmpty {
+                                    ScrollView(.horizontal, showsIndicators: false) {
+                                        HStack(spacing: 6) {
+                                            ForEach(remp.sorted(by: { $0.shirtNumber < $1.shirtNumber })) { mp in
+                                                Text("#\(mp.shirtNumber) \(mp.displayName)")
+                                                    .font(.caption2)
+                                                    .padding(.horizontal, 8)
+                                                    .padding(.vertical, 4)
+                                                    .background(Color.orange.opacity(0.12))
+                                                    .cornerRadius(6)
+                                            }
+                                        }
+                                    }
+                                }
+
+                                HStack(spacing: 16) {
+                                    Button {
+                                        showRosterSelection = true
+                                    } label: {
+                                        HStack(spacing: 4) {
+                                            Image(systemName: "pencil")
+                                                .font(.caption2)
+                                            Text("Modifier")
+                                                .font(.caption.bold())
+                                        }
                                         .foregroundStyle(.blue)
+                                    }
+
+                                    Button {
+                                        showDeleteRosterConfirmation = true
+                                    } label: {
+                                        HStack(spacing: 4) {
+                                            Image(systemName: "trash")
+                                                .font(.caption2)
+                                            Text("Supprimer")
+                                                .font(.caption.bold())
+                                        }
+                                        .foregroundStyle(.red)
+                                    }
                                 }
 
                                 // Boutons d'export de la composition
@@ -343,10 +383,8 @@ struct MatchSetupView: View {
             .sheet(item: $shareItemsWrapper) { wrapper in
                 ActivityView(activityItems: wrapper.items)
             }
-            .sheet(isPresented: $showPDFPreview) {
-                if let data = previewPDFData {
-                    PDFPreviewView(pdfData: data, title: previewPDFTitle)
-                }
+            .sheet(item: $pdfPreviewItem) { item in
+                PDFPreviewView(pdfData: item.data, title: item.title)
             }
             .fileImporter(
                 isPresented: $showImportRosterPicker,
@@ -359,6 +397,14 @@ struct MatchSetupView: View {
                 Button("OK") {}
             } message: {
                 Text(alertMessage)
+            }
+            .alert("Supprimer la composition", isPresented: $showDeleteRosterConfirmation) {
+                Button("Annuler", role: .cancel) {}
+                Button("Supprimer", role: .destructive) {
+                    viewModel.clearMatchRoster()
+                }
+            } message: {
+                Text("Voulez-vous vraiment supprimer la composition actuelle ? Cette action est irréversible.")
             }
             .onAppear {
                 allPlayers = TeamManager.shared.loadPlayers()
@@ -477,7 +523,7 @@ struct MatchSetupView: View {
         shareItemsWrapper = ShareItemsWrapper(items: [message])
     }
 
-    /// Génère et partage un PDF de la composition
+    /// Génère et affiche un aperçu PDF de la composition avant export
     private func shareRosterPDF() {
         let teamName = viewModel.match.myTeamName.isEmpty ? "Mon équipe" : viewModel.match.myTeamName
         let opponent = viewModel.match.isMyTeamHome ? viewModel.match.awayTeam : viewModel.match.homeTeam
@@ -498,15 +544,8 @@ struct MatchSetupView: View {
             f.dateFormat = "yyyy-MM-dd"
             return f.string(from: viewModel.match.date)
         }()
-        let fileName = "Composition_\(cleanTeam)_\(dateStr).pdf"
-        let tempURL = FileManager.default.temporaryDirectory.appendingPathComponent(fileName)
-
-        do {
-            try pdfData.write(to: tempURL)
-            shareItemsWrapper = ShareItemsWrapper(items: [tempURL])
-        } catch {
-            showAlertWith(title: "Erreur", message: "Impossible de créer le PDF.")
-        }
+        let title = "Composition_\(cleanTeam)_\(dateStr)"
+        pdfPreviewItem = MatchSetupPDFItem(data: pdfData, title: title)
     }
 
     private func exportAvailablePlayers() {

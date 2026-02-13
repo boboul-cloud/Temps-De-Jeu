@@ -50,26 +50,33 @@ struct ContentView: View {
                 }
                 .tag(1)
 
-            // Tab 3 : Cartons
+            // Tab 3 : Entraînements
+            TrainingAttendanceView()
+                .tabItem {
+                    Label("Présences", systemImage: "figure.run.circle.fill")
+                }
+                .tag(2)
+
+            // Tab 4 : Cartons
             CardsManagementView()
                 .tabItem {
                     Label("Cartons", systemImage: "rectangle.fill")
                 }
-                .tag(2)
+                .tag(3)
 
-            // Tab 4 : Historique
+            // Tab 5 : Historique
             MatchHistoryView()
                 .tabItem {
                     Label("Historique", systemImage: "clock.arrow.circlepath")
                 }
-                .tag(3)
+                .tag(4)
 
-            // Tab 5 : Paramètres / Premium
+            // Tab 6 : Paramètres / Premium
             SettingsView(storeManager: storeManager)
                 .tabItem {
                     Label("Réglages", systemImage: "gearshape.fill")
                 }
-                .tag(4)
+                .tag(5)
         }
         .tint(.green)
         .onChange(of: deepLinkManager.shouldNavigateToMatch) {
@@ -87,6 +94,7 @@ struct ContentView: View {
 
 struct SettingsView: View {
     @ObservedObject var storeManager: StoreManager
+    @ObservedObject var seasonManager = SeasonManager.shared
     @State private var showPaywall = false
     @State private var showTerms = false
     @State private var showPrivacy = false
@@ -96,6 +104,36 @@ struct SettingsView: View {
     var body: some View {
         NavigationStack {
             List {
+                // Saison
+                Section {
+                    NavigationLink {
+                        SeasonManagementView()
+                    } label: {
+                        Label {
+                            VStack(alignment: .leading, spacing: 2) {
+                                if let season = seasonManager.currentSeason {
+                                    Text("\(season.clubName) — \(season.label)")
+                                        .font(.subheadline)
+                                    Text("Saison en cours")
+                                        .font(.caption)
+                                        .foregroundStyle(.green)
+                                } else {
+                                    Text("Gestion des saisons")
+                                        .font(.subheadline)
+                                    Text("Aucune saison active")
+                                        .font(.caption)
+                                        .foregroundStyle(.secondary)
+                                }
+                            }
+                        } icon: {
+                            Image(systemName: seasonManager.currentSeason != nil ? "calendar.circle.fill" : "calendar.badge.plus")
+                                .foregroundStyle(seasonManager.currentSeason != nil ? .green : .orange)
+                        }
+                    }
+                } header: {
+                    Text("Saison")
+                }
+
                 // Mode d'emploi
                 Section {
                     Button {

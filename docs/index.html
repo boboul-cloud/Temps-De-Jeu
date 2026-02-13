@@ -240,6 +240,113 @@
             50% { opacity: 0.5; }
         }
         
+        /* Support */
+        .support {
+            padding: 100px 24px;
+            background: linear-gradient(180deg, transparent 0%, rgba(52, 199, 89, 0.05) 50%, transparent 100%);
+        }
+        
+        .support h2 {
+            text-align: center;
+            font-size: 2.5rem;
+            margin-bottom: 16px;
+        }
+        
+        .support > .container > p {
+            text-align: center;
+            color: var(--text-muted);
+            max-width: 600px;
+            margin: 0 auto 48px;
+            font-size: 1.1rem;
+        }
+        
+        .support-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+            gap: 24px;
+            max-width: 900px;
+            margin: 0 auto 48px;
+        }
+        
+        .support-card {
+            background: var(--card);
+            border-radius: 20px;
+            padding: 32px;
+            border: 1px solid #222;
+        }
+        
+        .support-card h3 {
+            font-size: 1.2rem;
+            margin-bottom: 12px;
+        }
+        
+        .support-card p {
+            color: var(--text-muted);
+            font-size: 0.95rem;
+            margin-bottom: 8px;
+        }
+        
+        .support-card a {
+            color: var(--green);
+            text-decoration: none;
+            font-weight: 600;
+        }
+        
+        .support-card a:hover {
+            text-decoration: underline;
+        }
+        
+        .faq {
+            max-width: 700px;
+            margin: 0 auto;
+        }
+        
+        .faq h3 {
+            text-align: center;
+            font-size: 1.5rem;
+            margin-bottom: 24px;
+        }
+        
+        .faq-item {
+            background: var(--card);
+            border-radius: 14px;
+            padding: 24px;
+            margin-bottom: 12px;
+            border: 1px solid #222;
+        }
+        
+        .faq-item summary {
+            cursor: pointer;
+            font-weight: 600;
+            font-size: 1.05rem;
+            list-style: none;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+        
+        .faq-item summary::-webkit-details-marker {
+            display: none;
+        }
+        
+        .faq-item summary::after {
+            content: '+';
+            font-size: 1.4rem;
+            color: var(--green);
+            transition: transform 0.2s;
+        }
+        
+        .faq-item[open] summary::after {
+            content: '−';
+        }
+        
+        .faq-item p {
+            color: var(--text-muted);
+            margin-top: 12px;
+            font-size: 0.95rem;
+            line-height: 1.7;
+        }
+        
         /* Footer */
         footer {
             padding: 40px 24px;
@@ -341,12 +448,77 @@
         </div>
     </section>
     
+    <!-- Support -->
+    <section class="support" id="support">
+        <div class="container">
+            <h2>Support & Aide</h2>
+            <p>Vous avez une question, un problème ou une suggestion ? Nous sommes là pour vous aider.</p>
+            
+            <div class="support-grid">
+                <div class="support-card">
+                    <div class="feature-icon">📧</div>
+                    <h3>Contactez-nous</h3>
+                    <p>Pour toute question, signalement de bug ou demande de fonctionnalité, envoyez-nous un email :</p>
+                    <a href="mailto:bob.oulhen@gmail.com">bob.oulhen@gmail.com</a>
+                    <p style="margin-top: 12px;">Nous répondons généralement sous 48 heures.</p>
+                </div>
+                <div class="support-card">
+                    <div class="feature-icon">🐛</div>
+                    <h3>Signaler un bug</h3>
+                    <p>Vous avez trouvé un problème ? Ouvrez une issue sur notre dépôt GitHub :</p>
+                    <a href="https://github.com/boboul-cloud/Temps-De-Jeu/issues" target="_blank">Ouvrir une issue GitHub</a>
+                </div>
+                <div class="support-card">
+                    <div class="feature-icon">💡</div>
+                    <h3>Suggestions</h3>
+                    <p>Vos idées comptent ! Proposez de nouvelles fonctionnalités par email ou via GitHub.</p>
+                    <a href="mailto:bob.oulhen@gmail.com?subject=Suggestion%20Temps%20De%20Jeu">Envoyer une suggestion</a>
+                </div>
+            </div>
+            
+            <div class="faq">
+                <h3>Questions fréquentes</h3>
+                
+                <details class="faq-item">
+                    <summary>Comment créer mon premier match ?</summary>
+                    <p>Commencez par ajouter vos joueurs dans l'onglet "Effectif", puis créez un nouveau match depuis l'écran principal. Sélectionnez les joueurs titulaires et remplaçants, puis lancez le chronomètre.</p>
+                </details>
+                
+                <details class="faq-item">
+                    <summary>Mes données sont-elles sauvegardées ?</summary>
+                    <p>Oui, toutes vos données sont sauvegardées localement sur votre appareil. Elles sont conservées tant que l'application est installée. Vous pouvez aussi exporter vos données via les fonctions d'export.</p>
+                </details>
+                
+                <details class="faq-item">
+                    <summary>Comment fonctionne l'achat Premium ?</summary>
+                    <p>L'achat Premium est un achat unique (non renouvelable) qui débloque un nombre illimité de matchs. Il est géré par Apple via l'App Store et peut être restauré sur tous vos appareils connectés au même identifiant Apple.</p>
+                </details>
+                
+                <details class="faq-item">
+                    <summary>Comment restaurer mon achat Premium ?</summary>
+                    <p>Allez dans les réglages de l'application et appuyez sur "Restaurer les achats". Si vous avez déjà acheté Premium avec le même identifiant Apple, votre accès sera immédiatement rétabli.</p>
+                </details>
+                
+                <details class="faq-item">
+                    <summary>L'application fonctionne-t-elle hors ligne ?</summary>
+                    <p>Oui, Temps De Jeu fonctionne entièrement hors ligne. Aucune connexion internet n'est nécessaire pour gérer vos matchs. La connexion est uniquement requise pour les achats intégrés.</p>
+                </details>
+                
+                <details class="faq-item">
+                    <summary>Comment exporter les statistiques d'un match ?</summary>
+                    <p>À la fin d'un match, appuyez sur le bouton de partage pour générer un rapport PDF contenant toutes les statistiques détaillées du match. Vous pouvez le partager via AirDrop, email, iMessage, etc.</p>
+                </details>
+            </div>
+        </div>
+    </section>
+    
     <!-- Footer -->
     <footer>
         <p>Créé avec ❤️ par <a href="https://github.com/boboul-cloud">Robert Oulhen</a></p>
         <p style="margin-top: 12px;">
             <a href="privacy.html">Politique de confidentialité</a> · 
-            <a href="terms.html">Conditions d'utilisation</a>
+            <a href="terms.html">Conditions d'utilisation</a> ·
+            <a href="#support">Support</a>
         </p>
         <p style="margin-top: 8px; font-size: 0.9rem;">© 2026 Temps De Jeu. Open source sous licence MIT.</p>
     </footer>

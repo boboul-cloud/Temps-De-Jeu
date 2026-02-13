@@ -6,6 +6,7 @@
 //
 
 import SwiftUI
+import PhotosUI
 
 /// Vue de gestion de l'effectif permanent de l'équipe
 struct TeamManagementView: View {
@@ -206,7 +207,7 @@ struct TeamManagementView: View {
     }
 
     private func cardsForPlayer(_ player: Player) -> [CardEvent] {
-        allCards.filter { $0.playerId == player.id }
+        allCards.filter { $0.playerId == player.id && !$0.isServed }
     }
 
     private func deletePlayer(_ player: Player) {
@@ -226,6 +227,46 @@ struct TeamManagementView: View {
     }
 }
 
+// MARK: - Avatar joueur réutilisable
+
+struct PlayerAvatar: View {
+    let player: Player
+    var size: CGFloat = 36
+    var showPositionColor: Bool = true
+    
+    var body: some View {
+        Group {
+            if let photoData = player.photoData,
+               let uiImage = UIImage(data: photoData) {
+                Image(uiImage: uiImage)
+                    .resizable()
+                    .scaledToFill()
+            } else {
+                Text(String(player.firstName.prefix(1)).uppercased())
+                    .font(.system(size: size * 0.45, weight: .semibold, design: .rounded))
+                    .foregroundColor(.white)
+                    .frame(maxWidth: .infinity, maxHeight: .infinity)
+                    .background(showPositionColor ? positionColor : Color.gray)
+            }
+        }
+        .frame(width: size, height: size)
+        .clipShape(Circle())
+        .overlay(
+            Circle()
+                .stroke(showPositionColor ? positionColor.opacity(0.3) : Color.clear, lineWidth: 2)
+        )
+    }
+    
+    private var positionColor: Color {
+        switch player.position {
+        case .gardien: return .orange
+        case .defenseur: return .blue
+        case .milieu: return .green
+        case .attaquant: return .red
+        }
+    }
+}
+
 // MARK: - Ligne joueur
 
 struct PlayerRow: View {
@@ -240,13 +281,8 @@ struct PlayerRow: View {
 
     var body: some View {
         HStack(spacing: 12) {
-            // Initiale dans un cercle coloré
-            Text(String(player.firstName.prefix(1)).uppercased())
-                .font(.system(.headline, design: .rounded))
-                .foregroundColor(.white)
-                .frame(width: 36, height: 36)
-                .background(positionColor)
-                .clipShape(Circle())
+            // Avatar du joueur (photo ou initiale)
+            PlayerAvatar(player: player, size: 40)
 
             VStack(alignment: .leading, spacing: 2) {
                 Text(player.fullName.isEmpty ? "Joueur" : player.fullName)
@@ -262,16 +298,16 @@ struct PlayerRow: View {
             if totalCards > 0 {
                 HStack(spacing: 4) {
                     if yellowCount > 0 {
-                        CardBadge(count: yellowCount, color: .yellow)
+                        CardBadge(count: yellowCount, color: .cardYellow)
                     }
                     if secondYellowCount > 0 {
-                        CardBadge(count: secondYellowCount, color: .orange)
+                        CardBadge(count: secondYellowCount, color: .cardOrange)
                     }
                     if redCount > 0 {
-                        CardBadge(count: redCount, color: .red)
+                        CardBadge(count: redCount, color: .cardRed)
                     }
                     if whiteCount > 0 {
-                        CardBadge(count: whiteCount, color: .gray)
+                        CardBadge(count: whiteCount, color: .cardWhite)
                     }
                 }
             }
@@ -348,12 +384,69 @@ struct PlayerEditView: View {
     @State private var lastName: String = ""
     @State private var position: PlayerPosition = .milieu
     @State private var availability: PlayerAvailability = .disponible
+    @State private var photoData: Data?
+    @State private var selectedPhotoItem: PhotosPickerItem?
 
     var isEditing: Bool { player != nil }
 
     var body: some View {
         NavigationStack {
             Form {
+                // Section Photo
+                Section {
+                    HStack {
+                        Spacer()
+                        VStack(spacing: 12) {
+                            // Aperçu de la photo
+                            Group {
+                                if let photoData = photoData,
+                                   let uiImage = UIImage(data: photoData) {
+                                    Image(uiImage: uiImage)
+                                        .resizable()
+                                        .scaledToFill()
+                                } else {
+                                    Image(systemName: "person.circle.fill")
+                                        .resizable()
+                                        .scaledToFit()
+                                        .foregroundStyle(.secondary)
+                                }
+                            }
+                            .frame(width: 100, height: 100)
+                            .clipShape(Circle())
+                            .overlay(
+                                Circle()
+                                    .stroke(Color.secondary.opacity(0.3), lineWidth: 2)
+                            )
+                            
+                            // Boutons Photo
+                            HStack(spacing: 16) {
+                                PhotosPicker(selection: $selectedPhotoItem, matching: .images) {
+                                    Label(photoData == nil ? "Ajouter" : "Modifier", systemImage: "photo")
+                                        .font(.subheadline)
+                                }
+                                .buttonStyle(.bordered)
+                                
+                                if photoData != nil {
+                                    Button(role: .destructive) {
+                                        withAnimation {
+                                            photoData = nil
+                                            selectedPhotoItem = nil
+                                        }
+                                    } label: {
+                                        Label("Supprimer", systemImage: "trash")
+                                            .font(.subheadline)
+                                    }
+                                    .buttonStyle(.bordered)
+                                }
+                            }
+                        }
+                        Spacer()
+                    }
+                    .listRowBackground(Color.clear)
+                } header: {
+                    Text("Photo")
+                }
+                
                 Section {
                     TextField("Prénom", text: $firstName)
                     TextField("Nom", text: $lastName)
@@ -395,7 +488,8 @@ struct PlayerEditView: View {
                             firstName: firstName,
                             lastName: lastName,
                             position: position,
-                            availability: availability
+                            availability: availability,
+                            photoData: photoData
                         )
                         onSave(p)
                         dismiss()
@@ -410,6 +504,31 @@ struct PlayerEditView: View {
                     lastName = p.lastName
                     position = p.position
                     availability = p.availability
+                    photoData = p.photoData
+                }
+            }
+            .onChange(of: selectedPhotoItem) { _, newItem in
+                Task {
+                    if let newItem = newItem,
+                       let data = try? await newItem.loadTransferable(type: Data.self),
+                       let uiImage = UIImage(data: data) {
+                        // Compresser l'image en JPEG pour économiser de l'espace
+                        let maxSize: CGFloat = 400
+                        let scale = min(maxSize / uiImage.size.width, maxSize / uiImage.size.height, 1.0)
+                        let newSize = CGSize(width: uiImage.size.width * scale, height: uiImage.size.height * scale)
+                        
+                        UIGraphicsBeginImageContextWithOptions(newSize, false, 1.0)
+                        uiImage.draw(in: CGRect(origin: .zero, size: newSize))
+                        let resizedImage = UIGraphicsGetImageFromCurrentImageContext()
+                        UIGraphicsEndImageContext()
+                        
+                        if let resizedImage = resizedImage,
+                           let jpegData = resizedImage.jpegData(compressionQuality: 0.7) {
+                            await MainActor.run {
+                                photoData = jpegData
+                            }
+                        }
+                    }
                 }
             }
         }
@@ -424,10 +543,20 @@ struct UnavailablePlayerRow: View {
 
     var body: some View {
         HStack(spacing: 12) {
-            // Icône de statut
-            Image(systemName: player.availability.icon)
-                .font(.title2)
-                .foregroundStyle(availabilityColor)
+            // Avatar avec indicateur d'indisponibilité
+            ZStack(alignment: .bottomTrailing) {
+                PlayerAvatar(player: player, size: 40, showPositionColor: false)
+                    .opacity(0.6)
+                
+                // Badge de statut
+                Image(systemName: player.availability.icon)
+                    .font(.system(size: 14, weight: .bold))
+                    .foregroundStyle(.white)
+                    .padding(4)
+                    .background(availabilityColor)
+                    .clipShape(Circle())
+                    .offset(x: 4, y: 4)
+            }
 
             VStack(alignment: .leading, spacing: 2) {
                 Text(player.fullName.isEmpty ? "Joueur" : player.fullName)

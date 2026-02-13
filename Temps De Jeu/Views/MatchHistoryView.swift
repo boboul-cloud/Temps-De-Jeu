@@ -40,6 +40,8 @@ struct MatchHistoryView: View {
             }
             .sheet(item: $selectedMatch) { match in
                 MatchReportView(match: match)
+                    .presentationDetents([.large])
+                    .presentationDragIndicator(.visible)
             }
             .alert("Supprimer ce match ?", isPresented: $showDeleteConfirmation) {
                 Button("Supprimer", role: .destructive) {
@@ -171,13 +173,77 @@ struct MatchReportView: View {
     @Environment(\.dismiss) private var dismiss
     @State private var showShareSheet = false
     @State private var shareItems: [Any] = []
-    @State private var showPDFPreview = false
-    @State private var pdfData: Data?
+    @State private var pdfPreviewItem: MatchReportPDFItem?
+    
+    /// Structure pour l'item de preview PDF
+    struct MatchReportPDFItem: Identifiable {
+        let id = UUID()
+        let data: Data
+        let title: String
+    }
 
     var body: some View {
-        NavigationStack {
+        VStack(spacing: 0) {
+            // Barre de titre personnalisée
+            HStack {
+                Button {
+                    let data = ExportService.shared.generateMatchPDF(match: match)
+                    let home = match.homeTeam.isEmpty ? "Match" : match.homeTeam
+                    let away = match.awayTeam.isEmpty ? "" : " vs \(match.awayTeam)"
+                    pdfPreviewItem = MatchReportPDFItem(data: data, title: "Rapport \(home)\(away)")
+                } label: {
+                    Image(systemName: "doc.richtext")
+                        .font(.body)
+                }
+                
+                Spacer()
+                
+                Button {
+                    let data = ExportService.shared.generateMatchPDF(match: match)
+                    let home = match.homeTeam.isEmpty ? "match" : match.homeTeam
+                    let away = match.awayTeam.isEmpty ? "" : "_vs_\(match.awayTeam)"
+                    let cleanName = "\(home)\(away)".replacingOccurrences(of: " ", with: "_")
+                    let f = DateFormatter()
+                    f.dateFormat = "yyyy-MM-dd"
+                    let fileName = "rapport_\(cleanName)_\(f.string(from: Date())).pdf"
+                    let tempURL = FileManager.default.temporaryDirectory.appendingPathComponent(fileName)
+                    try? data.write(to: tempURL)
+                    shareItems = [tempURL]
+                    showShareSheet = true
+                } label: {
+                    Image(systemName: "square.and.arrow.up")
+                        .font(.body)
+                }
+                
+                Spacer()
+                
+                Button("Fermer") { dismiss() }
+                    .fontWeight(.medium)
+            }
+            .padding(.horizontal)
+            .padding(.vertical, 12)
+            .background(Color(.systemBackground))
+            
+            Divider()
+            
+            // Contenu scrollable - rendu direct sans délai
             ScrollView {
-                VStack(spacing: 20) {
+                reportContent
+            }
+        }
+        .interactiveDismissDisabled(showShareSheet || pdfPreviewItem != nil)
+        .sheet(isPresented: $showShareSheet) {
+            ActivityView(activityItems: shareItems)
+                .presentationDetents([.medium, .large])
+        }
+        .sheet(item: $pdfPreviewItem) { item in
+            PDFPreviewView(pdfData: item.data, title: item.title)
+        }
+    }
+    
+    @ViewBuilder
+    private var reportContent: some View {
+        VStack(spacing: 20) {
                     // Header
                     VStack(spacing: 8) {
                         HStack {
@@ -479,51 +545,6 @@ struct MatchReportView: View {
                     }
                 }
                 .padding()
-            }
-            .navigationTitle("Rapport")
-            .navigationBarTitleDisplayMode(.inline)
-            .toolbar {
-                ToolbarItem(placement: .topBarLeading) {
-                    Button {
-                        let data = ExportService.shared.generateMatchPDF(match: match)
-                        pdfData = data
-                        showPDFPreview = true
-                    } label: {
-                        Image(systemName: "doc.richtext")
-                    }
-                }
-                ToolbarItem(placement: .principal) {
-                    Button {
-                        let data = ExportService.shared.generateMatchPDF(match: match)
-                        let home = match.homeTeam.isEmpty ? "match" : match.homeTeam
-                        let away = match.awayTeam.isEmpty ? "" : "_vs_\(match.awayTeam)"
-                        let cleanName = "\(home)\(away)".replacingOccurrences(of: " ", with: "_")
-                        let f = DateFormatter()
-                        f.dateFormat = "yyyy-MM-dd"
-                        let fileName = "rapport_\(cleanName)_\(f.string(from: Date())).pdf"
-                        let tempURL = FileManager.default.temporaryDirectory.appendingPathComponent(fileName)
-                        try? data.write(to: tempURL)
-                        shareItems = [tempURL]
-                        showShareSheet = true
-                    } label: {
-                        Image(systemName: "square.and.arrow.up")
-                    }
-                }
-                ToolbarItem(placement: .topBarTrailing) {
-                    Button("Fermer") { dismiss() }
-                }
-            }
-            .sheet(isPresented: $showShareSheet) {
-                ActivityView(activityItems: shareItems)
-            }
-            .sheet(isPresented: $showPDFPreview) {
-                if let data = pdfData {
-                    let home = match.homeTeam.isEmpty ? "Match" : match.homeTeam
-                    let away = match.awayTeam.isEmpty ? "" : " vs \(match.awayTeam)"
-                    PDFPreviewView(pdfData: data, title: "Rapport \(home)\(away)")
-                }
-            }
-        }
     }
 
     private func positionColor(_ position: PlayerPosition) -> Color {
