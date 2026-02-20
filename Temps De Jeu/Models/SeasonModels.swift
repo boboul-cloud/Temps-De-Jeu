@@ -11,16 +11,29 @@ import Foundation
 struct Season: Identifiable, Codable {
     let id: UUID
     var clubName: String
+    var category: String        // Catégorie d'âge (ex: "U13", "U15", "Seniors")
     var startDate: Date
     var endDate: Date?          // nil = saison en cours
     var isClosed: Bool
 
-    init(id: UUID = UUID(), clubName: String, startDate: Date = Date(), endDate: Date? = nil, isClosed: Bool = false) {
+    init(id: UUID = UUID(), clubName: String, category: String = "", startDate: Date = Date(), endDate: Date? = nil, isClosed: Bool = false) {
         self.id = id
         self.clubName = clubName
+        self.category = category
         self.startDate = startDate
         self.endDate = endDate
         self.isClosed = isClosed
+    }
+
+    // Backward compatibility: category optionnel (ancien format)
+    init(from decoder: Decoder) throws {
+        let container = try decoder.container(keyedBy: CodingKeys.self)
+        id = try container.decode(UUID.self, forKey: .id)
+        clubName = try container.decode(String.self, forKey: .clubName)
+        category = try container.decodeIfPresent(String.self, forKey: .category) ?? ""
+        startDate = try container.decode(Date.self, forKey: .startDate)
+        endDate = try container.decodeIfPresent(Date.self, forKey: .endDate)
+        isClosed = try container.decode(Bool.self, forKey: .isClosed)
     }
 
     /// Label de la saison (ex: "2025-2026")

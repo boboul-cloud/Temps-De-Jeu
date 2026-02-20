@@ -9,6 +9,7 @@ import UIKit
 import PDFKit
 
 /// Service d'export PDF et JSON
+@MainActor
 class ExportService {
     static let shared = ExportService()
     private init() {}
@@ -33,11 +34,34 @@ class ExportService {
 
     // MARK: - Export Joueurs JSON
 
+    /// Structure d'export des joueurs avec métadonnées pour routage automatique
+    struct PlayersExportWrapper: Codable {
+        let teamCode: String?
+        let teamName: String?
+        let players: [Player]
+    }
+
+    /// Résultat de l'import des joueurs avec métadonnées
+    struct PlayersImportResult {
+        let players: [Player]
+        let teamCode: String?
+        let teamName: String?
+    }
+
     func exportPlayersJSON(_ players: [Player]) -> Data? {
         let encoder = JSONEncoder()
         encoder.outputFormatting = [.prettyPrinted, .sortedKeys]
         encoder.dateEncodingStrategy = .iso8601
-        return try? encoder.encode(players)
+        
+        // Récupérer les métadonnées du profil actif
+        let activeProfile = ProfileManager.shared.activeProfile
+        let wrapper = PlayersExportWrapper(
+            teamCode: activeProfile?.teamCode,
+            teamName: activeProfile?.name,
+            players: players
+        )
+        
+        return try? encoder.encode(wrapper)
     }
 
     // MARK: - Import Joueurs JSON
@@ -46,6 +70,104 @@ class ExportService {
         let decoder = JSONDecoder()
         decoder.dateDecodingStrategy = .iso8601
         return try? decoder.decode([Player].self, from: data)
+    }
+
+    /// Importe les joueurs avec leurs métadonnées (teamCode, teamName)
+    /// Gère la rétrocompatibilité avec l'ancien format (simple tableau de joueurs)
+    func importPlayersWithMetadata(from data: Data) -> PlayersImportResult? {
+        let decoder = JSONDecoder()
+        decoder.dateDecodingStrategy = .iso8601
+        
+        // Essayer d'abord le nouveau format avec wrapper
+        do {
+            let wrapper = try decoder.decode(PlayersExportWrapper.self, from: data)
+            print("[Import] Format PlayersExportWrapper décodé: \(wrapper.players.count) joueurs, team=\(wrapper.teamName ?? "nil")")
+            return PlayersImportResult(
+                players: wrapper.players,
+                teamCode: wrapper.teamCode,
+                teamName: wrapper.teamName
+            )
+        } catch {
+            print("[Import] PlayersExportWrapper échoué: \(error)")
+        }
+        
+        // Fallback : ancien format (simple tableau de joueurs)
+        do {
+            let players = try decoder.decode([Player].self, from: data)
+            print("[Import] Format [Player] décodé: \(players.count) joueurs")
+            return PlayersImportResult(
+                players: players,
+                teamCode: nil,
+                teamName: nil
+            )
+        } catch {
+            print("[Import] [Player] échoué: \(error)")
+        }
+        
+        // Debug : afficher un aperçu du contenu
+        if let preview = String(data: data.prefix(500), encoding: .utf8) {
+            print("[Import] Aperçu du fichier: \(preview)")
+        }
+        
+        return nil
+    }
+
+    // MARK: - Export / Import Matchs JSON
+
+    /// Structure d'export des matchs avec métadonnées pour routage automatique
+    struct MatchesExportWrapper: Codable {
+        let teamCode: String?
+        let teamName: String?
+        let matches: [Match]
+    }
+
+    /// Résultat de l'import des matchs avec métadonnées
+    struct MatchesImportResult {
+        let matches: [Match]
+        let teamCode: String?
+        let teamName: String?
+    }
+
+    func exportMatchesJSON(_ matches: [Match]) -> Data? {
+        let encoder = JSONEncoder()
+        encoder.outputFormatting = [.prettyPrinted, .sortedKeys]
+        encoder.dateEncodingStrategy = .iso8601
+
+        let activeProfile = ProfileManager.shared.activeProfile
+        let wrapper = MatchesExportWrapper(
+            teamCode: activeProfile?.teamCode,
+            teamName: activeProfile?.name,
+            matches: matches
+        )
+
+        return try? encoder.encode(wrapper)
+    }
+
+    /// Importe les matchs avec leurs métadonnées (teamCode, teamName)
+    /// Gère la rétrocompatibilité avec l'ancien format (simple tableau de matchs)
+    func importMatchesWithMetadata(from data: Data) -> MatchesImportResult? {
+        let decoder = JSONDecoder()
+        decoder.dateDecodingStrategy = .iso8601
+
+        // Essayer d'abord le nouveau format avec wrapper
+        if let wrapper = try? decoder.decode(MatchesExportWrapper.self, from: data) {
+            return MatchesImportResult(
+                matches: wrapper.matches,
+                teamCode: wrapper.teamCode,
+                teamName: wrapper.teamName
+            )
+        }
+
+        // Fallback : ancien format (simple tableau de matchs)
+        if let matches = try? decoder.decode([Match].self, from: data) {
+            return MatchesImportResult(
+                matches: matches,
+                teamCode: nil,
+                teamName: nil
+            )
+        }
+
+        return nil
     }
 
     // MARK: - Export / Import Composition (Roster) — Système cascade A → B → C → D
@@ -68,7 +190,8 @@ class ExportService {
         matchDate: Date,
         previousUnavailableIds: [UUID] = [],
         previousChain: [String] = [],
-        excludePhotos: Bool = false
+        excludePhotos: Bool = false,
+        targetTeamCode: String? = nil
     ) -> Data? {
         // Fonction pour retirer les photos si nécessaire
         let stripPhoto: (Player) -> Player = { player in
@@ -102,7 +225,8 @@ class ExportService {
             selectedPlayers: selectedPlayers,
             availablePlayers: availablePlayers,
             unavailablePlayerIds: allUnavailable,
-            selectionChain: chain
+            selectionChain: chain,
+            targetTeamCode: targetTeamCode
         )
 
         let encoder = JSONEncoder()
@@ -148,7 +272,8 @@ class ExportService {
         competition: String,
         matchDate: Date,
         previousUnavailableIds: [UUID] = [],
-        previousChain: [String] = []
+        previousChain: [String] = [],
+        targetTeamCode: String? = nil
     ) -> URL? {
         guard let data = exportRoster(
             allPlayers: allPlayers,
@@ -157,7 +282,8 @@ class ExportService {
             competition: competition,
             matchDate: matchDate,
             previousUnavailableIds: previousUnavailableIds,
-            previousChain: previousChain
+            previousChain: previousChain,
+            targetTeamCode: targetTeamCode
         ) else { return nil }
 
         let cleanTeam = teamName
@@ -1081,13 +1207,22 @@ class ExportService {
         return try? encoder.encode(export)
     }
 
+    // MARK: - Import Présences Entraînements JSON
+
+    func importTrainingAttendanceJSON(from data: Data) -> TrainingAttendanceExport? {
+        let decoder = JSONDecoder()
+        decoder.dateDecodingStrategy = .iso8601
+        return try? decoder.decode(TrainingAttendanceExport.self, from: data)
+    }
+
     // MARK: - Export Présences Entraînements PDF
 
     func generateTrainingAttendancePDF(
         sessions: [TrainingSession],
         playerStats: [PlayerAttendanceStats],
         startDate: Date,
-        endDate: Date
+        endDate: Date,
+        guestCategoryNames: [UUID: String] = [:]
     ) -> Data {
         let pageWidth: CGFloat = 595.0   // A4
         let pageHeight: CGFloat = 842.0
@@ -1186,7 +1321,13 @@ class ExportService {
             for stat in playerStats.sorted(by: { $0.attendanceRate > $1.attendanceRate }) {
                 ensureSpace(18)
                 x = margin
-                stat.fullName.draw(at: CGPoint(x: x, y: currentY), withAttributes: bodyAttrs)
+                let playerLabel: String
+                if let catName = guestCategoryNames[stat.playerId] {
+                    playerLabel = "\(stat.fullName) (\(catName))"
+                } else {
+                    playerLabel = stat.fullName
+                }
+                playerLabel.draw(at: CGPoint(x: x, y: currentY), withAttributes: bodyAttrs)
                 x += colWidths[0]
                 "\(stat.presentSessions)/\(stat.totalSessions)".draw(at: CGPoint(x: x, y: currentY), withAttributes: bodyAttrs)
                 x += colWidths[1]
@@ -1235,7 +1376,12 @@ class ExportService {
                 }
                 
                 // Liste des présents
-                let presentNames = session.attendances.filter { $0.isPresent }.map { $0.fullName }.joined(separator: ", ")
+                let presentNames = session.attendances.filter { $0.isPresent }.map { att in
+                    if let catName = guestCategoryNames[att.id] {
+                        return "\(att.fullName) (\(catName))"
+                    }
+                    return att.fullName
+                }.joined(separator: ", ")
                 if !presentNames.isEmpty {
                     let maxWidth = contentWidth - 20
                     let presentText = "Présents: \(presentNames)"
@@ -1266,7 +1412,7 @@ class ExportService {
     // MARK: - Export Session Individuelle PDF
 
     /// Génère un PDF de la feuille de présence d'un entraînement
-    func generateTrainingSessionPDF(session: TrainingSession) -> Data {
+    func generateTrainingSessionPDF(session: TrainingSession, guestCategoryNames: [UUID: String] = [:]) -> Data {
         let pageWidth: CGFloat = 595.0   // A4
         let pageHeight: CGFloat = 842.0
         let margin: CGFloat = 40.0
@@ -1345,8 +1491,13 @@ class ExportService {
             
             for (index, attendance) in presentPlayers.enumerated() {
                 ensureSpace(20)
-                let line = "\(index + 1). \(attendance.fullName)"
-                line.draw(at: CGPoint(x: margin + 10, y: currentY), withAttributes: bodyAttrs)
+                let label: String
+                if let catName = guestCategoryNames[attendance.id] {
+                    label = "\(index + 1). \(attendance.fullName) (\(catName))"
+                } else {
+                    label = "\(index + 1). \(attendance.fullName)"
+                }
+                label.draw(at: CGPoint(x: margin + 10, y: currentY), withAttributes: bodyAttrs)
                 currentY += 18
             }
 
@@ -1371,8 +1522,13 @@ class ExportService {
 
             for (index, attendance) in absentPlayers.enumerated() {
                 ensureSpace(20)
-                let line = "\(index + 1). \(attendance.fullName)"
-                line.draw(at: CGPoint(x: margin + 10, y: currentY), withAttributes: bodyAttrs)
+                let label: String
+                if let catName = guestCategoryNames[attendance.id] {
+                    label = "\(index + 1). \(attendance.fullName) (\(catName))"
+                } else {
+                    label = "\(index + 1). \(attendance.fullName)"
+                }
+                label.draw(at: CGPoint(x: margin + 10, y: currentY), withAttributes: bodyAttrs)
                 currentY += 18
             }
 

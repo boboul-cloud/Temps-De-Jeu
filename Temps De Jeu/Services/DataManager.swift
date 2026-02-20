@@ -9,10 +9,14 @@ import Foundation
 import Combine
 
 /// Gestionnaire de persistance des matchs
+@MainActor
 class DataManager {
     static let shared = DataManager()
 
-    private let matchesKey = "savedMatches"
+    /// Clé de stockage préfixée par le profil actif
+    private var matchesKey: String {
+        "\(ProfileManager.currentStoragePrefix)savedMatches"
+    }
 
     private init() {}
 
@@ -38,6 +42,41 @@ class DataManager {
         } catch {
             print("Erreur chargement matchs: \(error)")
             return []
+        }
+    }
+    
+    // MARK: - Chargement/Sauvegarde pour un profil spécifique
+    
+    /// Charge les matchs d'un profil donné (sans switcher de profil)
+    func loadMatches(forProfileId profileId: UUID) -> [Match] {
+        let prefix = "profile_\(profileId.uuidString)_"
+        let key = "\(prefix)savedMatches"
+        guard let data = UserDefaults.standard.data(forKey: key) else {
+            return []
+        }
+        do {
+            return try JSONDecoder().decode([Match].self, from: data)
+        } catch {
+            print("Erreur chargement matchs profil \(profileId): \(error)")
+            return []
+        }
+    }
+    
+    /// Sauvegarde un match dans un profil spécifique (sans switcher de profil)
+    func saveMatch(_ match: Match, forProfileId profileId: UUID) {
+        var matches = loadMatches(forProfileId: profileId)
+        if let index = matches.firstIndex(where: { $0.id == match.id }) {
+            matches[index] = match
+        } else {
+            matches.insert(match, at: 0)
+        }
+        let prefix = "profile_\(profileId.uuidString)_"
+        let key = "\(prefix)savedMatches"
+        do {
+            let data = try JSONEncoder().encode(matches)
+            UserDefaults.standard.set(data, forKey: key)
+        } catch {
+            print("Erreur sauvegarde match profil \(profileId): \(error)")
         }
     }
 

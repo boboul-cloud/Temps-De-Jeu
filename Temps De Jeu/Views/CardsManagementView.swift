@@ -20,6 +20,7 @@ struct CardsManagementView: View {
     @State private var allCards: [EnrichedCard] = []
     @State private var searchText = ""
     @State private var filterType: CardFilterType = .all
+    @ObservedObject private var profileManager = ProfileManager.shared
 
     enum CardFilterType: String, CaseIterable {
         case all = "Tous"
@@ -179,6 +180,7 @@ struct CardsManagementView: View {
             .navigationTitle("Cartons")
             .searchable(text: $searchText, prompt: "Rechercher un joueur ou match")
             .onAppear { loadCards() }
+            .onChange(of: profileManager.activeProfileId) { loadCards() }
         }
     }
 

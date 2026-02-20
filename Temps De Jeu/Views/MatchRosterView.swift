@@ -17,6 +17,8 @@ struct MatchRosterView: View {
     let existingRoster: [MatchPlayer]
     /// IDs des joueurs indisponibles (déjà sélectionnés par une équipe supérieure)
     let unavailablePlayerIds: Set<UUID>
+    /// IDs des joueurs sélectionnés dans une autre catégorie → nom de la catégorie
+    let selectedInOtherCategoryIds: [UUID: String]
     /// Callback avec le roster validé
     let onConfirm: ([MatchPlayer]) -> Void
 
@@ -24,16 +26,17 @@ struct MatchRosterView: View {
     @State private var selectedPlayers: [UUID: MatchPlayer] = [:]
     @State private var searchText = ""
 
-    init(allPlayers: [Player], existingRoster: [MatchPlayer] = [], unavailablePlayerIds: Set<UUID> = [], onConfirm: @escaping ([MatchPlayer]) -> Void) {
+    init(allPlayers: [Player], existingRoster: [MatchPlayer] = [], unavailablePlayerIds: Set<UUID> = [], selectedInOtherCategoryIds: [UUID: String] = [:], onConfirm: @escaping ([MatchPlayer]) -> Void) {
         self.allPlayers = allPlayers
         self.existingRoster = existingRoster
         self.unavailablePlayerIds = unavailablePlayerIds
+        self.selectedInOtherCategoryIds = selectedInOtherCategoryIds
         self.onConfirm = onConfirm
     }
 
     /// Joueurs disponibles (excluant les indisponibles cascade ET les blessés/absents/suspendus)
     private var availablePlayers: [Player] {
-        allPlayers.filter { !unavailablePlayerIds.contains($0.id) && $0.availability == .disponible }
+        allPlayers.filter { !unavailablePlayerIds.contains($0.id) && !selectedInOtherCategoryIds.keys.contains($0.id) && $0.availability == .disponible }
     }
 
     private var filteredPlayers: [Player] {
@@ -50,9 +53,15 @@ struct MatchRosterView: View {
             .sorted { $0.lastName.localizedCompare($1.lastName) == .orderedAscending }
     }
 
+    /// Joueurs sélectionnés dans une autre catégorie
+    private var otherCategoryPlayers: [Player] {
+        allPlayers.filter { selectedInOtherCategoryIds.keys.contains($0.id) && !unavailablePlayerIds.contains($0.id) }
+            .sorted { $0.lastName.localizedCompare($1.lastName) == .orderedAscending }
+    }
+
     /// Joueurs blessés / absents / suspendus
     private var absentPlayers: [Player] {
-        allPlayers.filter { $0.availability != .disponible && !unavailablePlayerIds.contains($0.id) }
+        allPlayers.filter { $0.availability != .disponible && !unavailablePlayerIds.contains($0.id) && !selectedInOtherCategoryIds.keys.contains($0.id) }
             .sorted { $0.lastName.localizedCompare($1.lastName) == .orderedAscending }
     }
 
@@ -138,19 +147,19 @@ struct MatchRosterView: View {
                                 )
                             }
                         } header: {
-                            if !unavailablePlayerIds.isEmpty {
+                            if !unavailablePlayerIds.isEmpty || !selectedInOtherCategoryIds.isEmpty {
                                 Text("Joueurs disponibles (\(availablePlayers.count))")
                             }
                         }
 
-                        // Liste des joueurs indisponibles (pris par équipe supérieure)
-                        if !unavailablePlayers.isEmpty {
+                        // Liste des joueurs sélectionnés dans une autre catégorie
+                        if !otherCategoryPlayers.isEmpty {
                             Section {
-                                ForEach(unavailablePlayers) { player in
+                                ForEach(otherCategoryPlayers) { player in
                                     HStack(spacing: 12) {
-                                        Image(systemName: "xmark.circle.fill")
+                                        Image(systemName: "person.crop.circle.badge.exclamationmark.fill")
                                             .font(.title2)
-                                            .foregroundStyle(.red.opacity(0.5))
+                                            .foregroundStyle(.indigo.opacity(0.6))
 
                                         PlayerAvatar(player: player, size: 36, showPositionColor: false)
                                             .opacity(0.6)
@@ -167,18 +176,87 @@ struct MatchRosterView: View {
 
                                         Spacer()
 
-                                        Text("Indisponible")
+                                        Text(selectedInOtherCategoryIds[player.id] ?? "Autre catégorie")
                                             .font(.caption2.bold())
                                             .padding(.horizontal, 8)
                                             .padding(.vertical, 4)
-                                            .background(Color.red.opacity(0.1))
-                                            .foregroundStyle(.red)
+                                            .background(Color.indigo.opacity(0.12))
+                                            .foregroundStyle(.indigo)
                                             .cornerRadius(8)
                                     }
                                     .padding(.vertical, 2)
                                 }
                             } header: {
-                                Text("Indisponibles — équipe supérieure (\(unavailablePlayers.count))")
+                                HStack {
+                                    Image(systemName: "person.2.slash.fill")
+                                        .foregroundStyle(.indigo)
+                                    Text("Sélectionnés dans une autre catégorie (\(otherCategoryPlayers.count))")
+                                }
+                            }
+                        }
+
+                        // Liste des joueurs indisponibles (pris par équipe supérieure)
+                        if !unavailablePlayers.isEmpty {
+                            Section {
+                                ForEach(unavailablePlayers) { player in
+                                    HStack(spacing: 12) {
+                                        if player.availability != .disponible {
+                                            ZStack(alignment: .bottomTrailing) {
+                                                Image(systemName: "xmark.circle.fill")
+                                                    .font(.title2)
+                                                    .foregroundStyle(colorForAvailability(player.availability).opacity(0.5))
+
+                                                Image(systemName: player.availability.icon)
+                                                    .font(.system(size: 10, weight: .bold))
+                                                    .foregroundStyle(.white)
+                                                    .padding(2)
+                                                    .background(colorForAvailability(player.availability))
+                                                    .clipShape(Circle())
+                                                    .offset(x: 4, y: 4)
+                                            }
+                                        } else {
+                                            Image(systemName: "xmark.circle.fill")
+                                                .font(.title2)
+                                                .foregroundStyle(.red.opacity(0.5))
+                                        }
+
+                                        PlayerAvatar(player: player, size: 36, showPositionColor: false)
+                                            .opacity(0.6)
+
+                                        VStack(alignment: .leading, spacing: 2) {
+                                            Text(player.fullName.isEmpty ? "Joueur" : player.fullName)
+                                                .font(.subheadline)
+                                                .foregroundStyle(.secondary)
+                                                .strikethrough()
+                                            Text(player.position.rawValue)
+                                                .font(.caption)
+                                                .foregroundStyle(.tertiary)
+                                        }
+
+                                        Spacer()
+
+                                        if player.availability != .disponible {
+                                            Text(player.availability.rawValue)
+                                                .font(.caption2.bold())
+                                                .padding(.horizontal, 8)
+                                                .padding(.vertical, 4)
+                                                .background(colorForAvailability(player.availability).opacity(0.12))
+                                                .foregroundStyle(colorForAvailability(player.availability))
+                                                .cornerRadius(8)
+                                        } else {
+                                            Text("Indisponible")
+                                                .font(.caption2.bold())
+                                                .padding(.horizontal, 8)
+                                                .padding(.vertical, 4)
+                                                .background(Color.red.opacity(0.1))
+                                                .foregroundStyle(.red)
+                                                .cornerRadius(8)
+                                        }
+                                    }
+                                    .padding(.vertical, 2)
+                                }
+                            } header: {
+                                Text("Indisponibles — catégorie supérieure (\(unavailablePlayers.count))")
                             }
                         }
 

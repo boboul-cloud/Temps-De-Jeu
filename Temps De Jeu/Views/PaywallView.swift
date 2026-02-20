@@ -57,15 +57,20 @@ struct PaywallView: View {
                             .font(.caption)
                             .foregroundStyle(.secondary)
 
-                        Text(storeManager.formattedPrice)
-                            .font(.system(size: 44, weight: .bold, design: .rounded))
-                            .foregroundStyle(
-                                LinearGradient(
-                                    colors: [.orange, .yellow],
-                                    startPoint: .leading,
-                                    endPoint: .trailing
+                        if storeManager.isProductLoaded {
+                            Text(storeManager.formattedPrice)
+                                .font(.system(size: 44, weight: .bold, design: .rounded))
+                                .foregroundStyle(
+                                    LinearGradient(
+                                        colors: [.orange, .yellow],
+                                        startPoint: .leading,
+                                        endPoint: .trailing
+                                    )
                                 )
-                            )
+                        } else {
+                            ProgressView()
+                                .frame(height: 52)
+                        }
 
                         Text("Paiement unique · Pas d'abonnement")
                             .font(.caption)
@@ -82,7 +87,7 @@ struct PaywallView: View {
                         }
                     } label: {
                         HStack {
-                            if storeManager.purchaseInProgress {
+                            if storeManager.purchaseInProgress || !storeManager.isProductLoaded {
                                 ProgressView()
                                     .tint(.white)
                             } else {
@@ -103,7 +108,7 @@ struct PaywallView: View {
                         .foregroundColor(.white)
                         .cornerRadius(16)
                     }
-                    .disabled(storeManager.purchaseInProgress)
+                    .disabled(storeManager.purchaseInProgress || !storeManager.isProductLoaded)
                     .task {
                         if storeManager.products.isEmpty {
                             await storeManager.loadProducts()

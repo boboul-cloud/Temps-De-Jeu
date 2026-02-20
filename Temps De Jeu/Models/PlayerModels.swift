@@ -69,7 +69,8 @@ struct Player: Identifiable, Codable, Hashable {
     var lastName: String
     var position: PlayerPosition
     var availability: PlayerAvailability
-    var photoData: Data?  // Photo du joueur (JPEG compressée)
+    var photoData: Data?
+    var homeCategoryId: UUID?
 
     init(
         id: UUID = UUID(),
@@ -77,7 +78,8 @@ struct Player: Identifiable, Codable, Hashable {
         lastName: String = "",
         position: PlayerPosition = .milieu,
         availability: PlayerAvailability = .disponible,
-        photoData: Data? = nil
+        photoData: Data? = nil,
+        homeCategoryId: UUID? = nil
     ) {
         self.id = id
         self.firstName = firstName
@@ -85,13 +87,15 @@ struct Player: Identifiable, Codable, Hashable {
         self.position = position
         self.availability = availability
         self.photoData = photoData
+        self.homeCategoryId = homeCategoryId
     }
 
     // Backward compat: ignore defaultNumber if present in saved data
     // + availability optionnel (ancien format sans ce champ)
     // + photoData optionnel (nouveau champ)
+    // + homeCategoryId optionnel (nouveau champ)
     enum CodingKeys: String, CodingKey {
-        case id, firstName, lastName, position, availability, photoData
+        case id, firstName, lastName, position, availability, photoData, homeCategoryId
     }
 
     init(from decoder: Decoder) throws {
@@ -102,6 +106,7 @@ struct Player: Identifiable, Codable, Hashable {
         position = try container.decode(PlayerPosition.self, forKey: .position)
         availability = try container.decodeIfPresent(PlayerAvailability.self, forKey: .availability) ?? .disponible
         photoData = try container.decodeIfPresent(Data.self, forKey: .photoData)
+        homeCategoryId = try container.decodeIfPresent(UUID.self, forKey: .homeCategoryId)
     }
 
     var displayName: String {
@@ -208,8 +213,13 @@ struct RosterExport: Codable, Equatable {
     /// Effet boule de neige : A exporte ses sélectionnés → B les reçoit indisponibles,
     /// puis B ajoute ses propres sélectionnés et exporte vers C, etc.
     var unavailablePlayerIds: [UUID]
+    /// Joueurs indisponibles avec leur motif (blessé, suspendu, absent)
+    /// Optionnel pour backward compat avec les anciens exports
+    var unavailablePlayers: [Player]?
     /// Noms des équipes qui ont déjà sélectionné (pour info)
     var selectionChain: [String]
+    /// Code d'équipe destinataire — permet de diriger l'import vers le bon profil
+    var targetTeamCode: String?
     /// Version du format
     var formatVersion: Int = 1
 }

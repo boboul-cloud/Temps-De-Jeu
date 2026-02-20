@@ -9,6 +9,7 @@ import StoreKit
 import SwiftUI
 import Combine
 
+@MainActor
 class StoreManager: ObservableObject {
     static let shared = StoreManager()
 
@@ -155,6 +156,10 @@ class StoreManager: ObservableObject {
     // MARK: - Prix formaté
 
     var formattedPrice: String {
-        products.first?.displayPrice ?? "4,99 €"
+        products.first?.displayPrice ?? "..."
+    }
+    
+    var isProductLoaded: Bool {
+        !products.isEmpty
     }
 }

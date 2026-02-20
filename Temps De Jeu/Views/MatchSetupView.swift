@@ -18,6 +18,7 @@ struct ShareItemsWrapper: Identifiable {
 struct MatchSetupView: View {
     @ObservedObject var viewModel: MatchViewModel
     @ObservedObject var storeManager: StoreManager
+    @ObservedObject var profileManager: ProfileManager = .shared
     @EnvironmentObject var deepLinkManager: DeepLinkManager
     @Binding var showMatch: Bool
     @State private var showPaywall = false
@@ -31,6 +32,7 @@ struct MatchSetupView: View {
     @State private var importedRosterExport: RosterExport?
     @State private var unavailablePlayerIds: Set<UUID> = []
     @State private var importChain: [String] = []
+    @State private var targetTeamCode: String = ""
 
     // PDF Preview - utilise une struct identifiable pour éviter la page blanche
     @State private var pdfPreviewItem: MatchSetupPDFItem?
@@ -183,6 +185,43 @@ struct MatchSetupView: View {
                                     }
                                 }
 
+                                // Joueurs indisponibles (blessés, suspendus, absents)
+                                let indisponibles = allPlayers.filter { $0.availability != .disponible }
+                                if !indisponibles.isEmpty {
+                                    VStack(alignment: .leading, spacing: 4) {
+                                        HStack(spacing: 4) {
+                                            Image(systemName: "person.slash.fill")
+                                                .font(.caption2)
+                                                .foregroundStyle(.secondary)
+                                            Text("Indisponibles (\(indisponibles.count))")
+                                                .font(.caption2.bold())
+                                                .foregroundStyle(.secondary)
+                                        }
+                                        ScrollView(.horizontal, showsIndicators: false) {
+                                            HStack(spacing: 6) {
+                                                ForEach(indisponibles.sorted(by: { $0.lastName.localizedCompare($1.lastName) == .orderedAscending })) { player in
+                                                    HStack(spacing: 4) {
+                                                        Image(systemName: player.availability.icon)
+                                                            .font(.system(size: 9))
+                                                            .foregroundStyle(colorForAvailability(player.availability))
+                                                        Text(player.displayName)
+                                                            .font(.caption2)
+                                                            .strikethrough()
+                                                            .foregroundStyle(.secondary)
+                                                        Text("(\(player.availability.rawValue))")
+                                                            .font(.system(size: 8))
+                                                            .foregroundStyle(colorForAvailability(player.availability))
+                                                    }
+                                                    .padding(.horizontal, 8)
+                                                    .padding(.vertical, 4)
+                                                    .background(colorForAvailability(player.availability).opacity(0.08))
+                                                    .cornerRadius(6)
+                                                }
+                                            }
+                                        }
+                                    }
+                                }
+
                                 HStack(spacing: 16) {
                                     Button {
                                         showRosterSelection = true
@@ -216,6 +255,25 @@ struct MatchSetupView: View {
                                     Text("Partager la composition")
                                         .font(.caption2)
                                         .foregroundStyle(.secondary)
+
+                                    // Code équipe destinataire
+                                    HStack(spacing: 6) {
+                                        Image(systemName: "qrcode")
+                                            .font(.caption)
+                                            .foregroundStyle(.secondary)
+                                        Text("Code catégorie dest.")
+                                            .font(.caption2)
+                                            .foregroundStyle(.secondary)
+                                        TextField("Ex: A3K9F2", text: $targetTeamCode)
+                                            .font(.caption.bold().monospaced())
+                                            .textFieldStyle(.roundedBorder)
+                                            .textInputAutocapitalization(.characters)
+                                            .frame(width: 100)
+                                            .onChange(of: targetTeamCode) {
+                                                targetTeamCode = String(targetTeamCode.uppercased().prefix(6))
+                                            }
+                                    }
+                                    .padding(.vertical, 2)
 
                                     HStack(spacing: 8) {
                                         // Exporter en PDF
@@ -287,7 +345,7 @@ struct MatchSetupView: View {
                                 VStack(alignment: .leading, spacing: 2) {
                                     Text("Importer joueurs disponibles")
                                         .font(.caption.bold())
-                                    Text("Depuis l'export d'une équipe supérieure")
+                                    Text("Depuis l'export d'une catégorie supérieure")
                                         .font(.caption2)
                                         .foregroundStyle(.secondary)
                                 }
@@ -359,7 +417,7 @@ struct MatchSetupView: View {
                         }
                         .frame(maxWidth: .infinity)
                         .padding(.vertical, 16)
-                        .background(storeManager.canStartNewMatch ? Color.green : Color.gray)
+                        .background(storeManager.canStartNewMatch ? profileManager.activeProfileColor : Color.gray)
                         .foregroundColor(.white)
                         .cornerRadius(16)
                     }
@@ -374,7 +432,8 @@ struct MatchSetupView: View {
                 MatchRosterView(
                     allPlayers: allPlayers,
                     existingRoster: viewModel.matchRoster,
-                    unavailablePlayerIds: unavailablePlayerIds
+                    unavailablePlayerIds: unavailablePlayerIds,
+                    selectedInOtherCategoryIds: MatchViewModel.playerIdsSelectedInOtherCategories(localPlayers: allPlayers)
                 ) { roster in
                     viewModel.setMatchRoster(roster)
                     saveDraftState()
@@ -429,10 +488,45 @@ struct MatchSetupView: View {
                     handlePendingDeepLink()
                 }
             }
+            .onChange(of: profileManager.activeProfileId) { oldProfileId, newProfileId in
+                // 1) Sauvegarder le brouillon de l'ancien profil
+                if let oldId = oldProfileId {
+                    let oldKey = "profile_\(oldId.uuidString)_matchSetupDraft"
+                    let draft = MatchSetupDraft(
+                        match: viewModel.match,
+                        matchRoster: viewModel.matchRoster,
+                        unavailablePlayerIds: Array(unavailablePlayerIds),
+                        importChain: importChain
+                    )
+                    if let data = try? JSONEncoder().encode(draft) {
+                        UserDefaults.standard.set(data, forKey: oldKey)
+                    }
+                }
+
+                // 2) Recharger les joueurs du nouveau profil
+                allPlayers = TeamManager.shared.loadPlayers()
+
+                // 3) Restaurer le brouillon du nouveau profil
+                if let draft = MatchViewModel.loadDraft() {
+                    viewModel.match = draft.match
+                    viewModel.matchRoster = draft.matchRoster
+                    unavailablePlayerIds = Set(draft.unavailablePlayerIds)
+                    importChain = draft.importChain
+                } else {
+                    // Pas de brouillon pour cette catégorie → reset
+                    viewModel.match = Match()
+                    viewModel.matchRoster = []
+                    unavailablePlayerIds.removeAll()
+                    importChain.removeAll()
+                }
+            }
             .onChange(of: viewModel.match.homeTeam) { saveDraftState() }
             .onChange(of: viewModel.match.awayTeam) { saveDraftState() }
             .onChange(of: viewModel.match.competition) { saveDraftState() }
             .onChange(of: viewModel.match.isMyTeamHome) { saveDraftState() }
+            .onChange(of: viewModel.matchRoster) { saveDraftState() }
+            .onChange(of: viewModel.match.myTeamName) { saveDraftState() }
+            .onChange(of: viewModel.match.date) { saveDraftState() }
         }
     }
 
@@ -440,27 +534,94 @@ struct MatchSetupView: View {
 
     private func handlePendingDeepLink() {
         guard let rosterExport = deepLinkManager.pendingRosterImport else { return }
+        processRosterImport(rosterExport)
+        deepLinkManager.clearPendingImport()
+    }
 
-        // Marquer les joueurs indisponibles
-        unavailablePlayerIds = Set(rosterExport.unavailablePlayerIds)
+    /// Traite un import de composition — commun entre deep link, fichier et iMessage.
+    /// Fait la correspondance par prénom+nom (pas seulement UUID) pour supporter
+    /// les échanges entre appareils où le même joueur a des UUID différents.
+    private func processRosterImport(_ rosterExport: RosterExport) {
+        // 1) Auto-basculer sur le bon profil par code catégorie
+        if let code = rosterExport.targetTeamCode, !code.isEmpty,
+           let targetProfile = profileManager.profiles.first(where: { $0.teamCode.uppercased() == code.uppercased() }) {
+            if targetProfile.id != profileManager.activeProfileId {
+                profileManager.switchToProfile(targetProfile.id)
+            }
+        }
+
+        // 2) Recharger les joueurs du profil actif (après éventuel changement)
+        allPlayers = TeamManager.shared.loadPlayers()
+
+        // 3) Construire un index local par nom normalisé (prénom_nom en minuscules)
+        //    pour retrouver le même joueur même s'il a un UUID différent
+        let normalize: (Player) -> String = { p in
+            let first = p.firstName.trimmingCharacters(in: .whitespaces).lowercased()
+            let last = p.lastName.trimmingCharacters(in: .whitespaces).lowercased()
+            return "\(first)_\(last)"
+        }
+
+        var localByName: [String: Player] = [:]
+        for p in allPlayers {
+            localByName[normalize(p)] = p
+        }
+
+        // 4) Indexer tous les joueurs importés par UUID (sélectionnés + indisponibles)
+        //    pour le mapping UUID importé → UUID local
+        var importedById: [UUID: Player] = [:]
+        for p in rosterExport.selectedPlayers { importedById[p.id] = p }
+        if let unavailable = rosterExport.unavailablePlayers {
+            for p in unavailable { importedById[p.id] = p }
+        }
+
+        // 5) Mapper chaque UUID importé → UUID local (via correspondance de nom)
+        var toLocalId: [UUID: UUID] = [:]
+        for (importedId, importedPlayer) in importedById {
+            let name = normalize(importedPlayer)
+            if let local = localByName[name] {
+                toLocalId[importedId] = local.id
+            }
+        }
+
+        // 6) Mapper les IDs indisponibles importés → UUIDs locaux
+        //    UNIQUEMENT les joueurs qui existent déjà dans cette catégorie
+        //    Pas de mélange : on ne touche qu'aux joueurs locaux
+        unavailablePlayerIds = Set(rosterExport.unavailablePlayerIds.compactMap { importedId in
+            if let localId = toLocalId[importedId] { return localId }
+            if allPlayers.contains(where: { $0.id == importedId }) { return importedId }
+            return nil // joueur pas dans cette catégorie → ignorer
+        })
+
         importChain = rosterExport.selectionChain
 
-        // Importer les joueurs disponibles dans l'effectif s'ils n'existent pas
-        let existingIds = Set(allPlayers.map { $0.id })
-        let newPlayers = rosterExport.availablePlayers.filter { !existingIds.contains($0.id) }
-        if !newPlayers.isEmpty {
-            allPlayers.append(contentsOf: newPlayers)
+        // 7) Mettre à jour l'availability (blessé, suspendu, absent) seulement pour les joueurs locaux
+        var hasUpdates = false
+        if let importedUnavailable = rosterExport.unavailablePlayers {
+            for imported in importedUnavailable {
+                let name = normalize(imported)
+                if let local = localByName[name],
+                   let idx = allPlayers.firstIndex(where: { $0.id == local.id }),
+                   allPlayers[idx].availability != imported.availability {
+                    allPlayers[idx].availability = imported.availability
+                    hasUpdates = true
+                }
+            }
+        }
+
+        // 8) Sauvegarder uniquement si des statuts de disponibilité ont changé
+        if hasUpdates {
             TeamManager.shared.savePlayers(allPlayers)
         }
 
-        let chainText = rosterExport.selectionChain.isEmpty ? "" : "\nÉquipes : \(rosterExport.selectionChain.joined(separator: " → "))"
+        // 9) Message de confirmation
+        let recognizedCount = unavailablePlayerIds.count
+        let chainText = rosterExport.selectionChain.isEmpty ? "" : "\nCascade : \(rosterExport.selectionChain.joined(separator: " → "))"
+        let categoryName = ProfileManager.shared.activeProfile?.name ?? "cette catégorie"
         showAlertWith(
             title: "Composition importée",
-            message: "\(rosterExport.availablePlayers.count) joueurs disponibles.\n\(rosterExport.unavailablePlayerIds.count) joueurs indisponibles.\(chainText)"
+            message: "\(recognizedCount) joueur\(recognizedCount > 1 ? "s" : "") marqué\(recognizedCount > 1 ? "s" : "") indisponible\(recognizedCount > 1 ? "s" : "") dans \(categoryName).\(chainText)"
         )
 
-        // Consommer l'import
-        deepLinkManager.clearPendingImport()
         saveDraftState()
     }
 
@@ -472,6 +633,7 @@ struct MatchSetupView: View {
         let selectedIds = Set(viewModel.matchRoster.map { $0.id })
         let teamName = viewModel.match.myTeamName.isEmpty ? "Mon équipe" : viewModel.match.myTeamName
 
+        let cleanCode = targetTeamCode.trimmingCharacters(in: .whitespaces)
         guard let fileURL = ExportService.shared.createRosterFile(
             allPlayers: allPlayers,
             selectedPlayerIds: selectedIds,
@@ -479,7 +641,8 @@ struct MatchSetupView: View {
             competition: viewModel.match.competition,
             matchDate: viewModel.match.date,
             previousUnavailableIds: Array(unavailablePlayerIds),
-            previousChain: importChain
+            previousChain: importChain,
+            targetTeamCode: cleanCode.isEmpty ? nil : cleanCode
         ) else {
             showAlertWith(title: "Erreur", message: "Impossible de créer le fichier.")
             return
@@ -494,11 +657,14 @@ struct MatchSetupView: View {
         let selectedIds = Set(viewModel.matchRoster.map { $0.id })
         let teamName = viewModel.match.myTeamName.isEmpty ? "Mon équipe" : viewModel.match.myTeamName
 
-        // Calculer le nombre de joueurs disponibles
+        // Calculer le nombre de joueurs disponibles (exclure blessés, suspendus, absents)
         let availableCount = allPlayers.filter {
-            !selectedIds.contains($0.id) && !unavailablePlayerIds.contains($0.id)
+            !selectedIds.contains($0.id) &&
+            !unavailablePlayerIds.contains($0.id) &&
+            $0.availability == .disponible
         }.count
 
+        let cleanCodeLink = targetTeamCode.trimmingCharacters(in: .whitespaces)
         guard let link = DeepLinkManager.shared.createShareableLink(
             allPlayers: allPlayers,
             selectedPlayerIds: selectedIds,
@@ -506,7 +672,8 @@ struct MatchSetupView: View {
             competition: viewModel.match.competition,
             matchDate: viewModel.match.date,
             previousUnavailableIds: Array(unavailablePlayerIds),
-            previousChain: importChain
+            previousChain: importChain,
+            targetTeamCode: cleanCodeLink.isEmpty ? nil : cleanCodeLink
         ) else {
             showAlertWith(title: "Erreur", message: "Impossible de créer le lien.")
             return
@@ -571,24 +738,7 @@ struct MatchSetupView: View {
 
                 switch importType {
                 case .rosterExport(let rosterExport):
-                    // Marquer les joueurs indisponibles
-                    unavailablePlayerIds = Set(rosterExport.unavailablePlayerIds)
-                    importChain = rosterExport.selectionChain
-
-                    // Importer aussi les joueurs disponibles dans l'effectif s'ils n'existent pas
-                    let existingIds = Set(allPlayers.map { $0.id })
-                    let newPlayers = rosterExport.availablePlayers.filter { !existingIds.contains($0.id) }
-                    if !newPlayers.isEmpty {
-                        allPlayers.append(contentsOf: newPlayers)
-                        TeamManager.shared.savePlayers(allPlayers)
-                    }
-
-                    let chainText = rosterExport.selectionChain.isEmpty ? "" : "\nÉquipes : \(rosterExport.selectionChain.joined(separator: " → "))"
-                    showAlertWith(
-                        title: "Import réussi",
-                        message: "\(rosterExport.availablePlayers.count) joueurs disponibles.\n\(rosterExport.unavailablePlayerIds.count) joueurs indisponibles.\(chainText)"
-                    )
-                    saveDraftState()
+                    processRosterImport(rosterExport)
 
                 case .players:
                     showAlertWith(title: "Format non reconnu", message: "Ce fichier contient une liste de joueurs simple. Utilisez l'import classique dans Export/Import.")
@@ -622,6 +772,15 @@ struct MatchSetupView: View {
     /// Sauvegarde l'état du brouillon (infos match + composition + imports)
     private func saveDraftState() {
         viewModel.saveDraft(unavailablePlayerIds: unavailablePlayerIds, importChain: importChain)
+    }
+
+    private func colorForAvailability(_ availability: PlayerAvailability) -> Color {
+        switch availability {
+        case .disponible: return .green
+        case .blesse: return .red
+        case .absent: return .orange
+        case .suspendu: return .purple
+        }
     }
 }
 

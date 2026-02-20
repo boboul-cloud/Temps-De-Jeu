@@ -269,7 +269,39 @@ struct Match: Identifiable, Codable {
         let position: PlayerPosition
         let totalTime: TimeInterval        // Temps total sur le terrain
         let effectiveTime: TimeInterval     // Temps effectif (hors arrêts proportionnel)
-        let isTitulaire: Bool
+        let isTitulaire: Bool              // Était titulaire au début du match
+    }
+
+    /// Détermine si un joueur était initialement sur le terrain au début du match.
+    /// On ne peut PAS se fier à `mp.status` car celui-ci est modifié par les remplacements
+    /// (le sortant passe en `.remplacant`, l'entrant passe en `.titulaire`) et les expulsions.
+    /// On reconstitue donc le statut initial en analysant les événements de substitution.
+    private func wasInitiallyOnField(playerId: UUID) -> Bool {
+        guard let mp = matchRoster.first(where: { $0.id == playerId }) else { return false }
+
+        // Collecter toutes les substitutions impliquant ce joueur, triées chronologiquement
+        let playerSubs = substitutions
+            .filter { $0.playerOutId == playerId || $0.playerInId == playerId }
+            .sorted {
+                let periodOrder0 = MatchPeriod.allCases.firstIndex(of: $0.period) ?? 0
+                let periodOrder1 = MatchPeriod.allCases.firstIndex(of: $1.period) ?? 0
+                if periodOrder0 != periodOrder1 { return periodOrder0 < periodOrder1 }
+                return $0.minute < $1.minute
+            }
+
+        if playerSubs.isEmpty {
+            // Aucune substitution pour ce joueur :
+            // Si statut = titulaire → était sur le terrain
+            // Si statut = expulse ou tempExpulse → était sur le terrain (expulsé sans avoir été remplacé)
+            // Si statut = remplacant → n'a jamais joué
+            return mp.status == .titulaire || mp.status == .expulse || mp.status == .tempExpulse
+        }
+
+        // Le premier événement de substitution nous dit si le joueur était sur le terrain :
+        // - S'il sort en premier (playerOutId) → il était sur le terrain au départ
+        // - S'il entre en premier (playerInId) → il n'était pas sur le terrain au départ
+        let firstSub = playerSubs.first!
+        return firstSub.playerOutId == playerId
     }
 
     /// Calcule le temps de jeu de chaque joueur du roster
@@ -278,6 +310,12 @@ struct Match: Identifiable, Codable {
 
         // Durée totale de chaque période jouée
         let playedPeriods = MatchPeriod.allCases.filter { periodDurations[$0.rawValue] != nil }
+
+        // Précalculer le statut initial de chaque joueur
+        var initiallyOnField: [UUID: Bool] = [:]
+        for mp in matchRoster {
+            initiallyOnField[mp.id] = wasInitiallyOnField(playerId: mp.id)
+        }
 
         var results: [PlayerPlayingTime] = []
 
@@ -294,11 +332,11 @@ struct Match: Identifiable, Codable {
                 // Déterminer si le joueur était sur le terrain au début de cette période
                 var wasOnFieldAtStart: Bool
                 if period == playedPeriods.first {
-                    // Première période : les titulaires sont sur le terrain
-                    wasOnFieldAtStart = (mp.status == .titulaire)
+                    // Première période : utiliser le statut initial reconstitué
+                    wasOnFieldAtStart = initiallyOnField[mp.id] ?? false
                 } else {
                     // Périodes suivantes : le joueur est sur le terrain s'il y était à la fin de la période précédente
-                    wasOnFieldAtStart = wasPlayerOnFieldAtEndOf(playerId: mp.id, period: previousPeriod(period), playedPeriods: playedPeriods)
+                    wasOnFieldAtStart = wasPlayerOnFieldAtEndOf(playerId: mp.id, period: previousPeriod(period), playedPeriods: playedPeriods, initiallyOnField: initiallyOnField)
                 }
 
                 // Calculer le temps sur le terrain pour cette période
@@ -342,6 +380,7 @@ struct Match: Identifiable, Codable {
             let effectiveRatio = totalMatchDuration > 0 ? totalEffectivePlayTime / totalMatchDuration : 1.0
             let effectiveTime = totalOnField * effectiveRatio
 
+            let wasInitialTitulaire = initiallyOnField[mp.id] ?? false
             results.append(PlayerPlayingTime(
                 playerId: mp.id,
                 playerName: mp.fullName.isEmpty ? "Joueur #\(mp.shirtNumber)" : mp.fullName,
@@ -349,7 +388,7 @@ struct Match: Identifiable, Codable {
                 position: mp.position,
                 totalTime: totalOnField,
                 effectiveTime: effectiveTime,
-                isTitulaire: mp.status == .titulaire
+                isTitulaire: wasInitialTitulaire
             ))
         }
 
@@ -357,15 +396,13 @@ struct Match: Identifiable, Codable {
     }
 
     /// Vérifie si un joueur était sur le terrain à la fin d'une période donnée
-    private func wasPlayerOnFieldAtEndOf(playerId: UUID, period: MatchPeriod, playedPeriods: [MatchPeriod]) -> Bool {
-        guard let mp = matchRoster.first(where: { $0.id == playerId }) else { return false }
-
-        // Commencer par le statut initial (titulaire = sur le terrain en MT1)
+    private func wasPlayerOnFieldAtEndOf(playerId: UUID, period: MatchPeriod, playedPeriods: [MatchPeriod], initiallyOnField: [UUID: Bool]) -> Bool {
+        // Déterminer le statut au début de cette période
         var onField: Bool
         if period == playedPeriods.first {
-            onField = (mp.status == .titulaire)
+            onField = initiallyOnField[playerId] ?? false
         } else {
-            onField = wasPlayerOnFieldAtEndOf(playerId: playerId, period: previousPeriod(period), playedPeriods: playedPeriods)
+            onField = wasPlayerOnFieldAtEndOf(playerId: playerId, period: previousPeriod(period), playedPeriods: playedPeriods, initiallyOnField: initiallyOnField)
         }
 
         // Appliquer les substitutions de cette période

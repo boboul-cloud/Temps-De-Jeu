@@ -8,10 +8,14 @@
 import Foundation
 
 /// Gestionnaire des entraînements et présences
+@MainActor
 class TrainingManager {
     static let shared = TrainingManager()
     
-    private let sessionsKey = "trainingSessions"
+    /// Clé de stockage préfixée par le profil actif
+    private var sessionsKey: String {
+        "\(ProfileManager.currentStoragePrefix)trainingSessions"
+    }
     
     private init() {}
     
@@ -32,6 +36,18 @@ class TrainingManager {
             return try JSONDecoder().decode([TrainingSession].self, from: data)
         } catch {
             print("Erreur chargement entraînements: \(error)")
+            return []
+        }
+    }
+
+    /// Charge les sessions d'un profil spécifique (pas forcément le profil actif)
+    func loadSessions(forProfileId profileId: UUID) -> [TrainingSession] {
+        let key = "profile_\(profileId.uuidString)_trainingSessions"
+        guard let data = UserDefaults.standard.data(forKey: key) else { return [] }
+        do {
+            return try JSONDecoder().decode([TrainingSession].self, from: data)
+        } catch {
+            print("Erreur chargement entraînements profil \(profileId): \(error)")
             return []
         }
     }

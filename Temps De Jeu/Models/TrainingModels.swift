@@ -8,7 +8,7 @@
 import Foundation
 
 /// Un entraînement avec la liste des présences
-struct TrainingSession: Identifiable, Codable {
+struct TrainingSession: Identifiable, Codable, Equatable {
     let id: UUID
     var date: Date
     var notes: String
@@ -67,7 +67,7 @@ struct PlayerAttendance: Identifiable, Codable, Hashable {
 }
 
 /// Export des statistiques de présence aux entraînements
-struct TrainingAttendanceExport: Codable {
+struct TrainingAttendanceExport: Codable, Equatable {
     var startDate: Date
     var endDate: Date
     var sessions: [TrainingSession]
@@ -84,7 +84,7 @@ struct TrainingAttendanceExport: Codable {
 }
 
 /// Statistiques de présence d'un joueur
-struct PlayerAttendanceStats: Codable, Identifiable {
+struct PlayerAttendanceStats: Codable, Identifiable, Equatable {
     let playerId: UUID
     var firstName: String
     var lastName: String

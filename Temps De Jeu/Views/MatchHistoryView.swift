@@ -14,6 +14,7 @@ struct MatchHistoryView: View {
     @State private var selectedMatch: Match?
     @State private var showDeleteConfirmation = false
     @State private var matchToDelete: Match?
+    @ObservedObject private var profileManager = ProfileManager.shared
 
     var filteredMatches: [Match] {
         if searchText.isEmpty { return matches }
@@ -33,9 +34,12 @@ struct MatchHistoryView: View {
                     matchList
                 }
             }
-            .navigationTitle("Historique")
+            .navigationTitle("Historique des matchs")
             .searchable(text: $searchText, prompt: "Rechercher un match")
             .onAppear {
+                matches = DataManager.shared.loadMatches()
+            }
+            .onChange(of: profileManager.activeProfileId) {
                 matches = DataManager.shared.loadMatches()
             }
             .sheet(item: $selectedMatch) { match in
@@ -537,6 +541,65 @@ struct MatchReportView: View {
                                     }
                                 }
                                 .padding(.vertical, 2)
+                            }
+                        }
+                        .padding()
+                        .background(Color(.systemGray6))
+                        .cornerRadius(16)
+                    }
+
+                    // Remplacements
+                    if !match.substitutions.isEmpty {
+                        VStack(spacing: 12) {
+                            SectionHeader(title: "Remplacements", icon: "arrow.left.arrow.right")
+
+                            ForEach(match.substitutions) { sub in
+                                HStack(spacing: 10) {
+                                    // Minute du remplacement
+                                    Text(TimeFormatters.formatMatchMinute(sub.minute, regulation: sub.period.regulationDuration))
+                                        .font(.system(.caption, design: .monospaced).bold())
+                                        .foregroundStyle(.white)
+                                        .frame(width: 44, height: 28)
+                                        .background(Color.purple.opacity(0.8))
+                                        .cornerRadius(6)
+
+                                    VStack(alignment: .leading, spacing: 3) {
+                                        // Joueur entrant
+                                        HStack(spacing: 4) {
+                                            Image(systemName: "arrow.up.circle.fill")
+                                                .font(.caption)
+                                                .foregroundStyle(.green)
+                                            Text(sub.playerIn)
+                                                .font(.subheadline.bold())
+                                                .foregroundStyle(.primary)
+                                        }
+                                        // Joueur sortant
+                                        HStack(spacing: 4) {
+                                            Image(systemName: "arrow.down.circle.fill")
+                                                .font(.caption)
+                                                .foregroundStyle(.red)
+                                            Text(sub.playerOut)
+                                                .font(.caption)
+                                                .foregroundStyle(.secondary)
+                                        }
+                                    }
+
+                                    Spacer()
+
+                                    // Période
+                                    Text(sub.period.shortName)
+                                        .font(.caption2.bold())
+                                        .padding(.horizontal, 6)
+                                        .padding(.vertical, 2)
+                                        .background(Color(.systemGray4))
+                                        .cornerRadius(4)
+                                        .foregroundStyle(.secondary)
+                                }
+                                .padding(.vertical, 4)
+
+                                if sub.id != match.substitutions.last?.id {
+                                    Divider()
+                                }
                             }
                         }
                         .padding()

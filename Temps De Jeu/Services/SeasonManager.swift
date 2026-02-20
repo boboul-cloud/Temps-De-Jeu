@@ -9,11 +9,18 @@ import Foundation
 import Combine
 
 /// Gestionnaire des saisons
+@MainActor
 class SeasonManager: ObservableObject {
     static let shared = SeasonManager()
 
-    private let currentSeasonKey = "currentSeason"
-    private let archivesKey = "seasonArchives"
+    /// Clés de stockage préfixées par le profil actif
+    /// Utilise la méthode statique pour éviter un deadlock d'initialisation circulaire
+    private var currentSeasonKey: String {
+        "\(ProfileManager.currentStoragePrefix)currentSeason"
+    }
+    private var archivesKey: String {
+        "\(ProfileManager.currentStoragePrefix)seasonArchives"
+    }
 
     @Published var currentSeason: Season?
 
@@ -21,11 +28,16 @@ class SeasonManager: ObservableObject {
         currentSeason = loadCurrentSeason()
     }
 
+    /// Recharge la saison pour le profil actif (appelé lors du changement de profil)
+    func reloadForCurrentProfile() {
+        currentSeason = loadCurrentSeason()
+    }
+
     // MARK: - Saison courante
 
     /// Crée une nouvelle saison
-    func createSeason(clubName: String, startDate: Date) {
-        let season = Season(clubName: clubName, startDate: startDate)
+    func createSeason(clubName: String, category: String = "", startDate: Date) {
+        let season = Season(clubName: clubName, category: category, startDate: startDate)
         currentSeason = season
         saveCurrentSeason(season)
     }

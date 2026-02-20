@@ -15,6 +15,7 @@ struct SeasonManagementView: View {
     // Nouvelle saison
     @State private var showNewSeasonSheet = false
     @State private var newClubName = ""
+    @State private var newCategory = ""
     @State private var newStartDate = Date()
 
     // Clôture
@@ -109,6 +110,11 @@ struct SeasonManagementView: View {
                 VStack(alignment: .leading, spacing: 4) {
                     Text(season.clubName)
                         .font(.headline)
+                    if !season.category.isEmpty {
+                        Text(season.category)
+                            .font(.subheadline)
+                            .foregroundStyle(.blue)
+                    }
                     Text("Saison \(season.label)")
                         .font(.subheadline)
                         .foregroundStyle(.secondary)
@@ -202,6 +208,9 @@ struct SeasonManagementView: View {
                     if let lastClub = archives.first?.season.clubName, newClubName.isEmpty {
                         newClubName = lastClub
                     }
+                    if let lastCategory = archives.first?.season.category, newCategory.isEmpty {
+                        newCategory = lastCategory
+                    }
                     showNewSeasonSheet = true
                 } label: {
                     Label("Nouvelle saison", systemImage: "plus.circle.fill")
@@ -250,9 +259,20 @@ struct SeasonManagementView: View {
                                 .frame(width: 30)
 
                             VStack(alignment: .leading, spacing: 2) {
-                                Text("\(archive.season.clubName) — \(archive.season.label)")
-                                    .font(.subheadline.bold())
-                                    .foregroundStyle(.primary)
+                                HStack(spacing: 6) {
+                                    Text("\(archive.season.clubName) — \(archive.season.label)")
+                                        .font(.subheadline.bold())
+                                        .foregroundStyle(.primary)
+                                    if !archive.season.category.isEmpty {
+                                        Text(archive.season.category)
+                                            .font(.caption2.bold())
+                                            .padding(.horizontal, 6)
+                                            .padding(.vertical, 2)
+                                            .background(Color.blue.opacity(0.15))
+                                            .foregroundStyle(.blue)
+                                            .cornerRadius(4)
+                                    }
+                                }
 
                                 let matchCount = archive.matches.filter { $0.isFinished }.count
                                 let sessionCount = archive.trainingSessions.count
@@ -290,6 +310,7 @@ struct SeasonManagementView: View {
             Form {
                 Section {
                     TextField("Nom du club", text: $newClubName)
+                    TextField("Catégorie (ex: U13, Seniors…)", text: $newCategory)
                     DatePicker("Date de début", selection: $newStartDate, displayedComponents: .date)
                 } header: {
                     Text("Nouvelle saison")
@@ -305,8 +326,9 @@ struct SeasonManagementView: View {
                 }
                 ToolbarItem(placement: .confirmationAction) {
                     Button("Créer") {
-                        seasonManager.createSeason(clubName: newClubName.trimmingCharacters(in: .whitespaces), startDate: newStartDate)
+                        seasonManager.createSeason(clubName: newClubName.trimmingCharacters(in: .whitespaces), category: newCategory.trimmingCharacters(in: .whitespaces), startDate: newStartDate)
                         newClubName = ""
+                        newCategory = ""
                         newStartDate = Date()
                         showNewSeasonSheet = false
                     }
@@ -350,6 +372,9 @@ struct ArchiveDetailView: View {
             // Info saison
             Section {
                 LabeledContent("Club", value: archive.season.clubName)
+                if !archive.season.category.isEmpty {
+                    LabeledContent("Catégorie", value: archive.season.category)
+                }
                 LabeledContent("Début", value: dateFormatter.string(from: archive.season.startDate))
                 if let end = archive.season.endDate {
                     LabeledContent("Fin", value: dateFormatter.string(from: end))

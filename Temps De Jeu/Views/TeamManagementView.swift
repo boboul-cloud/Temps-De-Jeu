@@ -15,6 +15,9 @@ struct TeamManagementView: View {
     @State private var editingPlayer: Player?
     @State private var searchText = ""
     @State private var allCards: [CardEvent] = []  // Cartons de tous les matchs
+    /// Autres catégories auxquelles chaque joueur appartient (Player.id → [noms catégories])
+    @State private var otherCategories: [UUID: [(name: String, colorIndex: Int)]] = [:]
+    @ObservedObject private var profileManager = ProfileManager.shared
 
     var filteredPlayers: [Player] {
         let sorted = players.sorted { $0.lastName.localizedCompare($1.lastName) == .orderedAscending }
@@ -57,8 +60,12 @@ struct TeamManagementView: View {
             }
             .sheet(isPresented: $showAddPlayer) {
                 PlayerEditView(player: nil) { newPlayer in
-                    players.append(newPlayer)
+                    var playerWithHome = newPlayer
+                    playerWithHome.homeCategoryId = profileManager.activeProfileId
+                    players.append(playerWithHome)
                     save()
+                    // Assigner automatiquement au profil actif
+                    ProfileManager.shared.addPlayerToActiveProfile(playerWithHome.id)
                 }
             }
             .sheet(item: $editingPlayer) { player in
@@ -70,12 +77,69 @@ struct TeamManagementView: View {
                 }
             }
             .onAppear {
-                players = TeamManager.shared.loadPlayers()
-                // Charger tous les cartons de l'historique
-                let matches = DataManager.shared.loadMatches()
-                allCards = matches.flatMap { $0.cards }
+                reloadData()
+            }
+            .onChange(of: profileManager.activeProfileId) {
+                reloadData()
             }
         }
+    }
+
+    private func reloadData() {
+        players = TeamManager.shared.loadPlayers()
+        migrateHomeCategoryIfNeeded()
+        let matches = DataManager.shared.loadMatches()
+        allCards = matches.flatMap { $0.cards }
+        otherCategories = computeOtherCategories()
+    }
+
+    /// Assigne automatiquement homeCategoryId aux joueurs existants qui n'en ont pas
+    private func migrateHomeCategoryIfNeeded() {
+        let allProfiles = profileManager.profiles
+        var needsSave = false
+        for i in players.indices {
+            if players[i].homeCategoryId == nil {
+                // Première catégorie (dans l'ordre) qui contient ce joueur
+                if let homeProfile = allProfiles.first(where: { $0.playerIds.contains(players[i].id) }) {
+                    players[i].homeCategoryId = homeProfile.id
+                    needsSave = true
+                }
+            }
+        }
+        if needsSave {
+            TeamManager.shared.savePlayers(players)
+        }
+    }
+
+    /// Calcule la catégorie d'origine de chaque joueur vu depuis une autre catégorie.
+    /// Règle : la catégorie d'origine = la première catégorie (dans l'ordre de la liste des profils)
+    /// Pour chaque joueur de la catégorie active, afficher sa catégorie d'origine
+    /// (homeCategoryId) si elle diffère de la catégorie active.
+    private func computeOtherCategories() -> [UUID: [(name: String, colorIndex: Int)]] {
+        guard let activeId = profileManager.activeProfileId else { return [:] }
+        let allProfiles = profileManager.profiles
+
+        var result: [UUID: [(name: String, colorIndex: Int)]] = [:]
+
+        for player in players {
+            // Déterminer la catégorie d'origine
+            let homeId: UUID?
+            if let stored = player.homeCategoryId {
+                homeId = stored
+            } else {
+                // Fallback pour les joueurs existants sans homeCategoryId :
+                // la première catégorie (dans l'ordre) qui contient le joueur
+                homeId = allProfiles.first(where: { $0.playerIds.contains(player.id) })?.id
+            }
+            
+            // Si la catégorie d'origine est différente de la catégorie active, afficher le badge
+            if let homeId = homeId, homeId != activeId,
+               let homeProfile = allProfiles.first(where: { $0.id == homeId }) {
+                result[player.id] = [(name: homeProfile.name, colorIndex: homeProfile.colorIndex)]
+            }
+        }
+
+        return result
     }
 
     private var emptyState: some View {
@@ -129,7 +193,7 @@ struct TeamManagementView: View {
             if !unavailablePlayers.isEmpty {
                 Section {
                     ForEach(unavailablePlayers) { player in
-                        UnavailablePlayerRow(player: player, cards: cardsForPlayer(player))
+                        UnavailablePlayerRow(player: player, cards: cardsForPlayer(player), otherCategoryNames: otherCategories[player.id] ?? [])
                             .onTapGesture { editingPlayer = player }
                             .swipeActions(edge: .leading) {
                                 Button {
@@ -164,7 +228,7 @@ struct TeamManagementView: View {
         if !players.isEmpty {
             Section {
                 ForEach(players) { player in
-                    PlayerRow(player: player, cards: cardsForPlayer(player))
+                    PlayerRow(player: player, cards: cardsForPlayer(player), otherCategoryNames: otherCategories[player.id] ?? [])
                         .onTapGesture { editingPlayer = player }
                         .swipeActions(edge: .leading) {
                             Button {
@@ -212,7 +276,8 @@ struct TeamManagementView: View {
 
     private func deletePlayer(_ player: Player) {
         players.removeAll { $0.id == player.id }
-        save()
+        // Supprimer globalement (base + tous les profils)
+        TeamManager.shared.deletePlayerGlobally(player.id)
     }
 
     private func setAvailability(_ player: Player, to availability: PlayerAvailability) {
@@ -272,6 +337,7 @@ struct PlayerAvatar: View {
 struct PlayerRow: View {
     let player: Player
     var cards: [CardEvent] = []
+    var otherCategoryNames: [(name: String, colorIndex: Int)] = []
 
     private var yellowCount: Int { cards.filter { $0.type == .yellow }.count }
     private var secondYellowCount: Int { cards.filter { $0.type == .secondYellow }.count }
@@ -287,9 +353,25 @@ struct PlayerRow: View {
             VStack(alignment: .leading, spacing: 2) {
                 Text(player.fullName.isEmpty ? "Joueur" : player.fullName)
                     .font(.subheadline.bold())
-                Text(player.position.rawValue)
-                    .font(.caption)
-                    .foregroundStyle(.secondary)
+                HStack(spacing: 4) {
+                    Text(player.position.rawValue)
+                        .font(.caption)
+                        .foregroundStyle(.secondary)
+                    if !otherCategoryNames.isEmpty {
+                        Text("•")
+                            .font(.caption)
+                            .foregroundStyle(.tertiary)
+                        ForEach(Array(otherCategoryNames.enumerated()), id: \.offset) { _, cat in
+                            Text(cat.name)
+                                .font(.system(size: 10, weight: .semibold))
+                                .padding(.horizontal, 5)
+                                .padding(.vertical, 1)
+                                .background(ProfileManager.color(for: cat.colorIndex).opacity(0.15))
+                                .foregroundStyle(ProfileManager.color(for: cat.colorIndex))
+                                .cornerRadius(4)
+                        }
+                    }
+                }
             }
 
             Spacer()
@@ -540,6 +622,7 @@ struct PlayerEditView: View {
 struct UnavailablePlayerRow: View {
     let player: Player
     var cards: [CardEvent] = []
+    var otherCategoryNames: [(name: String, colorIndex: Int)] = []
 
     var body: some View {
         HStack(spacing: 12) {
@@ -563,9 +646,25 @@ struct UnavailablePlayerRow: View {
                     .font(.subheadline)
                     .foregroundStyle(.secondary)
                     .strikethrough()
-                Text(player.position.rawValue)
-                    .font(.caption)
-                    .foregroundStyle(.tertiary)
+                HStack(spacing: 4) {
+                    Text(player.position.rawValue)
+                        .font(.caption)
+                        .foregroundStyle(.tertiary)
+                    if !otherCategoryNames.isEmpty {
+                        Text("•")
+                            .font(.caption)
+                            .foregroundStyle(.quaternary)
+                        ForEach(Array(otherCategoryNames.enumerated()), id: \.offset) { _, cat in
+                            Text(cat.name)
+                                .font(.system(size: 10, weight: .semibold))
+                                .padding(.horizontal, 5)
+                                .padding(.vertical, 1)
+                                .background(ProfileManager.color(for: cat.colorIndex).opacity(0.12))
+                                .foregroundStyle(ProfileManager.color(for: cat.colorIndex))
+                                .cornerRadius(4)
+                        }
+                    }
+                }
             }
 
             Spacer()

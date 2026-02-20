@@ -25,6 +25,7 @@ struct MatchSetupDraft: Codable {
     var importChain: [String]
 }
 
+@MainActor
 class MatchViewModel: ObservableObject {
     // MARK: - Published Properties
 
@@ -52,7 +53,9 @@ class MatchViewModel: ObservableObject {
     private var accumulatedTime: TimeInterval = 0         // Temps accumulé avant pause
     private var accumulatedStoppageTime: TimeInterval = 0
 
-    private static let draftKey = "matchSetupDraft"
+    private static var draftKey: String {
+        "\(ProfileManager.currentStoragePrefix)matchSetupDraft"
+    }
 
     // MARK: - Init
 
@@ -352,6 +355,73 @@ class MatchViewModel: ObservableObject {
         UserDefaults.standard.removeObject(forKey: Self.draftKey)
     }
 
+    /// Retourne les IDs des joueurs sélectionnés dans les rosters des autres catégories (pas le profil actif)
+    /// Le dictionnaire associe chaque Player.id LOCAL au nom de la catégorie où il est sélectionné.
+    /// Matching par UUID direct ET par nom (prénom+nom normalisé) pour couvrir les cas
+    /// où le même joueur a été créé séparément dans chaque catégorie.
+    static func playerIdsSelectedInOtherCategories(localPlayers: [Player]) -> [UUID: String] {
+        let profiles = ProfileManager.shared.profiles
+        guard let activeId = ProfileManager.shared.activeProfileId else {
+            print("🔍 [CrossCategory] Pas de profil actif")
+            return [:]
+        }
+
+        print("🔍 [CrossCategory] Profil actif: \(profiles.first(where: { $0.id == activeId })?.name ?? "?") — \(profiles.count) profils au total — \(localPlayers.count) joueurs locaux")
+
+        // Index local : nom normalisé → Player.id
+        let normalize: (String, String) -> String = { first, last in
+            let f = first.trimmingCharacters(in: .whitespaces).lowercased()
+            let l = last.trimmingCharacters(in: .whitespaces).lowercased()
+            return "\(f)_\(l)"
+        }
+        var localByName: [String: UUID] = [:]
+        for p in localPlayers {
+            let key = normalize(p.firstName, p.lastName)
+            if !key.isEmpty && key != "_" {
+                localByName[key] = p.id
+            }
+        }
+
+        var result: [UUID: String] = [:]
+
+        for profile in profiles where profile.id != activeId {
+            let key = "profile_\(profile.id.uuidString)_matchSetupDraft"
+            let data = UserDefaults.standard.data(forKey: key)
+            print("🔍 [CrossCategory] Profil '\(profile.name)' — clé: \(key) — data: \(data != nil ? "\(data!.count) bytes" : "nil")")
+
+            guard let data = data else { continue }
+
+            do {
+                let draft = try JSONDecoder().decode(MatchSetupDraft.self, from: data)
+                print("🔍 [CrossCategory]   → roster: \(draft.matchRoster.count) joueurs: \(draft.matchRoster.map { "\($0.firstName) \($0.lastName)" })")
+
+                guard !draft.matchRoster.isEmpty else { continue }
+
+                for mp in draft.matchRoster {
+                    // 1) Matching par UUID direct
+                    if localPlayers.contains(where: { $0.id == mp.id }) {
+                        result[mp.id] = profile.name
+                        print("🔍 [CrossCategory]   ✅ UUID match: \(mp.firstName) \(mp.lastName) → \(profile.name)")
+                        continue
+                    }
+                    // 2) Matching par nom (prénom + nom)
+                    let nameKey = normalize(mp.firstName, mp.lastName)
+                    if let localId = localByName[nameKey] {
+                        result[localId] = profile.name
+                        print("🔍 [CrossCategory]   ✅ NAME match: \(mp.firstName) \(mp.lastName) → \(profile.name)")
+                    } else {
+                        print("🔍 [CrossCategory]   ❌ Pas de match pour \(mp.firstName) \(mp.lastName)")
+                    }
+                }
+            } catch {
+                print("🔍 [CrossCategory]   ⚠️ Erreur décodage: \(error)")
+            }
+        }
+
+        print("🔍 [CrossCategory] Résultat: \(result.count) joueurs bloqués")
+        return result
+    }
+
     // MARK: - Timer
 
     private func startTimer() {
@@ -363,7 +433,9 @@ class MatchViewModel: ObservableObject {
                 timer.invalidate()
                 return
             }
-            self.tick()
+            Task { @MainActor in
+                self.tick()
+            }
         }
     }
 
@@ -437,6 +509,8 @@ class MatchViewModel: ObservableObject {
 
         // Expulsion automatique : carton rouge ou 2ème jaune
         if type == .red || type == .secondYellow {
+            // Si le joueur est sous expulsion temporaire (carton blanc), annuler le compte à rebours
+            cancelTempExpulsion(playerId: playerId, playerName: playerName)
             expelPlayer(playerId: playerId, playerName: playerName)
         }
 
@@ -455,6 +529,30 @@ class MatchViewModel: ObservableObject {
         }) {
             matchRoster[idx].status = .expulse
             match.matchRoster = matchRoster
+        }
+    }
+
+    /// Annule l'expulsion temporaire d'un joueur (si en cours) — appelé quand le joueur reçoit un rouge ou 2ème jaune
+    private func cancelTempExpulsion(playerId: UUID?, playerName: String) {
+        // Trouver l'expulsion temporaire active pour ce joueur
+        if let idx = activeTempExpulsions.firstIndex(where: { expulsion in
+            if let pid = playerId, let eid = expulsion.playerId { return pid == eid }
+            return expulsion.playerName == playerName
+        }) {
+            // Marquer comme terminée
+            activeTempExpulsions[idx].isCompleted = true
+            let expulsion = activeTempExpulsions[idx]
+
+            // Mettre à jour dans match.tempExpulsions
+            if let matchIdx = match.tempExpulsions.firstIndex(where: { $0.id == expulsion.id }) {
+                match.tempExpulsions[matchIdx].isCompleted = true
+            }
+
+            // Nettoyer les références
+            tempExpulsionPeriodStartEffective.removeValue(forKey: expulsion.id)
+
+            // Retirer de la liste active
+            activeTempExpulsions.remove(at: idx)
         }
     }
 

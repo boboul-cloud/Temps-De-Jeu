@@ -13,11 +13,13 @@ import Compression
 /// Type de fichier personnalisé .tdj (Temps De Jeu)
 extension UTType {
     static let tdjRoster = UTType(exportedAs: "com.tempsdejeu.roster")
+    static let tdjMatches = UTType("com.tempsdejeu.matches") ?? .json
 }
 
 /// Gestionnaire centralisé de l'import de fichiers .tdj et des deep links
 /// Supporte:
 /// - Fichiers .tdj ouverts via iMessage, AirDrop, Mail...
+/// - Fichiers JSON d'entraînements
 /// - Liens tempsdejeu:// cliquables dans Messages
 @MainActor
 class DeepLinkManager: ObservableObject {
@@ -28,6 +30,21 @@ class DeepLinkManager: ObservableObject {
 
     /// Indique qu'un import vient d'arriver et qu'il faut naviguer vers le tab Match
     @Published var shouldNavigateToMatch: Bool = false
+    
+    /// Données d'entraînement importées, en attente de traitement
+    @Published var pendingTrainingImport: TrainingAttendanceExport?
+    
+    /// Indique qu'un import d'entraînement vient d'arriver
+    @Published var shouldNavigateToTraining: Bool = false
+    
+    /// Données de matchs importées, en attente de traitement
+    @Published var pendingMatchesImport: ExportService.MatchesImportResult?
+    
+    /// Indique qu'un import de matchs vient d'arriver
+    @Published var shouldNavigateToExport: Bool = false
+    
+    /// Message d'erreur à afficher si l'import échoue
+    @Published var importError: String?
 
     private init() {}
 
@@ -80,7 +97,8 @@ class DeepLinkManager: ObservableObject {
         competition: String,
         matchDate: Date,
         previousUnavailableIds: [UUID] = [],
-        previousChain: [String] = []
+        previousChain: [String] = [],
+        targetTeamCode: String? = nil
     ) -> URL? {
         // Exclure les photos pour réduire la taille du lien
         guard let jsonData = ExportService.shared.exportRoster(
@@ -91,7 +109,8 @@ class DeepLinkManager: ObservableObject {
             matchDate: matchDate,
             previousUnavailableIds: previousUnavailableIds,
             previousChain: previousChain,
-            excludePhotos: true
+            excludePhotos: true,
+            targetTeamCode: targetTeamCode
         ) else { return nil }
 
         // Compresser les données
@@ -141,6 +160,7 @@ class DeepLinkManager: ObservableObject {
     /// Traite une URL entrante (fichier .tdj ou lien tempsdejeu://)
     func handleURL(_ url: URL) {
         print("[DeepLink] handleURL appelé: \(url)")
+        print("[DeepLink] Scheme: \(url.scheme ?? "nil")")
         
         // Vérifier si c'est un URL scheme (lien iMessage)
         if url.scheme == "tempsdejeu" {
@@ -148,7 +168,7 @@ class DeepLinkManager: ObservableObject {
             return
         }
 
-        // Sinon, c'est un fichier .tdj
+        // Sinon, c'est un fichier .tdj (scheme = file ou nil)
         handleFileURL(url)
     }
 
@@ -233,35 +253,132 @@ class DeepLinkManager: ObservableObject {
 
     /// Traite un fichier .tdj ouvert par iOS
     private func handleFileURL(_ url: URL) {
+        print("[DeepLink] handleFileURL: \(url)")
+        print("[DeepLink] Scheme: \(url.scheme ?? "nil"), Extension: \(url.pathExtension)")
+        
+        // Accepter les fichiers .tdj, .tdjm OU .json (compat)
+        let ext = url.pathExtension.lowercased()
+        guard ext == "tdj" || ext == "tdjm" || ext == "json" else {
+            print("[DeepLink] Extension non supportée: \(ext)")
+            return
+        }
+        
         // Accéder au fichier sécurisé
         let accessing = url.startAccessingSecurityScopedResource()
         defer {
             if accessing { url.stopAccessingSecurityScopedResource() }
         }
-
-        // Accepter les fichiers .tdj OU .json (compat)
-        let ext = url.pathExtension.lowercased()
-        guard ext == "tdj" || ext == "json" else { return }
-
-        // Lire et décoder le fichier
-        guard let data = try? Data(contentsOf: url) else {
-            print("[DeepLink] Impossible de lire le fichier: \(url)")
-            return
-        }
-
-        // Essayer de décoder comme RosterExport
-        if let rosterExport = ExportService.shared.importRosterExport(from: data) {
-            pendingRosterImport = rosterExport
-            shouldNavigateToMatch = true
-            print("[DeepLink] Import fichier réussi: \(rosterExport.availablePlayers.count) joueurs disponibles")
-        } else {
-            print("[DeepLink] Fichier non reconnu comme RosterExport")
+        
+        // Copier le fichier vers un emplacement temporaire pour s'assurer qu'on peut le lire
+        let tempURL = FileManager.default.temporaryDirectory.appendingPathComponent(url.lastPathComponent)
+        
+        do {
+            // Supprimer l'ancien fichier temporaire s'il existe
+            if FileManager.default.fileExists(atPath: tempURL.path) {
+                try FileManager.default.removeItem(at: tempURL)
+            }
+            
+            // Copier le fichier
+            try FileManager.default.copyItem(at: url, to: tempURL)
+            print("[DeepLink] Fichier copié vers: \(tempURL)")
+            
+            // Lire les données
+            let data = try Data(contentsOf: tempURL)
+            print("[DeepLink] Données lues: \(data.count) bytes")
+            
+            // Afficher un aperçu pour debug
+            if let preview = String(data: data.prefix(200), encoding: .utf8) {
+                print("[DeepLink] Aperçu: \(preview)")
+            }
+            
+            // Essayer de décoder comme RosterExport (composition de match)
+            if let rosterExport = ExportService.shared.importRosterExport(from: data) {
+                pendingRosterImport = rosterExport
+                shouldNavigateToMatch = true
+                importError = nil
+                print("[DeepLink] Import fichier réussi: \(rosterExport.availablePlayers.count) joueurs disponibles")
+            }
+            // Essayer de décoder comme MatchesExport (export de matchs / cartons)
+            else if let matchesResult = ExportService.shared.importMatchesWithMetadata(from: data) {
+                pendingMatchesImport = matchesResult
+                shouldNavigateToExport = true
+                importError = nil
+                print("[DeepLink] Import matchs réussi: \(matchesResult.matches.count) matchs, catégorie: \(matchesResult.teamName ?? "?")")
+            }
+            // Vérifier si c'est un fichier d'entraînements
+            else if let trainingExport = ExportService.shared.importTrainingAttendanceJSON(from: data) {
+                pendingTrainingImport = trainingExport
+                shouldNavigateToTraining = true
+                importError = nil
+                print("[DeepLink] Import entraînements réussi: \(trainingExport.sessions.count) sessions")
+            }
+            // Essayer de décoder comme liste de joueurs simples
+            else if let players = ExportService.shared.importPlayersJSON(from: data), !players.isEmpty {
+                // Créer un RosterExport à partir des joueurs
+                let rosterExport = RosterExport(
+                    teamName: "",
+                    competition: "",
+                    matchDate: Date(),
+                    selectedPlayers: [],
+                    availablePlayers: players,
+                    unavailablePlayerIds: [],
+                    unavailablePlayers: nil,
+                    selectionChain: []
+                )
+                pendingRosterImport = rosterExport
+                shouldNavigateToMatch = true
+                importError = nil
+                print("[DeepLink] Import joueurs réussi: \(players.count) joueurs")
+            } else {
+                importError = "Format de fichier non reconnu."
+                print("[DeepLink] Fichier non reconnu")
+            }
+            
+            // Nettoyer
+            try? FileManager.default.removeItem(at: tempURL)
+            
+        } catch {
+            print("[DeepLink] Erreur lors du traitement du fichier: \(error)")
+            
+            // Essayer de lire directement si la copie a échoué
+            if let data = try? Data(contentsOf: url) {
+                print("[DeepLink] Lecture directe réussie: \(data.count) bytes")
+                if let rosterExport = ExportService.shared.importRosterExport(from: data) {
+                    pendingRosterImport = rosterExport
+                    shouldNavigateToMatch = true
+                    importError = nil
+                    print("[DeepLink] Import direct réussi: \(rosterExport.availablePlayers.count) joueurs disponibles")
+                } else {
+                    importError = "Le fichier n'est pas un fichier valide."
+                    print("[DeepLink] Fichier non reconnu (lecture directe)")
+                }
+            } else {
+                importError = "Impossible de lire le fichier. Erreur: \(error.localizedDescription)"
+                print("[DeepLink] Impossible de lire le fichier directement")
+            }
         }
     }
 
-    /// Consomme les données d'import (après traitement par la vue)
+    /// Consomme les données d'import roster (après traitement par la vue)
     func clearPendingImport() {
         pendingRosterImport = nil
         shouldNavigateToMatch = false
+    }
+    
+    /// Consomme les données d'import entraînement (après traitement par la vue)
+    func clearPendingTrainingImport() {
+        pendingTrainingImport = nil
+        shouldNavigateToTraining = false
+    }
+    
+    /// Consomme les données d'import matchs (après traitement par la vue)
+    func clearPendingMatchesImport() {
+        pendingMatchesImport = nil
+        shouldNavigateToExport = false
+    }
+    
+    /// Efface le message d'erreur
+    func clearError() {
+        importError = nil
     }
 }

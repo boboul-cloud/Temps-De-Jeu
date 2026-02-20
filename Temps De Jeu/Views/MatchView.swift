@@ -1000,6 +1000,13 @@ struct CardSheet: View {
                                 HStack(spacing: 4) {
                                     Text("#\(player.shirtNumber) \(player.displayName)")
                                         .font(.caption)
+                                    // Indicateur carton jaune si le joueur en a reçu un dans ce match
+                                    let playerYellows = viewModel.match.cards.filter { $0.playerId == player.id && $0.type == .yellow }
+                                    if !playerYellows.isEmpty {
+                                        RoundedRectangle(cornerRadius: 1)
+                                            .fill(Color.cardYellow)
+                                            .frame(width: 8, height: 11)
+                                    }
                                     if player.status == .tempExpulse {
                                         Image(systemName: "rectangle.fill")
                                             .font(.system(size: 8))
@@ -1014,6 +1021,42 @@ struct CardSheet: View {
                         }
                     }
                     .padding(.horizontal)
+                }
+
+                // Liste des joueurs expulsés (2ème jaune ou rouge)
+                let expelledPlayers = viewModel.matchRoster.filter { $0.status == .expulse }
+                if !expelledPlayers.isEmpty {
+                    VStack(alignment: .leading, spacing: 6) {
+                        Text("Expulsés")
+                            .font(.caption.bold())
+                            .foregroundStyle(.red)
+                            .padding(.horizontal)
+
+                        ScrollView(.horizontal, showsIndicators: false) {
+                            HStack(spacing: 8) {
+                                ForEach(expelledPlayers) { player in
+                                    HStack(spacing: 4) {
+                                        Text("#\(player.shirtNumber) \(player.displayName)")
+                                            .font(.caption)
+                                            .strikethrough()
+                                            .foregroundStyle(.secondary)
+                                        // Afficher les cartons reçus par ce joueur
+                                        let playerCards = viewModel.match.cards.filter { $0.playerId == player.id }
+                                        ForEach(playerCards) { card in
+                                            RoundedRectangle(cornerRadius: 1)
+                                                .fill(card.type == .red ? Color.cardRed : (card.type == .secondYellow ? Color.cardOrange : Color.cardYellow))
+                                                .frame(width: 8, height: 11)
+                                        }
+                                    }
+                                    .padding(.horizontal, 10)
+                                    .padding(.vertical, 6)
+                                    .background(Color.red.opacity(0.1))
+                                    .cornerRadius(8)
+                                }
+                            }
+                            .padding(.horizontal)
+                        }
+                    }
                 }
             }
 

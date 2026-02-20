@@ -27,7 +27,7 @@ struct UserGuideView: View {
                         icon: "person.3.fill",
                         color: .blue,
                         steps: [
-                            "Allez dans l'onglet **Équipe**",
+                            "Allez dans l'onglet **Joueurs**",
                             "Appuyez sur **+** pour ajouter un joueur",
                             "Renseignez le nom, prénom, numéro et position",
                             "Vous pouvez importer un effectif existant via **Import JSON**"
@@ -82,8 +82,10 @@ struct UserGuideView: View {
                         icon: "arrow.left.arrow.right",
                         color: .purple,
                         steps: [
-                            "**Méthode 1** : Glissez un remplaçant vers un joueur sur le terrain",
-                            "**Méthode 2** : Appuyez sur un joueur sur le terrain, puis sur le remplaçant",
+                            "Appuyez sur le bouton **Rempl.** en haut de l'écran de match",
+                            "Sélectionnez le **titulaire sortant** parmi la liste des titulaires",
+                            "Sélectionnez le **remplaçant entrant** parmi la liste des remplaçants",
+                            "Appuyez sur **Confirmer le remplacement**",
                             "Le remplacement est enregistré avec le temps exact",
                             "Consultez la **Timeline** pour voir l'historique"
                         ]
@@ -118,7 +120,7 @@ struct UserGuideView: View {
                             "Le chrono se met en pause",
                             "Appuyez sur **Reprendre** pour la 2ème mi-temps",
                             "En fin de match, appuyez sur **Terminer**",
-                            "Le match est sauvegardé dans l'**Historique**"
+                            "Le match est sauvegardé dans l'**Historique des matchs**"
                         ]
                     )
                     
@@ -147,7 +149,7 @@ struct UserGuideView: View {
                         icon: "clock.arrow.circlepath",
                         color: .brown,
                         steps: [
-                            "Allez dans l'onglet **Historique**",
+                            "Allez dans l'onglet **Historique des matchs**",
                             "Retrouvez tous vos matchs passés",
                             "Appuyez sur un match pour voir les détails",
                             "Exportez le rapport PDF du match"
@@ -156,12 +158,47 @@ struct UserGuideView: View {
                     
                     Divider()
                     
-                    // 10. Présences aux entraînements
+                    // 10. Catégories
                     guideSection(
                         number: "10",
+                        title: "Gérer les catégories",
+                        icon: "rectangle.stack.fill",
+                        color: .cyan,
+                        steps: [
+                            "Allez dans l'onglet **Catégories**",
+                            "Créez vos catégories d'âge (U13, U15, Seniors…)",
+                            "Les joueurs sont créés dans **Joueurs** dans leur catégorie d'origine",
+                            "Dans **Catégories**, assignez des joueurs à d'autres catégories si nécessaire",
+                            "Chaque catégorie a ses propres **matchs**, **entraînements** et **statistiques**",
+                            "Un badge coloré signale les joueurs venant d'une autre catégorie"
+                        ]
+                    )
+                    
+                    Divider()
+                    
+                    // 11. Joueurs inter-catégories
+                    guideSection(
+                        number: "11",
+                        title: "Joueurs inter-catégories",
+                        icon: "person.2.badge.plus",
+                        color: .orange,
+                        steps: [
+                            "Un joueur a **une catégorie d'origine** (là où il est créé)",
+                            "Il peut être **assigné à d'autres catégories** pour les matchs",
+                            "Lors d'un entraînement, dépliez **Joueurs d'autres catégories** pour inviter des joueurs",
+                            "Les entraînements avec d'autres catégories sont comptés dans ses **statistiques de présence**",
+                            "Un joueur sélectionné dans un match d'une catégorie est **verrouillé** dans les autres"
+                        ]
+                    )
+                    
+                    Divider()
+                    
+                    // 12. Présences aux entraînements
+                    guideSection(
+                        number: "12",
                         title: "Présences aux entraînements",
                         icon: "figure.run.circle.fill",
-                        color: .orange,
+                        color: .mint,
                         steps: [
                             "Allez dans l'onglet **Présences**",
                             "Appuyez sur **⋯** puis **Nouvel entraînement**",
@@ -232,22 +269,22 @@ struct UserGuideView: View {
                     HStack(spacing: 4) {
                         Image(systemName: "arrow.triangle.branch")
                             .font(.caption)
-                        Text("Pour clubs multi-équipes")
+                        Text("Pour clubs multi-catégories")
                             .font(.caption)
                     }
                     .foregroundStyle(.cyan)
                 }
             }
             
-            Text("Idéal pour les clubs avec plusieurs équipes (A, B, C, D...) :")
+            Text("Idéal pour les clubs avec plusieurs catégories (Seniors, U15A, U15B, U13...) :")
                 .font(.subheadline)
                 .foregroundStyle(.secondary)
             
             VStack(alignment: .leading, spacing: 8) {
-                cascadeStep("1", "L'équipe **A** sélectionne ses joueurs")
+                cascadeStep("1", "La catégorie **Seniors** sélectionne ses joueurs")
                 cascadeStep("2", "Elle exporte les **joueurs disponibles** via le bouton Partager")
-                cascadeStep("3", "L'équipe **B** importe le fichier → les joueurs pris par A sont marqués indisponibles")
-                cascadeStep("4", "B sélectionne ses joueurs et exporte pour **C**, etc.")
+                cascadeStep("3", "La catégorie **U15A** importe le fichier → les joueurs pris par les Seniors sont marqués indisponibles")
+                cascadeStep("4", "U15A sélectionne ses joueurs et exporte pour **U15B**, etc.")
             }
             
             HStack(spacing: 8) {
@@ -307,7 +344,7 @@ struct UserGuideView: View {
             
             VStack(alignment: .leading, spacing: 12) {
                 tipRow(icon: "icloud.fill", text: "Vos données sont sauvegardées automatiquement sur votre appareil")
-                tipRow(icon: "arrow.clockwise", text: "Restaurez vos achats depuis Réglages si vous changez d'appareil")
+                tipRow(icon: "arrow.clockwise", text: "Restaurez vos achats depuis Réglages et Exports si vous changez d'appareil")
                 tipRow(icon: "square.and.arrow.up", text: "Exportez régulièrement votre effectif en JSON pour avoir une sauvegarde")
                 tipRow(icon: "person.crop.circle.badge.plus", text: "Ajoutez une photo à vos joueurs pour les identifier plus facilement")
             }
