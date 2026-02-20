@@ -14,6 +14,7 @@ struct ProfileManagementView: View {
     @State private var showDeleteConfirmation = false
     @State private var profileToDelete: TeamProfile?
     @State private var editingProfile: TeamProfile?
+    @State private var showAssignSheet = false
 
     var body: some View {
         List {
@@ -84,7 +85,7 @@ struct ProfileManagementView: View {
 
             // Gestion des joueurs dans le profil actif
             if let activeProfile = profileManager.activeProfile {
-                PlayerAssignmentSection(profile: activeProfile)
+                PlayerAssignmentSection(profile: activeProfile, showAssignSheet: $showAssignSheet)
             }
         }
         .listStyle(.insetGrouped)
@@ -94,6 +95,11 @@ struct ProfileManagementView: View {
         }
         .sheet(item: $editingProfile) { profile in
             EditProfileSheet(profile: profile)
+        }
+        .sheet(isPresented: $showAssignSheet) {
+            if let activeProfile = profileManager.activeProfile {
+                PlayerAssignmentSheet(profile: activeProfile)
+            }
         }
         .alert("Supprimer cette catégorie ?", isPresented: $showDeleteConfirmation) {
             Button("Supprimer", role: .destructive) {
@@ -423,7 +429,7 @@ struct EditProfileSheet: View {
 
 struct PlayerAssignmentSection: View {
     let profile: TeamProfile
-    @State private var showAssignSheet = false
+    @Binding var showAssignSheet: Bool
 
     var body: some View {
         Section {
@@ -447,9 +453,6 @@ struct PlayerAssignmentSection: View {
             Text("Joueurs de la catégorie active")
         } footer: {
             Text("Ajoutez ou retirez des joueurs de la base globale pour cette catégorie.")
-        }
-        .sheet(isPresented: $showAssignSheet) {
-            PlayerAssignmentSheet(profile: profile)
         }
     }
 }
