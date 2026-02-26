@@ -4,12 +4,12 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Temps De Jeu - Gérez le temps de jeu de vos joueurs</title>
-    <meta name="description" content="Application iOS pour gérer le temps de jeu des joueurs lors des matchs de football. Idéale pour les entraîneurs de clubs amateurs.">
+    <meta name="description" content="Application iOS complète pour gérer le temps de jeu, les cartons, l'encadrement, les entraînements et les statistiques de vos équipes de football. Idéale pour les entraîneurs de clubs amateurs.">
     <meta name="theme-color" content="#34C759">
     
     <!-- Open Graph -->
     <meta property="og:title" content="Temps De Jeu">
-    <meta property="og:description" content="Gérez le temps de jeu de vos joueurs de football">
+    <meta property="og:description" content="Gérez le temps de jeu, les cartons, l'encadrement et les statistiques de vos équipes de football">
     <meta property="og:type" content="website">
     <meta property="og:image" content="https://boboul-cloud.github.io/Temps-De-Jeu/og-image.png">
     
@@ -381,7 +381,7 @@
     <section class="hero">
         <div class="hero-icon">⚽</div>
         <h1>Temps De Jeu</h1>
-        <p>L'application iOS pour gérer équitablement le temps de jeu de vos joueurs. Idéale pour les entraîneurs de clubs amateurs.</p>
+        <p>L'application iOS complète pour gérer le temps de jeu, les cartons, l'encadrement, les entraînements et les statistiques de vos équipes de football. Idéale pour les entraîneurs de clubs amateurs.</p>
         <div class="cta-buttons">
             <a href="https://apps.apple.com/app/temps-de-jeu/id6742602498" class="btn btn-primary">
                 <svg width="24" height="24" viewBox="0 0 24 24" fill="currentColor"><path d="M18.71 19.5c-.83 1.24-1.71 2.45-3.05 2.47-1.34.03-1.77-.79-3.29-.79-1.53 0-2 .77-3.27.82-1.31.05-2.3-1.32-3.14-2.53C4.25 17 2.94 12.45 4.7 9.39c.87-1.52 2.43-2.48 4.12-2.51 1.28-.02 2.5.87 3.29.87.78 0 2.26-1.07 3.81-.91.65.03 2.47.26 3.64 1.98-.09.06-2.17 1.28-2.15 3.81.03 3.02 2.65 4.03 2.68 4.04-.03.07-.42 1.44-1.38 2.83M13 3.5c.73-.83 1.94-1.46 2.94-1.5.13 1.17-.34 2.35-1.04 3.19-.69.85-1.83 1.51-2.95 1.42-.15-1.15.41-2.35 1.05-3.11z"/></svg>
@@ -398,47 +398,67 @@
                 <div class="feature-card">
                     <div class="feature-icon">⏱️</div>
                     <h3>Chronomètre intelligent</h3>
-                    <p>Suivez le temps de jeu de chaque joueur en temps réel avec gestion des arrêts de jeu.</p>
+                    <p>Suivez le temps de jeu de chaque joueur en temps réel. 11 types d'arrêts de jeu (touche, corner, coup franc, penalty, blessure, VAR…) avec calcul automatique du temps additionnel.</p>
                 </div>
                 <div class="feature-card">
                     <div class="feature-icon">🔄</div>
                     <h3>Remplacements faciles</h3>
-                    <p>Gérez les remplacements par simple glisser-déposer. Historique complet des changements.</p>
+                    <p>Gérez les remplacements par simple glisser-déposer. Support des prolongations (2 × 15 min). Historique complet des changements.</p>
                 </div>
                 <div class="feature-card">
                     <div class="feature-icon">📊</div>
-                    <h3>Statistiques détaillées</h3>
-                    <p>Analysez le temps de jeu par joueur, par match et sur la saison.</p>
+                    <h3>Statistiques en direct</h3>
+                    <p>Jauge de temps effectif, répartition des arrêts par type et par équipe, tableau des buteurs, fautes par joueur et par période. Analyse détaillée par match et sur la saison.</p>
                 </div>
                 <div class="feature-card">
                     <div class="feature-icon">📱</div>
                     <h3>Partage instantané</h3>
-                    <p>Partagez compositions et statistiques via iMessage, AirDrop ou PDF.</p>
+                    <p>Partagez compositions (.tdj) et matchs (.tdjm) via iMessage, AirDrop ou PDF. Import intelligent avec dédoublonnage automatique et routage par code catégorie.</p>
                 </div>
                 <div class="feature-card">
                     <div class="feature-icon">🎯</div>
                     <h3>Timeline des événements</h3>
-                    <p>Buts, cartons, remplacements : tout est enregistré avec le temps exact.</p>
+                    <p>Buts, cartons, remplacements, fautes : tout est enregistré avec le temps exact et l'icône du type d'événement.</p>
                 </div>
                 <div class="feature-card">
                     <div class="feature-icon">👥</div>
                     <h3>Gestion d'effectif</h3>
-                    <p>Créez votre effectif avec positions, disponibilités et photos des joueurs.</p>
+                    <p>Créez votre effectif avec positions, disponibilités (disponible, blessé, absent, suspendu) et photos des joueurs. Sélection domicile / extérieur.</p>
+                </div>
+                <div class="feature-card">
+                    <div class="feature-icon">🟨</div>
+                    <h3>Gestion des cartons</h3>
+                    <p>Suivi complet des cartons jaunes, 2ème jaunes, rouges et blancs. Tableau de bord dédié avec classement, filtrage par type, historique et purge des cartons purgés.</p>
+                </div>
+                <div class="feature-card">
+                    <div class="feature-icon">⬜</div>
+                    <h3>Carton blanc & expulsion temporaire</h3>
+                    <p>Support du carton blanc avec expulsion temporaire de 10 minutes. Compte à rebours en direct avec alerte automatique quand le joueur peut revenir.</p>
                 </div>
                 <div class="feature-card">
                     <div class="feature-icon">🏠</div>
                     <h3>Multi-catégories</h3>
-                    <p>Gérez plusieurs équipes (U13, U15, Seniors…) avec une base de joueurs partagée. Chaque catégorie a ses propres matchs, entraînements et saison.</p>
+                    <p>Gérez plusieurs équipes (U13, U15, Seniors…) avec une base de joueurs partagée. Chaque catégorie a ses propres matchs, entraînements et saison. Barre de sélection rapide en haut de l'écran.</p>
+                </div>
+                <div class="feature-card">
+                    <div class="feature-icon">🔑</div>
+                    <h3>Code catégorie</h3>
+                    <p>Chaque catégorie possède un code unique à 6 caractères. L'entraîneur principal le génère et le partage aux adjoints pour que les imports de composition arrivent automatiquement sur la bonne catégorie.</p>
+                </div>
+                <div class="feature-card">
+                    <div class="feature-icon">👔</div>
+                    <h3>Gestion de l'encadrement</h3>
+                    <p>Ajoutez coachs, adjoints, délégués, arbitres et staff médical avec photos, téléphone et email. Appel direct depuis l'app. Assignation multi-catégorie avec rôles personnalisables.</p>
                 </div>
                 <div class="feature-card">
                     <div class="feature-icon">🏋️</div>
                     <h3>Entraînements & présences</h3>
-                    <p>Pointez les présences aux entraînements, suivez les statistiques de présence par joueur et exportez les feuilles de présence en PDF.</p>
+                    <p>Pointez les présences aux entraînements, invitez des joueurs d'autres catégories, suivez les statistiques de présence par joueur et exportez les feuilles de présence en PDF.</p>
                 </div>
                 <div class="feature-card">
                     <div class="feature-icon">🔀</div>
                     <h3>Joueurs inter-catégories</h3>
-                    <p>Un joueur peut s'entraîner avec une autre catégorie. Sa participation est comptabilisée dans ses statistiques et il est signalé par un badge de couleur.</p>
+                    <p>Un joueur appartient à une catégorie d'origine et peut être assigné ou invité dans d'autres. Sa catégorie d'origine est toujours visible grâce à un badge de couleur.</p>
                 </div>
                 <div class="feature-card">
                     <div class="feature-icon">📅</div>
@@ -448,7 +468,12 @@
                 <div class="feature-card">
                     <div class="feature-icon">📦</div>
                     <h3>Import / Export complet</h3>
-                    <p>Exportez vos effectifs, matchs et entraînements en PDF ou JSON. Importez des données d'un autre appareil ou d'une autre application.</p>
+                    <p>Exportez effectifs, matchs et entraînements en PDF ou JSON (.tdj / .tdjm). Import intelligent avec fusion des données et dédoublonnage automatique des cartons et événements.</p>
+                </div>
+                <div class="feature-card">
+                    <div class="feature-icon">📖</div>
+                    <h3>Guide d'utilisation intégré</h3>
+                    <p>Mode d'emploi complet accessible depuis les réglages avec 12 sections illustrées couvrant toutes les fonctionnalités de l'application.</p>
                 </div>
             </div>
         </div>
@@ -502,7 +527,7 @@
                 
                 <details class="faq-item">
                     <summary>Comment créer mon premier match ?</summary>
-                    <p>Commencez par ajouter vos joueurs dans l'onglet "Effectif", puis créez un nouveau match depuis l'écran principal. Sélectionnez les joueurs titulaires et remplaçants, puis lancez le chronomètre.</p>
+                    <p>Commencez par ajouter vos joueurs dans l'onglet "Joueurs", puis créez un nouveau match depuis l'onglet "Match". Choisissez domicile ou extérieur, sélectionnez les joueurs titulaires et remplaçants, puis lancez le chronomètre.</p>
                 </details>
                 
                 <details class="faq-item">
@@ -547,7 +572,22 @@
 
                 <details class="faq-item">
                     <summary>Comment transférer mes données sur un autre appareil ?</summary>
-                    <p>Utilisez la fonction d'export JSON pour sauvegarder vos données (effectif, matchs, entraînements), puis importez-les sur le nouvel appareil. Les fichiers peuvent être partagés via AirDrop, email ou tout autre moyen.</p>
+                    <p>Utilisez la fonction d'export JSON pour sauvegarder vos données (effectif, matchs, entraînements), puis importez-les sur le nouvel appareil. Les fichiers (.tdj pour compositions, .tdjm pour matchs) peuvent être partagés via AirDrop, email ou tout autre moyen. L'import est intelligent : il dédoublonne automatiquement les données existantes.</p>
+                </details>
+
+                <details class="faq-item">
+                    <summary>Comment fonctionne le carton blanc ?</summary>
+                    <p>Le carton blanc entraîne une expulsion temporaire de 10 minutes. Un compte à rebours s'affiche en direct pendant le match et une alerte vous prévient automatiquement quand le joueur peut revenir sur le terrain.</p>
+                </details>
+
+                <details class="faq-item">
+                    <summary>Comment gérer l'encadrement (coachs, délégués…) ?</summary>
+                    <p>Dans l'onglet "Réglages", section "Encadrement", ajoutez les membres de votre staff avec leur rôle, numéro de téléphone et email. Vous pouvez les assigner à plusieurs catégories et les appeler directement depuis l'app.</p>
+                </details>
+
+                <details class="faq-item">
+                    <summary>Qu'est-ce que le code catégorie ?</summary>
+                    <p>C'est un code unique de 6 caractères généré pour chaque catégorie. L'entraîneur principal le partage aux adjoints pour que les imports de composition arrivent automatiquement sur la bonne catégorie, même entre différents appareils.</p>
                 </details>
             </div>
         </div>
@@ -561,7 +601,7 @@
             <a href="terms.html">Conditions d'utilisation</a> ·
             <a href="#support">Support</a>
         </p>
-        <p style="margin-top: 8px; font-size: 0.9rem;">© 2026 Temps De Jeu.</p>
+        <p style="margin-top: 8px; font-size: 0.9rem;">© 2026 Temps De Jeu. Mis à jour le 26 février 2026.</p>
     </footer>
 </body>
 </html>

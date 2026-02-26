@@ -103,12 +103,21 @@ struct ContentView: View {
                 }
                 .tag(6)
 
-                // Tab 8 : Paramètres / Premium
+                // Tab 8 : Encadrement (More)
+                NavigationStack {
+                    StaffManagementView()
+                }
+                .tabItem {
+                    Label("Encadrement", systemImage: "person.badge.shield.checkmark.fill")
+                }
+                .tag(7)
+
+                // Tab 9 : Paramètres / Premium
                 SettingsView(storeManager: storeManager)
                     .tabItem {
                         Label("Réglages et Exports", systemImage: "gearshape.fill")
                     }
-                    .tag(7)
+                    .tag(8)
             }
             .tint(profileManager.activeProfileColor)
         }

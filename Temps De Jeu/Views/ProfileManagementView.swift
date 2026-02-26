@@ -472,7 +472,7 @@ struct AssignmentPlayerRow: View {
     var body: some View {
         HStack(spacing: 12) {
             Image(systemName: isSelected ? "checkmark.circle.fill" : "circle")
-                .foregroundStyle(isSelected ? checkColor : .secondary)
+                .foregroundStyle(isSelected ? (showBadge ? nameColor : checkColor) : .secondary)
                 .font(.title3)
 
             VStack(alignment: .leading, spacing: 2) {
@@ -523,7 +523,16 @@ struct PlayerAssignmentSheet: View {
         var catNames: [UUID: String] = [:]
         var catColors: [UUID: Int] = [:]
         for player in players {
-            if let p = profiles.first(where: { $0.playerIds.contains(player.id) }) {
+            // Utiliser homeCategoryId pour déterminer la catégorie d'origine
+            let homeProfile: TeamProfile?
+            if let homeId = player.homeCategoryId,
+               let hp = profiles.first(where: { $0.id == homeId }) {
+                homeProfile = hp
+            } else {
+                // Fallback : première catégorie contenant le joueur
+                homeProfile = profiles.first(where: { $0.playerIds.contains(player.id) })
+            }
+            if let p = homeProfile {
                 colors[player.id] = ProfileManager.color(for: p.colorIndex)
                 badges[player.id] = (p.id != profile.id)
                 catNames[player.id] = p.name
