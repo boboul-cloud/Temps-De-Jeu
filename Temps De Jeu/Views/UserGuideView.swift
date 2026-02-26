@@ -214,6 +214,27 @@ struct UserGuideView: View {
                     
                     Divider()
                     
+                    // 13. Encadrement
+                    guideSection(
+                        number: "13",
+                        title: "Gérer l'encadrement",
+                        icon: "person.badge.shield.checkmark.fill",
+                        color: .brown,
+                        steps: [
+                            "Allez dans l'onglet **Encadrement** (dans « Autres »)",
+                            "Appuyez sur **+** puis **Ajouter un encadrant**",
+                            "Renseignez le **nom**, **prénom**, **rôle**, **téléphone** et **email**",
+                            "Ajoutez une **photo** pour identifier facilement chaque encadrant",
+                            "**8 rôles prédéfinis** : Coach, Adjoint, Arbitre, Délégué, Préparateur physique, Entraîneur des gardiens, Intendant, Responsable médical",
+                            "Créez vos propres rôles via **Gérer les rôles** dans le menu **+**",
+                            "Assignez un encadrant à **plusieurs catégories** depuis sa fiche",
+                            "**Appelez directement** un encadrant en appuyant sur l'icône téléphone ou par swipe",
+                            "Supprimez un encadrant par **swipe vers la gauche**"
+                        ]
+                    )
+                    
+                    Divider()
+                    
                     // Tips
                     tipsSection
                     
