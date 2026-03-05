@@ -330,7 +330,7 @@
                 for (let i = 0; i < binaryStr.length; i++) compressedBytes[i] = binaryStr.charCodeAt(i);
                 
                 // Decompress zlib using DecompressionStream API
-                const ds = new DecompressionStream('deflate');
+                const ds = new DecompressionStream('deflate-raw');
                 const writer = ds.writable.getWriter();
                 writer.write(compressedBytes);
                 writer.close();
