@@ -40,6 +40,7 @@ class MatchViewModel: ObservableObject {
     @Published var activeTempExpulsions: [TempExpulsion] = []  // Expulsions temporaires en cours
     @Published var showTempExpulsionEndAlert = false
     @Published var endedTempExpulsionPlayerName: String = ""
+    @Published var currentPossession: BeneficiaryTeam?  // Équipe qui a la possession
 
     // Temps effectif de jeu au début de chaque expulsion temporaire dans la période courante
     // Clé = TempExpulsion.id, Valeur = effectiveTime au moment du début dans cette période
@@ -52,6 +53,8 @@ class MatchViewModel: ObservableObject {
     private var stoppageStartDate: Date?
     private var accumulatedTime: TimeInterval = 0         // Temps accumulé avant pause
     private var accumulatedStoppageTime: TimeInterval = 0
+    private var possessionStartDate: Date?                 // Début du chrono possession actuelle
+    private var accumulatedPossessionTime: TimeInterval = 0 // Temps possession accumulé avant pause
 
     private static var draftKey: String {
         "\(ProfileManager.currentStoragePrefix)matchSetupDraft"
@@ -145,6 +148,108 @@ class MatchViewModel: ObservableObject {
         currentPeriod == .extraSecondHalf
     }
 
+    // MARK: - Possession
+
+    /// Temps de possession actuel de l'équipe domicile (live)
+    var currentHomePossessionTime: TimeInterval {
+        if currentPossession == .home, let start = possessionStartDate {
+            return accumulatedPossessionTime + Date().timeIntervalSince(start)
+        }
+        return match.homePossessionTime
+    }
+
+    /// Temps de possession actuel de l'équipe extérieure (live)
+    var currentAwayPossessionTime: TimeInterval {
+        if currentPossession == .away, let start = possessionStartDate {
+            return accumulatedPossessionTime + Date().timeIntervalSince(start)
+        }
+        return match.awayPossessionTime
+    }
+
+    /// Pourcentage de possession domicile (0-100)
+    var homePossessionPercentage: Double {
+        let total = currentHomePossessionTime + currentAwayPossessionTime
+        guard total > 0 else { return 50 }
+        return (currentHomePossessionTime / total) * 100
+    }
+
+    /// Pourcentage de possession extérieur (0-100)
+    var awayPossessionPercentage: Double {
+        return 100 - homePossessionPercentage
+    }
+
+    /// Sélectionner l'équipe qui a la possession
+    func selectPossession(_ team: BeneficiaryTeam) {
+        guard timerState == .running else { return }
+
+        // Enregistrer la possession actuelle
+        flushPossession()
+
+        if currentPossession == team {
+            // Taper la même équipe = désactiver le suivi
+            currentPossession = nil
+            possessionStartDate = nil
+            accumulatedPossessionTime = 0
+            return
+        }
+
+        // Basculer vers la nouvelle équipe
+        currentPossession = team
+        accumulatedPossessionTime = team == .home ? match.homePossessionTime : match.awayPossessionTime
+        possessionStartDate = Date()
+
+        // Haptic feedback léger
+        let impactFeedback = UIImpactFeedbackGenerator(style: .light)
+        impactFeedback.impactOccurred()
+    }
+
+    /// Enregistre le temps de possession accumulé dans le match
+    private func flushPossession() {
+        guard let team = currentPossession, let start = possessionStartDate else { return }
+        let elapsed = accumulatedPossessionTime + Date().timeIntervalSince(start)
+        if team == .home {
+            match.homePossessionTime = elapsed
+        } else {
+            match.awayPossessionTime = elapsed
+        }
+    }
+
+    /// Pause la possession (pendant arrêts / fin de période)
+    private func pausePossession() {
+        flushPossession()
+        possessionStartDate = nil
+        accumulatedPossessionTime = 0
+    }
+
+    /// Reprend la possession après une pause (reprise de jeu)
+    private func resumePossession() {
+        guard let team = currentPossession else { return }
+        accumulatedPossessionTime = team == .home ? match.homePossessionTime : match.awayPossessionTime
+        possessionStartDate = Date()
+    }
+
+    // MARK: - Passes
+
+    /// Incrémenter le compteur de passes pour une équipe
+    func addPass(team: BeneficiaryTeam) {
+        if team == .home {
+            match.homePasses += 1
+        } else {
+            match.awayPasses += 1
+        }
+        let impactFeedback = UIImpactFeedbackGenerator(style: .light)
+        impactFeedback.impactOccurred()
+    }
+
+    /// Décrémenter le compteur de passes pour une équipe (correction)
+    func removePass(team: BeneficiaryTeam) {
+        if team == .home {
+            match.homePasses = max(0, match.homePasses - 1)
+        } else {
+            match.awayPasses = max(0, match.awayPasses - 1)
+        }
+    }
+
     // MARK: - Actions du match
 
     /// Démarrer le match ou reprendre la période
@@ -164,6 +269,9 @@ class MatchViewModel: ObservableObject {
 
         // Reprendre les expulsions temporaires en cours (après mi-temps)
         resumeTempExpulsions()
+
+        // Reprendre la possession si une était sélectionnée
+        resumePossession()
 
         startTimer()
     }
@@ -187,6 +295,9 @@ class MatchViewModel: ObservableObject {
         stoppageStartDate = Date()
         accumulatedStoppageTime = 0
         stoppageElapsed = 0
+
+        // Pauser la possession pendant l'arrêt
+        pausePossession()
 
         // Haptic feedback
         let impactFeedback = UIImpactFeedbackGenerator(style: .heavy)
@@ -256,6 +367,9 @@ class MatchViewModel: ObservableObject {
         stoppageElapsed = 0
         stoppageStartDate = nil
 
+        // Reprendre la possession
+        resumePossession()
+
         // Haptic feedback
         let impactFeedback = UIImpactFeedbackGenerator(style: .medium)
         impactFeedback.impactOccurred()
@@ -273,6 +387,9 @@ class MatchViewModel: ObservableObject {
 
         // Geler les expulsions temporaires en cours (pause mi-temps)
         pauseTempExpulsions()
+
+        // Pauser la possession
+        pausePossession()
 
         timerState = .periodEnded
         stopTimer()
@@ -318,6 +435,9 @@ class MatchViewModel: ObservableObject {
         matchRoster = []
         activeTempExpulsions = []
         tempExpulsionPeriodStartEffective = [:]
+        currentPossession = nil
+        possessionStartDate = nil
+        accumulatedPossessionTime = 0
         clearDraft()
     }
 
@@ -453,6 +573,11 @@ class MatchViewModel: ObservableObject {
         // Si arrêt en cours, mettre à jour le temps d'arrêt
         if let stoppageStart = stoppageStartDate {
             stoppageElapsed = accumulatedStoppageTime + Date().timeIntervalSince(stoppageStart)
+        }
+
+        // Mettre à jour la possession (flush régulier pour affichage live)
+        if currentPossession != nil && timerState == .running {
+            flushPossession()
         }
 
         // Vérifier les expulsions temporaires
@@ -685,6 +810,31 @@ class MatchViewModel: ObservableObject {
         match.fouls.filter { $0.playerId == playerId }.count
     }
 
+    // MARK: - Passes décisives
+
+    func addAssist(playerName: String, playerId: UUID? = nil) {
+        let assist = AssistEvent(
+            playerName: playerName,
+            playerId: playerId,
+            minute: elapsedTime,
+            period: currentPeriod
+        )
+        match.assists.append(assist)
+
+        // Haptic feedback
+        let impactFeedback = UIImpactFeedbackGenerator(style: .medium)
+        impactFeedback.impactOccurred()
+    }
+
+    func removeAssist(_ assist: AssistEvent) {
+        match.assists.removeAll { $0.id == assist.id }
+    }
+
+    /// Nombre de passes décisives pour un joueur donné
+    func assistCount(for playerId: UUID) -> Int {
+        match.assists.filter { $0.playerId == playerId }.count
+    }
+
     // MARK: - Remplacements
 
     func addSubstitution(playerOut: String, playerIn: String, playerOutId: UUID? = nil, playerInId: UUID? = nil) {
@@ -749,5 +899,149 @@ class MatchViewModel: ObservableObject {
     /// Les joueurs sous carton blanc (expulsion temporaire) restent sélectionnables
     var allMatchPlayers: [MatchPlayer] {
         matchRoster.filter { $0.status != .expulse }.sorted { $0.shirtNumber < $1.shirtNumber }
+    }
+
+    // MARK: - Temps de jeu live (équité)
+
+    /// Structure de résultat pour le temps de jeu live d'un joueur
+    struct LivePlayingTime: Identifiable {
+        let id: UUID
+        let playerName: String
+        let shirtNumber: Int
+        let position: PlayerPosition
+        var totalTime: TimeInterval
+        let isOnField: Bool
+        let isTitulaire: Bool
+    }
+
+    /// Calcule le temps de jeu de chaque joueur EN DIRECT, en tenant compte:
+    /// - Des périodes terminées (stockées dans match.periodDurations)
+    /// - De la période en cours (utilisant elapsedTime live)
+    func livePlayerPlayingTimes() -> [LivePlayingTime] {
+        guard !matchRoster.isEmpty else { return [] }
+
+        // Périodes terminées
+        let finishedPeriods = MatchPeriod.allCases.filter { match.periodDurations[$0.rawValue] != nil }
+
+        // Statut initial de chaque joueur
+        var initiallyOnField: [UUID: Bool] = [:]
+        for mp in matchRoster {
+            initiallyOnField[mp.id] = match.wasInitiallyOnField(playerId: mp.id)
+        }
+
+        var results: [LivePlayingTime] = []
+
+        for mp in matchRoster {
+            var totalOnField: TimeInterval = 0
+            var currentlyOnField = false
+
+            // 1) Périodes terminées
+            for period in finishedPeriods {
+                let periodDuration = match.periodDurations[period.rawValue] ?? 0
+                let (timeInPeriod, onFieldAtEnd) = calcTimeInPeriod(
+                    playerId: mp.id,
+                    period: period,
+                    periodDuration: periodDuration,
+                    finishedPeriods: finishedPeriods,
+                    initiallyOnField: initiallyOnField
+                )
+                totalOnField += timeInPeriod
+                currentlyOnField = onFieldAtEnd
+            }
+
+            // 2) Période en cours (si le match tourne)
+            if timerState != .idle && timerState != .matchEnded && timerState != .periodEnded {
+                let isCurrentFinished = finishedPeriods.contains(currentPeriod)
+                if !isCurrentFinished {
+                    // Déterminer si le joueur est sur le terrain au début de la période courante
+                    let wasOnFieldAtStart: Bool
+                    if finishedPeriods.isEmpty {
+                        wasOnFieldAtStart = initiallyOnField[mp.id] ?? false
+                    } else {
+                        wasOnFieldAtStart = currentlyOnField
+                    }
+
+                    let (timeInPeriod, onFieldNow) = calcTimeInPeriod(
+                        playerId: mp.id,
+                        period: currentPeriod,
+                        periodDuration: elapsedTime,
+                        finishedPeriods: finishedPeriods,
+                        initiallyOnField: initiallyOnField,
+                        overrideWasOnFieldAtStart: wasOnFieldAtStart
+                    )
+                    totalOnField += timeInPeriod
+                    currentlyOnField = onFieldNow
+                }
+            } else if timerState == .periodEnded {
+                // Pendant la mi-temps aussi rester cohérent
+            }
+
+            results.append(LivePlayingTime(
+                id: mp.id,
+                playerName: mp.fullName.isEmpty ? "Joueur #\(mp.shirtNumber)" : mp.fullName,
+                shirtNumber: mp.shirtNumber,
+                position: mp.position,
+                totalTime: totalOnField,
+                isOnField: currentlyOnField,
+                isTitulaire: initiallyOnField[mp.id] ?? false
+            ))
+        }
+
+        return results.sorted { $0.totalTime < $1.totalTime }
+    }
+
+    /// Calcule le temps sur le terrain pour un joueur dans une période donnée
+    /// Retourne (temps sur terrain, était sur terrain à la fin de la période)
+    private func calcTimeInPeriod(
+        playerId: UUID,
+        period: MatchPeriod,
+        periodDuration: TimeInterval,
+        finishedPeriods: [MatchPeriod],
+        initiallyOnField: [UUID: Bool],
+        overrideWasOnFieldAtStart: Bool? = nil
+    ) -> (TimeInterval, Bool) {
+
+        let wasOnFieldAtStart: Bool
+        if let override = overrideWasOnFieldAtStart {
+            wasOnFieldAtStart = override
+        } else if period == MatchPeriod.allCases.first(where: { finishedPeriods.contains($0) || $0 == currentPeriod }) {
+            wasOnFieldAtStart = initiallyOnField[playerId] ?? false
+        } else {
+            wasOnFieldAtStart = match.wasPlayerOnFieldAtEndOf(playerId: playerId, period: match.previousPeriod(period), playedPeriods: finishedPeriods, initiallyOnField: initiallyOnField)
+        }
+
+        let subsOut = match.substitutions.filter { $0.period == period && $0.playerOutId == playerId }
+        let subsIn = match.substitutions.filter { $0.period == period && $0.playerInId == playerId }
+
+        struct FieldEvent: Comparable {
+            let minute: TimeInterval
+            let isEntering: Bool
+            static func < (lhs: FieldEvent, rhs: FieldEvent) -> Bool { lhs.minute < rhs.minute }
+        }
+
+        var events: [FieldEvent] = []
+        for s in subsOut { events.append(FieldEvent(minute: s.minute, isEntering: false)) }
+        for s in subsIn { events.append(FieldEvent(minute: s.minute, isEntering: true)) }
+        events.sort()
+
+        var onField = wasOnFieldAtStart
+        var lastChange: TimeInterval = 0
+        var timeOnField: TimeInterval = 0
+
+        for event in events {
+            if onField { timeOnField += event.minute - lastChange }
+            onField = event.isEntering
+            lastChange = event.minute
+        }
+        if onField { timeOnField += periodDuration - lastChange }
+
+        return (timeOnField, onField)
+    }
+
+    /// Écart max entre le joueur le plus joué et le moins joué
+    var playingTimeGap: TimeInterval {
+        let times = livePlayerPlayingTimes()
+        guard let max = times.last?.totalTime, let min = times.first?.totalTime else { return 0 }
+        return max - min
     }
 }

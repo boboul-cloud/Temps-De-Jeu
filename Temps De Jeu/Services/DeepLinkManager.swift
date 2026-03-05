@@ -506,6 +506,13 @@ class DeepLinkManager: ObservableObject {
             // Appliquer directement la réponse dans la session d'entraînement
             TrainingManager.shared.applyAvailabilityResponse(response, forSession: session.id)
             
+            // Notification locale
+            NotificationManager.shared.notifyAvailabilityResponse(
+                playerName: playerName,
+                status: status,
+                sessionDate: session.date
+            )
+            
             pendingAvailabilityResponse = response
             pendingAvailabilitySessionId = session.id
             shouldNavigateToAvailability = true

@@ -20,7 +20,9 @@ struct MatchView: View {
     @State private var showCardSheet = false
     @State private var showSubSheet = false
     @State private var showFoulSheet = false
+    @State private var showAssistSheet = false
     @State private var showCardsList = false
+    @State private var showPostMatchRecap = false
     @State private var pendingStoppageType: StoppageType?
     @State private var pendingIsChain = false
     @State private var showTeamPicker = false
@@ -44,6 +46,11 @@ struct MatchView: View {
                             // Chronomètre principal
                             timerDisplay
                                 .padding(.vertical, 12)
+
+                            // Boutons compteur de passes
+                            passCounterButtons
+                                .padding(.horizontal)
+                                .padding(.bottom, 8)
 
                             // Info arrêt en cours
                             if case .stopped(let type, _) = viewModel.timerState {
@@ -76,6 +83,13 @@ struct MatchView: View {
                             quickStatsBar
                                 .padding(.horizontal)
                                 .padding(.top, 8)
+
+                            // Indicateur d'équité temps de jeu
+                            if viewModel.timerState != .idle && !viewModel.matchRoster.isEmpty {
+                                PlayingTimeFairnessView(viewModel: viewModel)
+                                    .padding(.horizontal)
+                                    .padding(.top, 8)
+                            }
                         }
                     }
                     .scrollIndicators(.hidden)
@@ -146,6 +160,10 @@ struct MatchView: View {
                 FoulSheet(viewModel: viewModel)
                     .presentationDetents([.height(350)])
             }
+            .sheet(isPresented: $showAssistSheet) {
+                AssistSheet(viewModel: viewModel)
+                    .presentationDetents([.height(350)])
+            }
             .sheet(isPresented: $showCardsList) {
                 MatchCardsListView(viewModel: viewModel)
                     .presentationDetents([.medium, .large])
@@ -163,11 +181,17 @@ struct MatchView: View {
                     viewModel.endMatch()
                     storeManager.incrementMatchCount()
                     DataManager.shared.saveMatch(viewModel.match)
-                    showMatch = false
+                    showPostMatchRecap = true
                 }
                 Button("Annuler", role: .cancel) {}
             } message: {
                 Text("Êtes-vous sûr de vouloir terminer le match ?")
+            }
+            .fullScreenCover(isPresented: $showPostMatchRecap) {
+                PostMatchRecapView(match: viewModel.match) {
+                    showPostMatchRecap = false
+                    showMatch = false
+                }
             }
             .alert("Fin d'expulsion temporaire", isPresented: $viewModel.showTempExpulsionEndAlert) {
                 Button("OK") {}
@@ -287,6 +311,31 @@ struct MatchView: View {
                 }
             }
 
+            // Boutons de possession par équipe
+            HStack(spacing: 12) {
+                // Bouton équipe domicile
+                TeamPossessionButton(
+                    teamName: viewModel.match.homeTeam.isEmpty ? "Domicile" : viewModel.match.homeTeam,
+                    jerseyColor: viewModel.match.homeJerseyColor,
+                    possessionTime: viewModel.currentHomePossessionTime,
+                    isActive: viewModel.currentPossession == .home,
+                    isEnabled: viewModel.isPlaying
+                ) {
+                    viewModel.selectPossession(.home)
+                }
+
+                // Bouton équipe extérieur
+                TeamPossessionButton(
+                    teamName: viewModel.match.awayTeam.isEmpty ? "Extérieur" : viewModel.match.awayTeam,
+                    jerseyColor: viewModel.match.awayJerseyColor,
+                    possessionTime: viewModel.currentAwayPossessionTime,
+                    isActive: viewModel.currentPossession == .away,
+                    isEnabled: viewModel.isPlaying
+                ) {
+                    viewModel.selectPossession(.away)
+                }
+            }
+
             // Score cliquable
             Button {
                 showScoreSheet = true
@@ -304,61 +353,76 @@ struct MatchView: View {
                 }
             }
 
-            // Boutons rapides cartons / remplacements
-            HStack(spacing: 12) {
-                Button {
+            // Boutons rapides cartons / remplacements / fautes / passes
+            LazyVGrid(columns: [
+                GridItem(.flexible(), spacing: 10),
+                GridItem(.flexible(), spacing: 10),
+                GridItem(.flexible(), spacing: 10),
+                GridItem(.flexible(), spacing: 10)
+            ], spacing: 10) {
+                // Carton
+                ActionQuickButton(
+                    icon: {
+                        AnyView(
+                            RoundedRectangle(cornerRadius: 2)
+                                .fill(Color.cardYellow)
+                                .frame(width: 14, height: 19)
+                                .shadow(color: Color.cardYellow.opacity(0.5), radius: 2, y: 1)
+                        )
+                    },
+                    label: "Carton",
+                    badge: viewModel.match.cards.isEmpty ? nil : "\(viewModel.match.cards.count)",
+                    accentColor: .cardYellow
+                ) {
                     showCardSheet = true
-                } label: {
-                    HStack(spacing: 4) {
-                        RoundedRectangle(cornerRadius: 2)
-                            .fill(Color.cardYellow)
-                            .frame(width: 12, height: 16)
-                        Text("Carton")
-                            .font(.caption.bold())
-                    }
-                    .padding(.horizontal, 12)
-                    .padding(.vertical, 6)
-                    .background(Color.white.opacity(0.2))
-                    .cornerRadius(8)
-                    .foregroundStyle(.white)
                 }
 
-                Button {
+                // Remplacement
+                ActionQuickButton(
+                    icon: {
+                        AnyView(
+                            Image(systemName: "arrow.left.arrow.right")
+                                .font(.system(size: 15, weight: .semibold))
+                        )
+                    },
+                    label: "Rempl.",
+                    badge: viewModel.match.substitutions.isEmpty ? nil : "\(viewModel.match.substitutions.count)",
+                    accentColor: .cyan
+                ) {
                     showSubSheet = true
-                } label: {
-                    HStack(spacing: 4) {
-                        Image(systemName: "arrow.left.arrow.right")
-                            .font(.caption)
-                        Text("Rempl.")
-                            .font(.caption.bold())
-                    }
-                    .padding(.horizontal, 12)
-                    .padding(.vertical, 6)
-                    .background(Color.white.opacity(0.2))
-                    .cornerRadius(8)
-                    .foregroundStyle(.white)
                 }
 
-                Button {
+                // Faute
+                ActionQuickButton(
+                    icon: {
+                        AnyView(
+                            Image(systemName: "exclamationmark.triangle.fill")
+                                .font(.system(size: 15, weight: .semibold))
+                        )
+                    },
+                    label: "Faute",
+                    badge: viewModel.match.fouls.isEmpty ? nil : "\(viewModel.match.fouls.count)",
+                    accentColor: .orange
+                ) {
                     showFoulSheet = true
-                } label: {
-                    HStack(spacing: 4) {
-                        Image(systemName: "exclamationmark.triangle.fill")
-                            .font(.caption)
-                        Text("Faute")
-                            .font(.caption.bold())
-                        if !viewModel.match.fouls.isEmpty {
-                            Text("\(viewModel.match.fouls.count)")
-                                .font(.caption2.bold())
-                        }
-                    }
-                    .padding(.horizontal, 12)
-                    .padding(.vertical, 6)
-                    .background(Color.white.opacity(0.2))
-                    .cornerRadius(8)
-                    .foregroundStyle(.white)
+                }
+
+                // Passe décisive
+                ActionQuickButton(
+                    icon: {
+                        AnyView(
+                            Image(systemName: "hand.point.up.fill")
+                                .font(.system(size: 15, weight: .semibold))
+                        )
+                    },
+                    label: "Passe D.",
+                    badge: viewModel.match.assists.isEmpty ? nil : "\(viewModel.match.assists.count)",
+                    accentColor: .blue
+                ) {
+                    showAssistSheet = true
                 }
             }
+            .padding(.horizontal, 4)
         }
     }
 
@@ -402,6 +466,30 @@ struct MatchView: View {
                         .foregroundStyle(.orange)
                 }
             }
+        }
+    }
+
+    // MARK: - Boutons compteur de passes
+
+    private var passCounterButtons: some View {
+        HStack(spacing: 24) {
+            // Bouton passes équipe domicile
+            PassCounterButton(
+                count: viewModel.match.homePasses,
+                jerseyColor: viewModel.match.homeJerseyColor,
+                teamName: viewModel.match.homeTeam.isEmpty ? "DOM" : viewModel.match.homeTeam,
+                onTap: { viewModel.addPass(team: .home) },
+                onLongPress: { viewModel.removePass(team: .home) }
+            )
+
+            // Bouton passes équipe extérieur
+            PassCounterButton(
+                count: viewModel.match.awayPasses,
+                jerseyColor: viewModel.match.awayJerseyColor,
+                teamName: viewModel.match.awayTeam.isEmpty ? "EXT" : viewModel.match.awayTeam,
+                onTap: { viewModel.addPass(team: .away) },
+                onLongPress: { viewModel.removePass(team: .away) }
+            )
         }
     }
 
@@ -713,6 +801,66 @@ struct StoppageButton: View {
     }
 }
 
+// MARK: - Bouton action rapide (carton, faute, remplacement, passe)
+
+struct ActionQuickButton<Icon: View>: View {
+    let icon: () -> Icon
+    let label: String
+    var badge: String?
+    var accentColor: Color = .white
+    let action: () -> Void
+
+    var body: some View {
+        Button(action: action) {
+            VStack(spacing: 6) {
+                ZStack(alignment: .topTrailing) {
+                    icon()
+                        .foregroundStyle(.white)
+                        .frame(width: 38, height: 38)
+                        .background(
+                            RoundedRectangle(cornerRadius: 10, style: .continuous)
+                                .fill(accentColor.opacity(0.25))
+                        )
+                        .overlay(
+                            RoundedRectangle(cornerRadius: 10, style: .continuous)
+                                .stroke(accentColor.opacity(0.5), lineWidth: 1)
+                        )
+
+                    if let badge = badge {
+                        Text(badge)
+                            .font(.system(size: 10, weight: .bold, design: .rounded))
+                            .foregroundStyle(.white)
+                            .frame(minWidth: 16, minHeight: 16)
+                            .background(
+                                Circle()
+                                    .fill(accentColor)
+                            )
+                            .offset(x: 5, y: -5)
+                    }
+                }
+
+                Text(label)
+                    .font(.system(size: 11, weight: .semibold))
+                    .foregroundStyle(.white.opacity(0.9))
+                    .lineLimit(1)
+                    .minimumScaleFactor(0.8)
+            }
+            .frame(maxWidth: .infinity)
+            .padding(.vertical, 8)
+            .background(
+                RoundedRectangle(cornerRadius: 12, style: .continuous)
+                    .fill(.ultraThinMaterial)
+                    .environment(\.colorScheme, .dark)
+            )
+            .overlay(
+                RoundedRectangle(cornerRadius: 12, style: .continuous)
+                    .stroke(Color.white.opacity(0.12), lineWidth: 1)
+            )
+        }
+        .buttonStyle(.plain)
+    }
+}
+
 struct StatPill: View {
     let label: String
     let value: String
@@ -731,6 +879,113 @@ struct StatPill: View {
         .padding(.vertical, 8)
         .background(Color(.systemGray6))
         .cornerRadius(10)
+    }
+}
+
+// MARK: - Bouton possession par équipe
+
+struct TeamPossessionButton: View {
+    let teamName: String
+    let jerseyColor: JerseyColor
+    let possessionTime: TimeInterval
+    let isActive: Bool
+    let isEnabled: Bool
+    let action: () -> Void
+
+    var body: some View {
+        Button(action: action) {
+            HStack(spacing: 8) {
+                Image(systemName: "tshirt.fill")
+                    .font(.system(size: 16))
+                    .foregroundStyle(jerseyColor.color)
+                    .shadow(color: jerseyColor == .white ? .gray.opacity(0.6) : .clear, radius: 1)
+
+                VStack(alignment: .leading, spacing: 2) {
+                    Text(teamName)
+                        .font(.caption2.bold())
+                        .lineLimit(1)
+                    Text(TimeFormatters.formatTime(possessionTime))
+                        .font(.system(size: 14, weight: .bold, design: .monospaced))
+                }
+            }
+            .frame(maxWidth: .infinity)
+            .padding(.horizontal, 10)
+            .padding(.vertical, 8)
+            .background(
+                isActive
+                    ? jerseyColor.color.opacity(0.35)
+                    : (isEnabled ? jerseyColor.color.opacity(0.12) : Color.gray.opacity(0.08))
+            )
+            .foregroundStyle(isActive ? jerseyColor.textColor : (isEnabled ? .white : .gray))
+            .cornerRadius(12)
+            .overlay(
+                RoundedRectangle(cornerRadius: 12)
+                    .stroke(
+                        isActive ? jerseyColor.color : (isEnabled ? jerseyColor.color.opacity(0.4) : Color.gray.opacity(0.2)),
+                        lineWidth: isActive ? 2.5 : 1
+                    )
+            )
+            .shadow(color: isActive ? jerseyColor.color.opacity(0.4) : .clear, radius: 4, y: 2)
+        }
+        .disabled(!isEnabled)
+        .animation(.easeInOut(duration: 0.2), value: isActive)
+    }
+}
+
+// MARK: - Bouton compteur de passes
+
+struct PassCounterButton: View {
+    let count: Int
+    let jerseyColor: JerseyColor
+    let teamName: String
+    let onTap: () -> Void
+    let onLongPress: () -> Void
+
+    @State private var isPressed = false
+
+    var body: some View {
+        VStack(spacing: 4) {
+            Button {
+                onTap()
+            } label: {
+                ZStack {
+                    Circle()
+                        .fill(jerseyColor.color)
+                        .frame(width: 56, height: 56)
+                        .shadow(color: jerseyColor.color.opacity(0.5), radius: 4, y: 2)
+                        .overlay(
+                            Circle()
+                                .stroke(
+                                    jerseyColor == .white ? Color.gray.opacity(0.4) : Color.white.opacity(0.3),
+                                    lineWidth: 2
+                                )
+                        )
+
+                    VStack(spacing: 0) {
+                        Image(systemName: "sportscourt.fill")
+                            .font(.system(size: 12))
+                            .foregroundStyle(jerseyColor.textColor.opacity(0.7))
+                        Text("\(count)")
+                            .font(.system(size: 20, weight: .bold, design: .rounded))
+                            .foregroundStyle(jerseyColor.textColor)
+                    }
+                }
+            }
+            .simultaneousGesture(
+                LongPressGesture(minimumDuration: 0.5)
+                    .onEnded { _ in
+                        onLongPress()
+                        let feedback = UIImpactFeedbackGenerator(style: .medium)
+                        feedback.impactOccurred()
+                    }
+            )
+            .scaleEffect(isPressed ? 0.9 : 1.0)
+            .animation(.easeInOut(duration: 0.1), value: isPressed)
+
+            Text("Passes")
+                .font(.caption2)
+                .foregroundStyle(.white.opacity(0.8))
+        }
     }
 }
 
@@ -1325,6 +1580,93 @@ struct FoulSheet: View {
                     .frame(maxWidth: .infinity)
                     .padding(.vertical, 12)
                     .background(playerName.isEmpty ? Color.gray : Color.orange)
+                    .foregroundColor(.white)
+                    .cornerRadius(12)
+            }
+            .disabled(playerName.isEmpty)
+            .padding(.horizontal)
+        }
+        .padding()
+        .onAppear { viewModel.loadMatchRoster() }
+    }
+}
+
+// MARK: - Assist Sheet
+
+struct AssistSheet: View {
+    @ObservedObject var viewModel: MatchViewModel
+    @Environment(\.dismiss) private var dismiss
+    @State private var playerName = ""
+    @State private var selectedPlayerId: UUID?
+
+    var body: some View {
+        VStack(spacing: 20) {
+            Text("Passe décisive")
+                .font(.headline)
+
+            HStack(spacing: 8) {
+                Image(systemName: "hand.point.up.fill")
+                    .font(.title2)
+                    .foregroundStyle(.blue)
+                Text("Attribuer une passe décisive à un joueur")
+                    .font(.subheadline)
+                    .foregroundStyle(.secondary)
+            }
+
+            TextField("Nom du joueur", text: $playerName)
+                .textFieldStyle(.roundedBorder)
+                .padding(.horizontal)
+                .onChange(of: playerName) {
+                    if let id = selectedPlayerId,
+                       let mp = viewModel.allMatchPlayers.first(where: { $0.id == id }),
+                       playerName != mp.displayName {
+                        selectedPlayerId = nil
+                    }
+                }
+
+            // Liste rapide des joueurs de l'effectif
+            if !viewModel.matchRoster.isEmpty {
+                ScrollView(.horizontal, showsIndicators: false) {
+                    HStack(spacing: 8) {
+                        ForEach(viewModel.allMatchPlayers) { player in
+                            let assists = viewModel.assistCount(for: player.id)
+                            Button {
+                                playerName = player.displayName
+                                selectedPlayerId = player.id
+                            } label: {
+                                HStack(spacing: 4) {
+                                    Text("#\(player.shirtNumber) \(player.displayName)")
+                                        .font(.caption)
+                                    if assists > 0 {
+                                        Text("\(assists)")
+                                            .font(.caption2.bold())
+                                            .foregroundStyle(.white)
+                                            .frame(width: 18, height: 18)
+                                            .background(Color.blue)
+                                            .clipShape(Circle())
+                                    }
+                                }
+                                .padding(.horizontal, 10)
+                                .padding(.vertical, 6)
+                                .background(selectedPlayerId == player.id ? Color.blue.opacity(0.25) : Color(.systemGray5))
+                                .cornerRadius(8)
+                            }
+                        }
+                    }
+                    .padding(.horizontal)
+                }
+            }
+
+            Button {
+                guard !playerName.isEmpty else { return }
+                viewModel.addAssist(playerName: playerName, playerId: selectedPlayerId)
+                dismiss()
+            } label: {
+                Text("Confirmer la passe décisive")
+                    .font(.headline)
+                    .frame(maxWidth: .infinity)
+                    .padding(.vertical, 12)
+                    .background(playerName.isEmpty ? Color.gray : Color.blue)
                     .foregroundColor(.white)
                     .cornerRadius(12)
             }

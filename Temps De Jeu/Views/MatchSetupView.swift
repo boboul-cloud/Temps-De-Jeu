@@ -96,6 +96,40 @@ struct MatchSetupView: View {
                             icon: viewModel.match.isMyTeamHome ? "airplane" : "star.fill"
                         )
                         CustomTextField(placeholder: "Compétition", text: $viewModel.match.competition, icon: "trophy.fill")
+
+                        // Sélecteur de couleurs de maillot
+                        VStack(spacing: 12) {
+                            Text("Couleurs de maillot")
+                                .font(.subheadline)
+                                .foregroundStyle(.secondary)
+
+                            HStack(spacing: 20) {
+                                // Maillot domicile
+                                VStack(spacing: 6) {
+                                    Text(viewModel.match.homeTeam.isEmpty ? "Domicile" : viewModel.match.homeTeam)
+                                        .font(.caption.bold())
+                                        .lineLimit(1)
+                                    JerseyColorPicker(
+                                        selectedColor: $viewModel.match.homeJerseyColor,
+                                        label: "DOM"
+                                    )
+                                }
+                                .frame(maxWidth: .infinity)
+
+                                // Maillot extérieur
+                                VStack(spacing: 6) {
+                                    Text(viewModel.match.awayTeam.isEmpty ? "Extérieur" : viewModel.match.awayTeam)
+                                        .font(.caption.bold())
+                                        .lineLimit(1)
+                                    JerseyColorPicker(
+                                        selectedColor: $viewModel.match.awayJerseyColor,
+                                        label: "EXT"
+                                    )
+                                }
+                                .frame(maxWidth: .infinity)
+                            }
+                        }
+                        .padding(.vertical, 4)
                     }
                     .padding()
                     .background(Color(.systemGray6))
@@ -871,4 +905,115 @@ struct FreeMatchBanner: View {
         showMatch: .constant(false)
     )
     .environmentObject(DeepLinkManager.shared)
+}
+
+// MARK: - Jersey Color Picker
+
+struct JerseyColorPicker: View {
+    @Binding var selectedColor: JerseyColor
+    let label: String
+    @State private var showPicker = false
+
+    var body: some View {
+        Button {
+            showPicker = true
+        } label: {
+            HStack(spacing: 8) {
+                // Maillot en couleur sélectionnée
+                Image(systemName: "tshirt.fill")
+                    .font(.title3)
+                    .foregroundStyle(selectedColor.color)
+                    .shadow(color: selectedColor == .white ? .gray.opacity(0.5) : .clear, radius: 1)
+
+                Text(selectedColor.rawValue)
+                    .font(.caption.bold())
+                    .foregroundStyle(.primary)
+
+                Image(systemName: "chevron.down")
+                    .font(.caption2)
+                    .foregroundStyle(.secondary)
+            }
+            .padding(.horizontal, 12)
+            .padding(.vertical, 8)
+            .background(Color(.systemBackground))
+            .cornerRadius(10)
+            .overlay(
+                RoundedRectangle(cornerRadius: 10)
+                    .stroke(selectedColor.color.opacity(0.5), lineWidth: 2)
+            )
+        }
+        .sheet(isPresented: $showPicker) {
+            JerseyColorPickerSheet(selectedColor: $selectedColor, label: label)
+                .presentationDetents([.medium])
+        }
+    }
+}
+
+struct JerseyColorPickerSheet: View {
+    @Binding var selectedColor: JerseyColor
+    let label: String
+    @Environment(\.dismiss) private var dismiss
+
+    private let columns = [
+        GridItem(.adaptive(minimum: 70), spacing: 12)
+    ]
+
+    var body: some View {
+        NavigationStack {
+            ScrollView {
+                LazyVGrid(columns: columns, spacing: 12) {
+                    ForEach(JerseyColor.allCases) { jerseyColor in
+                        Button {
+                            selectedColor = jerseyColor
+                            dismiss()
+                        } label: {
+                            VStack(spacing: 6) {
+                                ZStack {
+                                    Image(systemName: "tshirt.fill")
+                                        .font(.system(size: 36))
+                                        .foregroundStyle(jerseyColor.color)
+                                        .shadow(color: jerseyColor == .white ? .gray.opacity(0.5) : .clear, radius: 2)
+
+                                    if selectedColor == jerseyColor {
+                                        Image(systemName: "checkmark.circle.fill")
+                                            .font(.caption)
+                                            .foregroundStyle(.green)
+                                            .offset(x: 16, y: -14)
+                                    }
+                                }
+
+                                Text(jerseyColor.rawValue)
+                                    .font(.caption2)
+                                    .foregroundStyle(.primary)
+                                    .lineLimit(1)
+                            }
+                            .frame(maxWidth: .infinity)
+                            .padding(.vertical, 10)
+                            .background(
+                                selectedColor == jerseyColor
+                                    ? jerseyColor.color.opacity(0.15)
+                                    : Color(.systemGray6)
+                            )
+                            .cornerRadius(12)
+                            .overlay(
+                                RoundedRectangle(cornerRadius: 12)
+                                    .stroke(
+                                        selectedColor == jerseyColor ? jerseyColor.color : Color.clear,
+                                        lineWidth: 2
+                                    )
+                            )
+                        }
+                    }
+                }
+                .padding()
+            }
+            .navigationTitle("Maillot \(label)")
+            .navigationBarTitleDisplayMode(.inline)
+            .toolbar {
+                ToolbarItem(placement: .topBarTrailing) {
+                    Button("Fermer") { dismiss() }
+                }
+            }
+        }
+    }
 }

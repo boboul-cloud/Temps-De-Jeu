@@ -7,6 +7,7 @@
 
 import SwiftUI
 import PhotosUI
+import UniformTypeIdentifiers
 
 /// Vue de gestion de l'encadrement des équipes
 struct StaffManagementView: View {
@@ -17,6 +18,17 @@ struct StaffManagementView: View {
     @State private var showRoleManager = false
     @State private var searchText = ""
     @ObservedObject private var profileManager = ProfileManager.shared
+
+    // Export / Import
+    @State private var shareItemsWrapper: ExportShareItemsWrapper?
+    @State private var pdfPreviewItem: ExportImportView.PDFPreviewItem?
+    @State private var showFilePicker = false
+    @State private var showImportConfirmation = false
+    @State private var importedStaff: [StaffMember] = []
+    @State private var importedRoles: [StaffRole] = []
+    @State private var alertTitle = ""
+    @State private var alertMessage = ""
+    @State private var showAlert = false
 
     /// Encadrants filtrés par recherche
     var filteredStaff: [StaffMember] {
@@ -68,6 +80,31 @@ struct StaffManagementView: View {
                     } label: {
                         Label("Gérer les rôles", systemImage: "tag")
                     }
+
+                    Divider()
+
+                    // Export JSON
+                    Button {
+                        exportStaffJSON()
+                    } label: {
+                        Label("Exporter (JSON)", systemImage: "doc.text")
+                    }
+                    .disabled(staffMembers.isEmpty)
+
+                    // Export PDF
+                    Button {
+                        previewStaffPDF()
+                    } label: {
+                        Label("Exporter (PDF)", systemImage: "doc.richtext")
+                    }
+                    .disabled(staffMembers.isEmpty)
+
+                    // Import JSON
+                    Button {
+                        showFilePicker = true
+                    } label: {
+                        Label("Importer (JSON)", systemImage: "square.and.arrow.down")
+                    }
                 } label: {
                     Image(systemName: "plus.circle.fill")
                 }
@@ -93,6 +130,43 @@ struct StaffManagementView: View {
         .sheet(isPresented: $showRoleManager) {
             StaffRoleManagerView(roles: $roles)
         }
+        .sheet(item: $shareItemsWrapper) { wrapper in
+            ActivityView(activityItems: wrapper.items)
+        }
+        .sheet(item: $pdfPreviewItem) { item in
+            PDFPreviewView(pdfData: item.data, title: item.title)
+        }
+        .fileImporter(
+            isPresented: $showFilePicker,
+            allowedContentTypes: [.json],
+            allowsMultipleSelection: false
+        ) { result in
+            handleStaffImportResult(result)
+        }
+        .confirmationDialog(
+            "Importer \(importedStaff.count) encadrant\(importedStaff.count > 1 ? "s" : "")",
+            isPresented: $showImportConfirmation,
+            titleVisibility: .visible
+        ) {
+            Button("Fusionner (ajouter les nouveaux)") {
+                performStaffImport(mode: .merge)
+            }
+            Button("Remplacer tout l'encadrement") {
+                performStaffImport(mode: .replace)
+            }
+            Button("Annuler", role: .cancel) {
+                importedStaff = []
+                importedRoles = []
+            }
+        } message: {
+            let rolesCount = importedRoles.isEmpty ? "" : " et \(importedRoles.count) rôle\(importedRoles.count > 1 ? "s" : "")"
+            Text("\(importedStaff.count) encadrant\(importedStaff.count > 1 ? "s" : "")\(rolesCount) trouvé\(importedStaff.count > 1 ? "s" : "") dans le fichier.")
+        }
+        .alert(alertTitle, isPresented: $showAlert) {
+            Button("OK") {}
+        } message: {
+            Text(alertMessage)
+        }
         .onAppear {
             reloadData()
         }
@@ -104,6 +178,182 @@ struct StaffManagementView: View {
     private func reloadData() {
         staffMembers = StaffManager.shared.loadStaff()
         roles = StaffManager.shared.loadRoles()
+    }
+
+    // MARK: - Export / Import Encadrement
+
+    private func exportStaffJSON() {
+        guard let data = ExportService.shared.exportStaffJSON(staffMembers, roles: roles) else {
+            showAlertWith(title: "Erreur", message: "Impossible d'exporter l'encadrement.")
+            return
+        }
+        let categoryName = profileManager.activeProfile?.name ?? "tous"
+        let cleanCategory = categoryName
+            .replacingOccurrences(of: " ", with: "_")
+            .replacingOccurrences(of: "/", with: "-")
+        let fileName = "encadrement_\(cleanCategory)_\(formattedDateForFile()).json"
+        let tempURL = FileManager.default.temporaryDirectory.appendingPathComponent(fileName)
+        do {
+            try data.write(to: tempURL)
+            shareItemsWrapper = ExportShareItemsWrapper(items: [tempURL])
+        } catch {
+            showAlertWith(title: "Erreur", message: error.localizedDescription)
+        }
+    }
+
+    private func previewStaffPDF() {
+        let data = ExportService.shared.generateStaffPDF(staffMembers: staffMembers, roles: roles)
+        pdfPreviewItem = ExportImportView.PDFPreviewItem(data: data, title: "Encadrement")
+    }
+
+    private func handleStaffImportResult(_ result: Result<[URL], Error>) {
+        switch result {
+        case .success(let urls):
+            guard let url = urls.first else { return }
+            guard url.startAccessingSecurityScopedResource() else {
+                showAlertWith(title: "Erreur", message: "Impossible d'accéder au fichier.")
+                return
+            }
+            defer { url.stopAccessingSecurityScopedResource() }
+            do {
+                let data = try Data(contentsOf: url)
+                guard let importResult = ExportService.shared.importStaffWithMetadata(from: data) else {
+                    showAlertWith(title: "Erreur", message: "Le fichier n'est pas un export d'encadrement valide.")
+                    return
+                }
+                importedStaff = importResult.staffMembers
+                importedRoles = importResult.staffRoles
+                showImportConfirmation = true
+            } catch {
+                showAlertWith(title: "Erreur", message: "Impossible de lire le fichier : \(error.localizedDescription)")
+            }
+        case .failure(let error):
+            showAlertWith(title: "Erreur", message: error.localizedDescription)
+        }
+    }
+
+    private enum StaffImportMode { case merge, replace }
+
+    private func performStaffImport(mode: StaffImportMode) {
+        // Importer les rôles personnalisés manquants
+        var currentRoles = StaffManager.shared.loadRoles()
+        let existingRoleIds = Set(currentRoles.map { $0.id })
+
+        // Map old roleId → new roleId pour les rôles renommés/manquants
+        var roleIdMapping: [UUID: UUID] = [:]
+
+        for importedRole in importedRoles {
+            if existingRoleIds.contains(importedRole.id) {
+                // Rôle déjà présent (même UUID)
+                roleIdMapping[importedRole.id] = importedRole.id
+            } else if let existing = currentRoles.first(where: { $0.name.lowercased() == importedRole.name.lowercased() }) {
+                // Même nom mais UUID différent → mapper vers l'existant
+                roleIdMapping[importedRole.id] = existing.id
+            } else {
+                // Nouveau rôle → ajouter
+                currentRoles.append(importedRole)
+                roleIdMapping[importedRole.id] = importedRole.id
+            }
+        }
+        StaffManager.shared.saveRoles(currentRoles)
+
+        switch mode {
+        case .replace:
+            // Remplacer tous les encadrants du profil actif
+            var allStaff = StaffManager.shared.loadAllStaff()
+            let activeId = profileManager.activeProfileId
+            // Retirer les encadrants du profil actif
+            allStaff = allStaff.map { member in
+                guard let activeId = activeId, member.profileIds.contains(activeId) else { return member }
+                var m = member
+                m.profileIds.remove(activeId)
+                return m
+            }
+            // Supprimer ceux qui n'ont plus aucun profil
+            allStaff.removeAll { $0.profileIds.isEmpty }
+            // Ajouter les nouveaux
+            for imported in importedStaff {
+                let mappedRoleId = roleIdMapping[imported.roleId] ?? imported.roleId
+                let m = StaffMember(
+                    id: UUID(),
+                    firstName: imported.firstName,
+                    lastName: imported.lastName,
+                    roleId: mappedRoleId,
+                    phone: imported.phone,
+                    email: imported.email,
+                    photoData: imported.photoData,
+                    profileIds: activeId != nil ? [activeId!] : imported.profileIds
+                )
+                allStaff.append(m)
+            }
+            StaffManager.shared.saveAllStaff(allStaff)
+
+        case .merge:
+            var allStaff = StaffManager.shared.loadAllStaff()
+            let activeId = profileManager.activeProfileId
+            var added = 0
+            var updated = 0
+
+            for imported in importedStaff {
+                let importedName = imported.fullName.lowercased()
+                if let existingIdx = allStaff.firstIndex(where: { $0.fullName.lowercased() == importedName }) {
+                    // Mettre à jour le contact si vide
+                    if allStaff[existingIdx].phone.isEmpty && !imported.phone.isEmpty {
+                        allStaff[existingIdx].phone = imported.phone
+                    }
+                    if allStaff[existingIdx].email.isEmpty && !imported.email.isEmpty {
+                        allStaff[existingIdx].email = imported.email
+                    }
+                    if allStaff[existingIdx].photoData == nil, let photo = imported.photoData {
+                        allStaff[existingIdx].photoData = photo
+                    }
+                    // S'assurer qu'il est bien rattaché au profil actif
+                    if let activeId = activeId {
+                        allStaff[existingIdx].profileIds.insert(activeId)
+                    }
+                    updated += 1
+                } else {
+                    // Nouveau → ajouter
+                    let mappedRoleId = roleIdMapping[imported.roleId] ?? imported.roleId
+                    let m = StaffMember(
+                        id: UUID(),
+                        firstName: imported.firstName,
+                        lastName: imported.lastName,
+                        roleId: mappedRoleId,
+                        phone: imported.phone,
+                        email: imported.email,
+                        photoData: imported.photoData,
+                        profileIds: activeId != nil ? [activeId!] : imported.profileIds
+                    )
+                    allStaff.append(m)
+                    added += 1
+                }
+            }
+            StaffManager.shared.saveAllStaff(allStaff)
+        }
+
+        reloadData()
+        let total = staffMembers.count
+        showAlertWith(
+            title: "Import réussi",
+            message: mode == .replace
+                ? "\(importedStaff.count) encadrant\(importedStaff.count > 1 ? "s" : "") importé\(importedStaff.count > 1 ? "s" : "") (remplacement)."
+                : "Encadrement mis à jour. \(total) encadrant\(total > 1 ? "s" : "") au total."
+        )
+        importedStaff = []
+        importedRoles = []
+    }
+
+    private func formattedDateForFile() -> String {
+        let f = DateFormatter()
+        f.dateFormat = "yyyy-MM-dd"
+        return f.string(from: Date())
+    }
+
+    private func showAlertWith(title: String, message: String) {
+        alertTitle = title
+        alertMessage = message
+        showAlert = true
     }
 
     // MARK: - État vide
@@ -305,7 +555,7 @@ struct StaffAvatar: View {
 
 struct StaffEditView: View {
     let member: StaffMember?
-    let roles: [StaffRole]
+    @State private var roles: [StaffRole]
     let onSave: (StaffMember) -> Void
     @Environment(\.dismiss) private var dismiss
     @ObservedObject private var profileManager = ProfileManager.shared
@@ -318,6 +568,13 @@ struct StaffEditView: View {
     @State private var photoData: Data?
     @State private var selectedPhotoItem: PhotosPickerItem?
     @State private var assignedProfileIds: Set<UUID> = []
+
+    init(member: StaffMember?, roles: [StaffRole], onSave: @escaping (StaffMember) -> Void) {
+        self.member = member
+        let effectiveRoles = roles.isEmpty ? StaffManager.shared.loadRoles() : roles
+        self._roles = State(initialValue: effectiveRoles)
+        self.onSave = onSave
+    }
 
     var isEditing: Bool { member != nil }
 
@@ -478,6 +735,10 @@ struct StaffEditView: View {
                 }
             }
             .onAppear {
+                // S'assurer que les rôles sont chargés (fix: après création de catégorie)
+                if roles.isEmpty {
+                    roles = StaffManager.shared.loadRoles()
+                }
                 if let m = member {
                     firstName = m.firstName
                     lastName = m.lastName

@@ -71,6 +71,7 @@ struct Player: Identifiable, Codable, Hashable {
     var availability: PlayerAvailability
     var photoData: Data?
     var homeCategoryId: UUID?
+    var phoneNumber: String?
 
     init(
         id: UUID = UUID(),
@@ -79,7 +80,8 @@ struct Player: Identifiable, Codable, Hashable {
         position: PlayerPosition = .milieu,
         availability: PlayerAvailability = .disponible,
         photoData: Data? = nil,
-        homeCategoryId: UUID? = nil
+        homeCategoryId: UUID? = nil,
+        phoneNumber: String? = nil
     ) {
         self.id = id
         self.firstName = firstName
@@ -88,6 +90,7 @@ struct Player: Identifiable, Codable, Hashable {
         self.availability = availability
         self.photoData = photoData
         self.homeCategoryId = homeCategoryId
+        self.phoneNumber = phoneNumber
     }
 
     // Backward compat: ignore defaultNumber if present in saved data
@@ -95,7 +98,7 @@ struct Player: Identifiable, Codable, Hashable {
     // + photoData optionnel (nouveau champ)
     // + homeCategoryId optionnel (nouveau champ)
     enum CodingKeys: String, CodingKey {
-        case id, firstName, lastName, position, availability, photoData, homeCategoryId
+        case id, firstName, lastName, position, availability, photoData, homeCategoryId, phoneNumber
     }
 
     init(from decoder: Decoder) throws {
@@ -107,6 +110,7 @@ struct Player: Identifiable, Codable, Hashable {
         availability = try container.decodeIfPresent(PlayerAvailability.self, forKey: .availability) ?? .disponible
         photoData = try container.decodeIfPresent(Data.self, forKey: .photoData)
         homeCategoryId = try container.decodeIfPresent(UUID.self, forKey: .homeCategoryId)
+        phoneNumber = try container.decodeIfPresent(String.self, forKey: .phoneNumber)
     }
 
     var displayName: String {
@@ -290,6 +294,25 @@ struct CardEvent: Identifiable, Codable {
 
 /// Événement faute
 struct FoulEvent: Identifiable, Codable {
+    let id: UUID
+    var playerName: String
+    var playerId: UUID?
+    var minute: TimeInterval
+    var period: MatchPeriod
+    var timestamp: Date
+
+    init(id: UUID = UUID(), playerName: String, playerId: UUID? = nil, minute: TimeInterval, period: MatchPeriod, timestamp: Date = Date()) {
+        self.id = id
+        self.playerName = playerName
+        self.playerId = playerId
+        self.minute = minute
+        self.period = period
+        self.timestamp = timestamp
+    }
+}
+
+/// Événement passe décisive
+struct AssistEvent: Identifiable, Codable {
     let id: UUID
     var playerName: String
     var playerId: UUID?

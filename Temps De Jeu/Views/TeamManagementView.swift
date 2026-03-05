@@ -376,6 +376,24 @@ struct PlayerRow: View {
 
             Spacer()
 
+            // Lien téléphone
+            if let phone = player.phoneNumber, !phone.isEmpty {
+                Button {
+                    let cleaned = phone.replacingOccurrences(of: " ", with: "")
+                    if let url = URL(string: "tel:\(cleaned)") {
+                        UIApplication.shared.open(url)
+                    }
+                } label: {
+                    Image(systemName: "phone.fill")
+                        .font(.system(size: 14))
+                        .foregroundStyle(.green)
+                        .padding(6)
+                        .background(Color.green.opacity(0.12))
+                        .clipShape(Circle())
+                }
+                .buttonStyle(.plain)
+            }
+
             // Badges cartons
             if totalCards > 0 {
                 HStack(spacing: 4) {
@@ -464,6 +482,7 @@ struct PlayerEditView: View {
 
     @State private var firstName: String = ""
     @State private var lastName: String = ""
+    @State private var phoneNumber: String = ""
     @State private var position: PlayerPosition = .milieu
     @State private var availability: PlayerAvailability = .disponible
     @State private var photoData: Data?
@@ -537,6 +556,13 @@ struct PlayerEditView: View {
                 }
 
                 Section {
+                    TextField("N° Téléphone", text: $phoneNumber)
+                        .keyboardType(.phonePad)
+                } header: {
+                    Text("Contact")
+                }
+
+                Section {
                     Picker("Position", selection: $position) {
                         ForEach(PlayerPosition.allCases) { pos in
                             Text(pos.rawValue).tag(pos)
@@ -571,7 +597,8 @@ struct PlayerEditView: View {
                             lastName: lastName,
                             position: position,
                             availability: availability,
-                            photoData: photoData
+                            photoData: photoData,
+                            phoneNumber: phoneNumber.isEmpty ? nil : phoneNumber
                         )
                         onSave(p)
                         dismiss()
@@ -584,6 +611,7 @@ struct PlayerEditView: View {
                 if let p = player {
                     firstName = p.firstName
                     lastName = p.lastName
+                    phoneNumber = p.phoneNumber ?? ""
                     position = p.position
                     availability = p.availability
                     photoData = p.photoData

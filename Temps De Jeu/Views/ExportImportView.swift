@@ -27,7 +27,7 @@ struct ExportImportView: View {
 
     // Import — un seul fileImporter pour éviter le bug SwiftUI double-fileImporter
     enum ActiveImportType {
-        case none, players, matches
+        case none, players, matches, backup
     }
     @State private var activeImportType: ActiveImportType = .none
     @State private var showFilePicker = false
@@ -43,6 +43,10 @@ struct ExportImportView: View {
     @State private var importedMatches: [Match] = []
     @State private var importedMatchesTeamCode: String? = nil
     @State private var importedMatchesTeamName: String? = nil
+
+    // Import sauvegarde complète
+    @State private var showBackupImportConfirmation = false
+    @State private var pendingBackupResult: ExportService.FullBackupImportResult? = nil
 
     // Alerts
     @State private var alertTitle = ""
@@ -205,6 +209,50 @@ struct ExportImportView: View {
                 Text("Import Matchs")
             }
 
+            // MARK: - Sauvegarde complète
+            Section {
+                // Export complet
+                Button {
+                    exportFullBackup()
+                } label: {
+                    Label {
+                        VStack(alignment: .leading, spacing: 2) {
+                            Text("Exporter la sauvegarde complète")
+                                .font(.subheadline)
+                            Text("Toutes les catégories, joueurs, matchs, entraînements, staff…")
+                                .font(.caption)
+                                .foregroundStyle(.secondary)
+                        }
+                    } icon: {
+                        Image(systemName: "arrow.up.doc.on.clipboard")
+                            .foregroundStyle(.indigo)
+                    }
+                }
+
+                // Import complet
+                Button {
+                    activeImportType = .backup
+                    showFilePicker = true
+                } label: {
+                    Label {
+                        VStack(alignment: .leading, spacing: 2) {
+                            Text("Restaurer une sauvegarde complète")
+                                .font(.subheadline)
+                            Text("Remplace toutes les données de l'app")
+                                .font(.caption)
+                                .foregroundStyle(.secondary)
+                        }
+                    } icon: {
+                        Image(systemName: "arrow.down.doc.fill")
+                            .foregroundStyle(.indigo)
+                    }
+                }
+            } header: {
+                Text("Sauvegarde complète")
+            } footer: {
+                Text("La sauvegarde inclut tous les profils, joueurs, matchs, entraînements, saisons et encadrants. Idéal pour transférer vers un nouvel appareil.")
+            }
+
             // MARK: - Export Stats
             Section {
                 // PDF stats globales — preview avant export
@@ -294,7 +342,7 @@ struct ExportImportView: View {
         }
         .fileImporter(
             isPresented: $showFilePicker,
-            allowedContentTypes: activeImportType == .matches ? [.json, .tdjMatches] : [.json],
+            allowedContentTypes: activeImportType == .matches ? [.json, .tdjMatches] : (activeImportType == .backup ? [.json, .tdjBackup] : [.json]),
             allowsMultipleSelection: false
         ) { result in
             switch activeImportType {
@@ -302,6 +350,8 @@ struct ExportImportView: View {
                 handleImportResult(result)
             case .matches:
                 handleMatchImportResult(result)
+            case .backup:
+                handleBackupImportResult(result)
             case .none:
                 break
             }
@@ -355,6 +405,31 @@ struct ExportImportView: View {
                 Text("\(importedMatches.count) match\(importedMatches.count > 1 ? "s" : "") → catégorie « \(targetName) ».\n\(newCount) nouveau\(newCount > 1 ? "x" : ""), \(existingCount) déjà présent\(existingCount > 1 ? "s" : "").")
             } else {
                 Text("\(newCount) nouveau\(newCount > 1 ? "x" : "") match\(newCount > 1 ? "s" : ""), \(existingCount) déjà présent\(existingCount > 1 ? "s" : "").")
+            }
+        }
+        .confirmationDialog(
+            "Restaurer la sauvegarde complète ?",
+            isPresented: $showBackupImportConfirmation,
+            titleVisibility: .visible
+        ) {
+            Button("Restaurer (remplacer toutes les données)", role: .destructive) {
+                performBackupImport()
+            }
+            Button("Annuler", role: .cancel) {
+                pendingBackupResult = nil
+            }
+        } message: {
+            if let result = pendingBackupResult {
+                let dateStr: String = {
+                    let f = DateFormatter()
+                    f.dateStyle = .long
+                    f.timeStyle = .short
+                    f.locale = Locale(identifier: "fr_FR")
+                    return f.string(from: result.backup.exportDate)
+                }()
+                Text("Sauvegarde du \(dateStr)\n\(result.profileCount) catégorie\(result.profileCount > 1 ? "s" : ""), \(result.playerCount) joueur\(result.playerCount > 1 ? "s" : ""), \(result.totalMatches) match\(result.totalMatches > 1 ? "s" : ""), \(result.totalTrainingSessions) entraînement\(result.totalTrainingSessions > 1 ? "s" : ""), \(result.staffCount) encadrant\(result.staffCount > 1 ? "s" : "").\n\n⚠️ Cette action remplacera toutes les données actuelles de l'application.")
+            } else {
+                Text("")
             }
         }
     }
@@ -430,6 +505,65 @@ struct ExportImportView: View {
         } catch {
             showAlertWith(title: "Erreur", message: error.localizedDescription)
         }
+    }
+
+    // MARK: - Sauvegarde complète
+
+    private func exportFullBackup() {
+        guard let data = ExportService.shared.exportFullBackup() else {
+            showAlertWith(title: "Erreur", message: "Impossible de créer la sauvegarde complète.")
+            return
+        }
+
+        let fileName = "sauvegarde_temps_de_jeu_\(formattedDateForFile()).tdjb"
+        let tempURL = FileManager.default.temporaryDirectory.appendingPathComponent(fileName)
+        do {
+            try data.write(to: tempURL)
+            shareItemsWrapper = ExportShareItemsWrapper(items: [tempURL])
+        } catch {
+            showAlertWith(title: "Erreur", message: error.localizedDescription)
+        }
+    }
+
+    private func handleBackupImportResult(_ result: Result<[URL], Error>) {
+        switch result {
+        case .success(let urls):
+            guard let url = urls.first else { return }
+
+            guard url.startAccessingSecurityScopedResource() else {
+                showAlertWith(title: "Erreur", message: "Impossible d'accéder au fichier.")
+                return
+            }
+            defer { url.stopAccessingSecurityScopedResource() }
+
+            do {
+                let data = try Data(contentsOf: url)
+                guard let importResult = ExportService.shared.importFullBackup(from: data) else {
+                    showAlertWith(title: "Erreur", message: "Le fichier n'est pas une sauvegarde complète valide.")
+                    return
+                }
+                pendingBackupResult = importResult
+                showBackupImportConfirmation = true
+            } catch {
+                showAlertWith(title: "Erreur", message: "Impossible de lire le fichier : \(error.localizedDescription)")
+            }
+
+        case .failure(let error):
+            showAlertWith(title: "Erreur", message: error.localizedDescription)
+        }
+    }
+
+    private func performBackupImport() {
+        guard let result = pendingBackupResult else { return }
+
+        ExportService.shared.applyFullBackup(result.backup)
+        reloadData()
+
+        showAlertWith(
+            title: "Restauration réussie",
+            message: "\(result.profileCount) catégorie\(result.profileCount > 1 ? "s" : ""), \(result.playerCount) joueur\(result.playerCount > 1 ? "s" : ""), \(result.totalMatches) match\(result.totalMatches > 1 ? "s" : ""), \(result.totalTrainingSessions) entraînement\(result.totalTrainingSessions > 1 ? "s" : ""), \(result.staffCount) encadrant\(result.staffCount > 1 ? "s" : "") restaurés."
+        )
+        pendingBackupResult = nil
     }
 
     // MARK: - Import Actions

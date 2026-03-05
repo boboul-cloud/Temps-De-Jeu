@@ -43,6 +43,18 @@
 		</dict>
 		<dict>
 			<key>CFBundleTypeName</key>
+			<string>Sauvegarde Temps De Jeu</string>
+			<key>CFBundleTypeRole</key>
+			<string>Editor</string>
+			<key>LSHandlerRank</key>
+			<string>Owner</string>
+			<key>LSItemContentTypes</key>
+			<array>
+				<string>com.tempsdejeu.backup</string>
+			</array>
+		</dict>
+		<dict>
+			<key>CFBundleTypeName</key>
 			<string>JSON</string>
 			<key>CFBundleTypeRole</key>
 			<string>Viewer</string>
@@ -91,6 +103,26 @@
 				<key>public.filename-extension</key>
 				<array>
 					<string>tdjm</string>
+				</array>
+				<key>public.mime-type</key>
+				<string>application/json</string>
+			</dict>
+		</dict>
+		<dict>
+			<key>UTTypeConformsTo</key>
+			<array>
+				<string>public.data</string>
+				<string>public.json</string>
+			</array>
+			<key>UTTypeDescription</key>
+			<string>Sauvegarde Temps De Jeu</string>
+			<key>UTTypeIdentifier</key>
+			<string>com.tempsdejeu.backup</string>
+			<key>UTTypeTagSpecification</key>
+			<dict>
+				<key>public.filename-extension</key>
+				<array>
+					<string>tdjb</string>
 				</array>
 				<key>public.mime-type</key>
 				<string>application/json</string>

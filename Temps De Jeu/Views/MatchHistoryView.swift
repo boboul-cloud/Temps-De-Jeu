@@ -495,6 +495,48 @@ struct MatchReportView: View {
                         .cornerRadius(16)
                     }
 
+                    // Passes décisives
+                    if !match.assists.isEmpty {
+                        VStack(spacing: 12) {
+                            SectionHeader(title: "Passes décisives (\(match.assists.count))", icon: "hand.point.up.fill")
+
+                            let assisters = Dictionary(grouping: match.assists, by: { $0.playerName })
+                                .map { (name: $0.key, count: $0.value.count, minutes: $0.value.map { Int($0.minute / 60) }) }
+                                .sorted { $0.count > $1.count }
+
+                            ForEach(assisters, id: \.name) { assister in
+                                HStack(spacing: 10) {
+                                    Image(systemName: "hand.point.up.fill")
+                                        .font(.caption)
+                                        .foregroundStyle(.blue)
+
+                                    Text(assister.name)
+                                        .font(.subheadline.bold())
+
+                                    Spacer()
+
+                                    HStack(spacing: 4) {
+                                        ForEach(assister.minutes, id: \.self) { min in
+                                            Text("\(min)'")
+                                                .font(.system(size: 9, weight: .bold, design: .monospaced))
+                                                .padding(.horizontal, 5)
+                                                .padding(.vertical, 2)
+                                                .background(Color.blue.opacity(0.15))
+                                                .cornerRadius(4)
+                                        }
+                                    }
+
+                                    Text("\(assister.count)")
+                                        .font(.caption.bold())
+                                        .foregroundStyle(.blue)
+                                }
+                            }
+                        }
+                        .padding()
+                        .background(Color(.systemGray6))
+                        .cornerRadius(16)
+                    }
+
                     // Temps de jeu par joueur
                     let playingTimes = match.playerPlayingTimes()
                     if !playingTimes.isEmpty {

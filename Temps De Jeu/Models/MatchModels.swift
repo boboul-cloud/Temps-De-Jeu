@@ -6,6 +6,7 @@
 //
 
 import Foundation
+import SwiftUI
 
 /// Représente une période de jeu (mi-temps)
 enum MatchPeriod: String, Codable, CaseIterable, Identifiable {
@@ -79,6 +80,57 @@ struct Stoppage: Identifiable, Codable {
     }
 }
 
+/// Couleur de maillot
+enum JerseyColor: String, Codable, CaseIterable, Identifiable {
+    case white = "Blanc"
+    case black = "Noir"
+    case red = "Rouge"
+    case blue = "Bleu"
+    case darkBlue = "Marine"
+    case green = "Vert"
+    case darkGreen = "Vert foncé"
+    case yellow = "Jaune"
+    case orange = "Orange"
+    case purple = "Violet"
+    case pink = "Rose"
+    case cyan = "Cyan"
+    case gray = "Gris"
+    case maroon = "Bordeaux"
+    case skyBlue = "Bleu ciel"
+
+    var id: String { rawValue }
+
+    var color: Color {
+        switch self {
+        case .white: return Color.white
+        case .black: return Color.black
+        case .red: return Color.red
+        case .blue: return Color.blue
+        case .darkBlue: return Color(red: 0.0, green: 0.0, blue: 0.55)
+        case .green: return Color.green
+        case .darkGreen: return Color(red: 0.0, green: 0.4, blue: 0.0)
+        case .yellow: return Color.yellow
+        case .orange: return Color.orange
+        case .purple: return Color.purple
+        case .pink: return Color.pink
+        case .cyan: return Color.cyan
+        case .gray: return Color.gray
+        case .maroon: return Color(red: 0.5, green: 0.0, blue: 0.0)
+        case .skyBlue: return Color(red: 0.4, green: 0.7, blue: 1.0)
+        }
+    }
+
+    /// Couleur du texte adaptée au fond du maillot
+    var textColor: Color {
+        switch self {
+        case .white, .yellow, .cyan, .skyBlue, .pink:
+            return .black
+        default:
+            return .white
+        }
+    }
+}
+
 /// Un match complet
 struct Match: Identifiable, Codable {
     let id: UUID
@@ -97,8 +149,15 @@ struct Match: Identifiable, Codable {
     var cards: [CardEvent]
     var substitutions: [SubstitutionEvent]
     var fouls: [FoulEvent]
+    var assists: [AssistEvent]
     var matchRoster: [MatchPlayer]
     var tempExpulsions: [TempExpulsion]
+    var homeJerseyColor: JerseyColor
+    var awayJerseyColor: JerseyColor
+    var homePossessionTime: TimeInterval
+    var awayPossessionTime: TimeInterval
+    var homePasses: Int
+    var awayPasses: Int
 
     init(
         id: UUID = UUID(),
@@ -117,8 +176,15 @@ struct Match: Identifiable, Codable {
         cards: [CardEvent] = [],
         substitutions: [SubstitutionEvent] = [],
         fouls: [FoulEvent] = [],
+        assists: [AssistEvent] = [],
         matchRoster: [MatchPlayer] = [],
-        tempExpulsions: [TempExpulsion] = []
+        tempExpulsions: [TempExpulsion] = [],
+        homeJerseyColor: JerseyColor = .white,
+        awayJerseyColor: JerseyColor = .blue,
+        homePossessionTime: TimeInterval = 0,
+        awayPossessionTime: TimeInterval = 0,
+        homePasses: Int = 0,
+        awayPasses: Int = 0
     ) {
         self.id = id
         self.homeTeam = homeTeam
@@ -136,8 +202,15 @@ struct Match: Identifiable, Codable {
         self.cards = cards
         self.substitutions = substitutions
         self.fouls = fouls
+        self.assists = assists
         self.matchRoster = matchRoster
         self.tempExpulsions = tempExpulsions
+        self.homeJerseyColor = homeJerseyColor
+        self.awayJerseyColor = awayJerseyColor
+        self.homePossessionTime = homePossessionTime
+        self.awayPossessionTime = awayPossessionTime
+        self.homePasses = homePasses
+        self.awayPasses = awayPasses
     }
 
     // Backward compatibility: old saved matches don't have matchRoster
@@ -158,9 +231,16 @@ struct Match: Identifiable, Codable {
         cards = try container.decodeIfPresent([CardEvent].self, forKey: .cards) ?? []
         substitutions = try container.decodeIfPresent([SubstitutionEvent].self, forKey: .substitutions) ?? []
         fouls = try container.decodeIfPresent([FoulEvent].self, forKey: .fouls) ?? []
+        assists = try container.decodeIfPresent([AssistEvent].self, forKey: .assists) ?? []
         matchRoster = try container.decodeIfPresent([MatchPlayer].self, forKey: .matchRoster) ?? []
         tempExpulsions = try container.decodeIfPresent([TempExpulsion].self, forKey: .tempExpulsions) ?? []
         isMyTeamHome = try container.decodeIfPresent(Bool.self, forKey: .isMyTeamHome) ?? true
+        homeJerseyColor = try container.decodeIfPresent(JerseyColor.self, forKey: .homeJerseyColor) ?? .white
+        awayJerseyColor = try container.decodeIfPresent(JerseyColor.self, forKey: .awayJerseyColor) ?? .blue
+        homePossessionTime = try container.decodeIfPresent(TimeInterval.self, forKey: .homePossessionTime) ?? 0
+        awayPossessionTime = try container.decodeIfPresent(TimeInterval.self, forKey: .awayPossessionTime) ?? 0
+        homePasses = try container.decodeIfPresent(Int.self, forKey: .homePasses) ?? 0
+        awayPasses = try container.decodeIfPresent(Int.self, forKey: .awayPasses) ?? 0
     }
 
     // MARK: - Mon équipe
@@ -276,7 +356,7 @@ struct Match: Identifiable, Codable {
     /// On ne peut PAS se fier à `mp.status` car celui-ci est modifié par les remplacements
     /// (le sortant passe en `.remplacant`, l'entrant passe en `.titulaire`) et les expulsions.
     /// On reconstitue donc le statut initial en analysant les événements de substitution.
-    private func wasInitiallyOnField(playerId: UUID) -> Bool {
+    func wasInitiallyOnField(playerId: UUID) -> Bool {
         guard let mp = matchRoster.first(where: { $0.id == playerId }) else { return false }
 
         // Collecter toutes les substitutions impliquant ce joueur, triées chronologiquement
@@ -396,7 +476,7 @@ struct Match: Identifiable, Codable {
     }
 
     /// Vérifie si un joueur était sur le terrain à la fin d'une période donnée
-    private func wasPlayerOnFieldAtEndOf(playerId: UUID, period: MatchPeriod, playedPeriods: [MatchPeriod], initiallyOnField: [UUID: Bool]) -> Bool {
+    func wasPlayerOnFieldAtEndOf(playerId: UUID, period: MatchPeriod, playedPeriods: [MatchPeriod], initiallyOnField: [UUID: Bool]) -> Bool {
         // Déterminer le statut au début de cette période
         var onField: Bool
         if period == playedPeriods.first {
@@ -416,7 +496,7 @@ struct Match: Identifiable, Codable {
     }
 
     /// Période précédente
-    private func previousPeriod(_ period: MatchPeriod) -> MatchPeriod {
+    func previousPeriod(_ period: MatchPeriod) -> MatchPeriod {
         switch period {
         case .firstHalf: return .firstHalf
         case .secondHalf: return .firstHalf

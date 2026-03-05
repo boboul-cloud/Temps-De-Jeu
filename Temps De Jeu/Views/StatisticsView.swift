@@ -20,6 +20,12 @@ struct StatisticsView: View {
                     // Résumé global
                     globalSummaryCard
 
+                    // Possession par équipe
+                    teamPossessionCard
+
+                    // Passes par équipe
+                    teamPassesCard
+
                     // Répartition par type d'arrêt
                     stoppageBreakdownCard
 
@@ -28,6 +34,9 @@ struct StatisticsView: View {
 
                     // Buteurs
                     scorersCard
+
+                    // Passes décisives
+                    assistsCard
 
                     // Fautes par joueur
                     foulBreakdownCard
@@ -103,6 +112,203 @@ struct StatisticsView: View {
                     value: TimeFormatters.formatTime(viewModel.currentAddedTime),
                     color: .red
                 )
+            }
+        }
+        .padding()
+        .background(Color(.systemGray6))
+        .cornerRadius(16)
+    }
+
+    // MARK: - Possession par équipe
+
+    private var teamPossessionCard: some View {
+        VStack(spacing: 16) {
+            SectionHeader(title: "Possession par équipe", icon: "tshirt.fill")
+
+            let homeTime = viewModel.currentHomePossessionTime
+            let awayTime = viewModel.currentAwayPossessionTime
+            let totalPossession = homeTime + awayTime
+
+            if totalPossession > 0 {
+                // Barre de possession
+                VStack(spacing: 8) {
+                    HStack {
+                        HStack(spacing: 6) {
+                            Image(systemName: "tshirt.fill")
+                                .font(.caption)
+                                .foregroundStyle(viewModel.match.homeJerseyColor.color)
+                                .shadow(color: viewModel.match.homeJerseyColor == .white ? .gray.opacity(0.5) : .clear, radius: 1)
+                            Text(viewModel.match.homeTeam.isEmpty ? "Domicile" : viewModel.match.homeTeam)
+                                .font(.subheadline.bold())
+                        }
+                        Spacer()
+                        HStack(spacing: 6) {
+                            Text(viewModel.match.awayTeam.isEmpty ? "Extérieur" : viewModel.match.awayTeam)
+                                .font(.subheadline.bold())
+                            Image(systemName: "tshirt.fill")
+                                .font(.caption)
+                                .foregroundStyle(viewModel.match.awayJerseyColor.color)
+                                .shadow(color: viewModel.match.awayJerseyColor == .white ? .gray.opacity(0.5) : .clear, radius: 1)
+                        }
+                    }
+
+                    // Barre de progression double
+                    GeometryReader { geo in
+                        HStack(spacing: 2) {
+                            RoundedRectangle(cornerRadius: 4)
+                                .fill(viewModel.match.homeJerseyColor.color)
+                                .frame(width: geo.size.width * CGFloat(homeTime / totalPossession))
+                                .overlay(
+                                    viewModel.match.homeJerseyColor == .white
+                                        ? RoundedRectangle(cornerRadius: 4).stroke(Color.gray.opacity(0.3), lineWidth: 1)
+                                        : nil
+                                )
+                            RoundedRectangle(cornerRadius: 4)
+                                .fill(viewModel.match.awayJerseyColor.color)
+                                .overlay(
+                                    viewModel.match.awayJerseyColor == .white
+                                        ? RoundedRectangle(cornerRadius: 4).stroke(Color.gray.opacity(0.3), lineWidth: 1)
+                                        : nil
+                                )
+                        }
+                    }
+                    .frame(height: 14)
+
+                    // Pourcentages + temps
+                    HStack {
+                        VStack(alignment: .leading, spacing: 2) {
+                            Text("\(Int(viewModel.homePossessionPercentage))%")
+                                .font(.system(.title2, design: .rounded).bold())
+                                .foregroundStyle(viewModel.match.homeJerseyColor.color == .white ? .primary : viewModel.match.homeJerseyColor.color)
+                            Text(TimeFormatters.formatTime(homeTime))
+                                .font(.system(.caption, design: .monospaced))
+                                .foregroundStyle(.secondary)
+                        }
+                        Spacer()
+                        VStack(alignment: .trailing, spacing: 2) {
+                            Text("\(Int(viewModel.awayPossessionPercentage))%")
+                                .font(.system(.title2, design: .rounded).bold())
+                                .foregroundStyle(viewModel.match.awayJerseyColor.color == .white ? .primary : viewModel.match.awayJerseyColor.color)
+                            Text(TimeFormatters.formatTime(awayTime))
+                                .font(.system(.caption, design: .monospaced))
+                                .foregroundStyle(.secondary)
+                        }
+                    }
+                }
+
+                // Stats complémentaires par équipe (arrêts par équipe)
+                let homeStoppages = viewModel.match.stoppages.filter { $0.beneficiaryTeam == .home }
+                let awayStoppages = viewModel.match.stoppages.filter { $0.beneficiaryTeam == .away }
+                let homeStoppageTime = homeStoppages.reduce(0) { $0 + $1.duration }
+                let awayStoppageTime = awayStoppages.reduce(0) { $0 + $1.duration }
+
+                if !homeStoppages.isEmpty || !awayStoppages.isEmpty {
+                    Divider()
+                    HStack(spacing: 20) {
+                        VStack(spacing: 4) {
+                            Text("\(homeStoppages.count)")
+                                .font(.headline.bold())
+                            Text("Arrêts")
+                                .font(.caption2)
+                                .foregroundStyle(.secondary)
+                            Text(TimeFormatters.formatShort(homeStoppageTime))
+                                .font(.caption.bold())
+                                .foregroundStyle(.red)
+                        }
+                        .frame(maxWidth: .infinity)
+
+                        Divider().frame(height: 40)
+
+                        VStack(spacing: 4) {
+                            Text("\(awayStoppages.count)")
+                                .font(.headline.bold())
+                            Text("Arrêts")
+                                .font(.caption2)
+                                .foregroundStyle(.secondary)
+                            Text(TimeFormatters.formatShort(awayStoppageTime))
+                                .font(.caption.bold())
+                                .foregroundStyle(.red)
+                        }
+                        .frame(maxWidth: .infinity)
+                    }
+                }
+            } else {
+                VStack(spacing: 8) {
+                    Image(systemName: "tshirt.fill")
+                        .font(.title2)
+                        .foregroundStyle(.secondary)
+                    Text("Aucune donnée de possession")
+                        .font(.subheadline)
+                        .foregroundStyle(.secondary)
+                    Text("Utilisez les boutons de possession pendant le match")
+                        .font(.caption)
+                        .foregroundStyle(.secondary)
+                }
+                .padding()
+            }
+        }
+        .padding()
+        .background(Color(.systemGray6))
+        .cornerRadius(16)
+    }
+
+    // MARK: - Passes par équipe
+
+    private var teamPassesCard: some View {
+        VStack(spacing: 12) {
+            SectionHeader(title: "Passes par équipe", icon: "sportscourt.fill")
+
+            let homePasses = viewModel.match.homePasses
+            let awayPasses = viewModel.match.awayPasses
+            let totalPasses = homePasses + awayPasses
+
+            if totalPasses > 0 {
+                // Barre de répartition
+                GeometryReader { geo in
+                    HStack(spacing: 0) {
+                        Rectangle()
+                            .fill(viewModel.match.homeJerseyColor.color)
+                            .frame(width: geo.size.width * CGFloat(homePasses) / CGFloat(totalPasses))
+
+                        Rectangle()
+                            .fill(viewModel.match.awayJerseyColor.color)
+                    }
+                    .clipShape(Capsule())
+                    .overlay(
+                        Capsule()
+                            .stroke(Color.gray.opacity(0.3), lineWidth: 1)
+                    )
+                }
+                .frame(height: 20)
+
+                HStack {
+                    VStack(alignment: .leading, spacing: 4) {
+                        Text(viewModel.match.homeTeam.isEmpty ? "Domicile" : viewModel.match.homeTeam)
+                            .font(.caption.bold())
+                        Text("\(homePasses)")
+                            .font(.system(.title3, design: .rounded).bold())
+                    }
+                    Spacer()
+                    VStack(alignment: .trailing, spacing: 4) {
+                        Text(viewModel.match.awayTeam.isEmpty ? "Extérieur" : viewModel.match.awayTeam)
+                            .font(.caption.bold())
+                        Text("\(awayPasses)")
+                            .font(.system(.title3, design: .rounded).bold())
+                    }
+                }
+            } else {
+                VStack(spacing: 8) {
+                    Image(systemName: "sportscourt.fill")
+                        .font(.title2)
+                        .foregroundStyle(.secondary)
+                    Text("Aucune passe enregistrée")
+                        .font(.subheadline)
+                        .foregroundStyle(.secondary)
+                    Text("Utilisez les boutons ronds pendant le match")
+                        .font(.caption)
+                        .foregroundStyle(.secondary)
+                }
+                .padding()
             }
         }
         .padding()
@@ -343,6 +549,96 @@ struct StatisticsView: View {
     }
 
     // MARK: - Fautes par joueur
+
+    /// Entrée stable pour le ForEach des passes décisives
+    private struct AssistEntry: Identifiable {
+        let id: String
+        let playerName: String
+        let assistMinutes: [AssistMinuteEntry]
+        let count: Int
+    }
+
+    private struct AssistMinuteEntry: Identifiable {
+        let id: UUID
+        let minute: Int
+    }
+
+    /// Données passes décisives pré-calculées
+    private var assistEntries: [AssistEntry] {
+        let myAssists = viewModel.match.assists.filter { !$0.playerName.isEmpty }
+        let grouped = Dictionary(grouping: myAssists, by: { $0.playerName })
+        return grouped.map { name, assists in
+            AssistEntry(
+                id: name,
+                playerName: name,
+                assistMinutes: assists.map { AssistMinuteEntry(id: $0.id, minute: Int($0.minute / 60)) },
+                count: assists.count
+            )
+        }
+        .sorted { $0.count != $1.count ? $0.count > $1.count : $0.playerName < $1.playerName }
+    }
+
+    private var assistsCard: some View {
+        VStack(spacing: 12) {
+            SectionHeader(title: "Passes D. (\(viewModel.match.assists.count))", icon: "hand.point.up.fill")
+
+            if assistEntries.isEmpty {
+                Text("Aucune passe décisive enregistrée")
+                    .font(.subheadline)
+                    .foregroundStyle(.secondary)
+                    .padding()
+            } else {
+                let maxAssists = assistEntries.first?.count ?? 1
+
+                ForEach(assistEntries) { entry in
+                    HStack(spacing: 12) {
+                        Image(systemName: "hand.point.up.fill")
+                            .foregroundStyle(.blue)
+                            .frame(width: 24)
+
+                        VStack(alignment: .leading, spacing: 4) {
+                            HStack {
+                                Text(entry.playerName)
+                                    .font(.subheadline.bold())
+                                Spacer()
+                                Text("\(entry.count)")
+                                    .font(.subheadline.bold())
+                                    .foregroundStyle(.blue)
+                                Text(entry.count > 1 ? "passes" : "passe")
+                                    .font(.caption)
+                                    .foregroundStyle(.secondary)
+                            }
+
+                            // Minutes des passes décisives
+                            HStack(spacing: 6) {
+                                ForEach(entry.assistMinutes) { am in
+                                    Text("\(am.minute)'")
+                                        .font(.system(size: 9, weight: .bold, design: .monospaced))
+                                        .padding(.horizontal, 6)
+                                        .padding(.vertical, 2)
+                                        .background(Color.blue.opacity(0.15))
+                                        .cornerRadius(4)
+                                }
+                                Spacer()
+                            }
+
+                            GeometryReader { geo in
+                                RoundedRectangle(cornerRadius: 4)
+                                    .fill(Color.blue.opacity(0.3))
+                                    .frame(width: geo.size.width * CGFloat(entry.count) / CGFloat(maxAssists), height: 6)
+                            }
+                            .frame(height: 6)
+                        }
+                    }
+                }
+            }
+        }
+        .padding()
+        .background(Color(.systemGray6))
+        .cornerRadius(16)
+    }
+
+    // MARK: - Fautes par joueur (data)
 
     /// Entrée stable pour le ForEach des fautes
     private struct FoulPlayerEntry: Identifiable {

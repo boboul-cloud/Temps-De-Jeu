@@ -248,6 +248,25 @@ struct AvailabilityPollView: View {
                         .foregroundStyle(.tertiary)
                 }
             }
+
+            // Bouton rappel notification
+            if notResponded.count > 0 {
+                Button {
+                    scheduleReminder()
+                } label: {
+                    Label {
+                        VStack(alignment: .leading, spacing: 2) {
+                            Text("Programmer un rappel")
+                            Text("Notification demain à 9h pour relancer")
+                                .font(.caption)
+                                .foregroundStyle(.secondary)
+                        }
+                    } icon: {
+                        Image(systemName: "bell.badge.fill")
+                            .foregroundStyle(.orange)
+                    }
+                }
+            }
         } header: {
             Text("Sans réponse (\(notRespondedCount))")
         }
@@ -309,6 +328,31 @@ struct AvailabilityPollView: View {
     private func applyResponsesToAttendance() {
         var updatedSession = session
         TrainingManager.shared.applyResponsesToAttendance(session: &updatedSession)
+        onUpdate(updatedSession)
+        dismiss()
+    }
+
+    private func scheduleReminder() {
+        // Programmer un rappel demain à 9h
+        var components = Calendar.current.dateComponents([.year, .month, .day], from: Date())
+        components.day! += 1
+        components.hour = 9
+        components.minute = 0
+        let reminderDate = Calendar.current.date(from: components) ?? Date().addingTimeInterval(86400)
+
+        NotificationManager.shared.scheduleAvailabilityReminder(
+            sessionId: session.id,
+            sessionDate: session.date,
+            teamName: teamName,
+            pendingCount: notRespondedCount,
+            reminderDate: reminderDate
+        )
+
+        withAnimation { showCopiedToast = true }
+        DispatchQueue.main.asyncAfter(deadline: .now() + 1.5) {
+            withAnimation { showCopiedToast = false }
+        }
+    }
         onUpdate(updatedSession)
         dismiss()
     }
