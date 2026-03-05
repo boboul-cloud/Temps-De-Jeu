@@ -340,6 +340,12 @@
                 throw new Error('No players');
             }
 
+            // Normalize player data: support both old {i,n} and new [id, name] formats
+            pollData.p = pollData.p.map(p => {
+                if (Array.isArray(p)) return { i: p[0], n: p[1] };
+                return p;
+            });
+
             // Populate UI
             document.getElementById('teamName').textContent = pollData.t;
             document.getElementById('sessionDate').textContent = formatDate(pollData.d);
