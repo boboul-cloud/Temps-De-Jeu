@@ -193,6 +193,19 @@ struct TrainingSessionRow: View {
                         .foregroundStyle(.tertiary)
                         .lineLimit(1)
                 }
+                
+                // Badge réponses de disponibilité
+                if !session.availabilityResponses.isEmpty {
+                    let presentR = session.availabilityResponses.filter { $0.status == .present }.count
+                    let totalR = session.availabilityResponses.count
+                    HStack(spacing: 4) {
+                        Image(systemName: "paperplane.fill")
+                            .font(.caption2)
+                        Text("\(presentR)/\(totalR) réponses")
+                            .font(.caption)
+                    }
+                    .foregroundStyle(.orange)
+                }
             }
             
             Spacer()
@@ -304,8 +317,23 @@ struct NewTrainingSessionView: View {
                                 .font(.caption)
                                 .foregroundStyle(.secondary)
                         } else {
-                            ForEach(filteredGuestPlayers, id: \.player.id) { guest in
-                                HStack {
+                            let grouped = Dictionary(grouping: filteredGuestPlayers, by: { $0.categoryName })
+                            let sortedCategories = grouped.keys.sorted { $0.localizedCompare($1) == .orderedAscending }
+                            ForEach(sortedCategories, id: \.self) { categoryName in
+                                let guests = grouped[categoryName] ?? []
+                                let colorIndex = guests.first?.categoryColorIndex ?? 0
+                                HStack(spacing: 6) {
+                                    Circle()
+                                        .fill(ProfileManager.color(for: colorIndex))
+                                        .frame(width: 8, height: 8)
+                                    Text(categoryName)
+                                        .font(.caption.bold())
+                                        .foregroundStyle(ProfileManager.color(for: colorIndex))
+                                }
+                                .padding(.top, 6)
+                                .listRowSeparator(.hidden)
+
+                                ForEach(guests, id: \.player.id) { guest in
                                     PlayerAttendanceRow(
                                         player: guest.player,
                                         isPresent: presentGuestIds.contains(guest.player.id)
@@ -316,13 +344,6 @@ struct NewTrainingSessionView: View {
                                             presentGuestIds.insert(guest.player.id)
                                         }
                                     }
-                                    Text(guest.categoryName)
-                                        .font(.system(size: 10, weight: .semibold))
-                                        .padding(.horizontal, 5)
-                                        .padding(.vertical, 2)
-                                        .background(ProfileManager.color(for: guest.categoryColorIndex).opacity(0.15))
-                                        .foregroundStyle(ProfileManager.color(for: guest.categoryColorIndex))
-                                        .cornerRadius(4)
                                 }
                             }
                         }
@@ -406,7 +427,11 @@ struct NewTrainingSessionView: View {
                 }
             }
         }
-        guests.sort { $0.player.lastName.localizedCompare($1.player.lastName) == .orderedAscending }
+        guests.sort {
+            let catCompare = $0.categoryName.localizedCompare($1.categoryName)
+            if catCompare != .orderedSame { return catCompare == .orderedAscending }
+            return $0.player.lastName.localizedCompare($1.player.lastName) == .orderedAscending
+        }
         guestPlayers = guests
     }
 }
@@ -470,11 +495,11 @@ struct TrainingSessionDetailView: View {
     @State private var notes: String
     @State private var presentPlayerIds: Set<UUID>
     @State private var searchText = ""
-    @State private var showShareSheet = false
-    @State private var exportURL: URL?
+    @State private var pdfPreviewItem: TrainingPDFPreviewItem?
     @State private var showGuestPlayers = false
     @State private var guestPlayers: [(player: Player, categoryName: String, categoryColorIndex: Int)] = []
     @State private var presentGuestIds: Set<UUID> = []
+    @State private var showAvailabilityPoll = false
     
     init(session: TrainingSession, players: [Player], onSave: @escaping (TrainingSession) -> Void) {
         self.session = session
@@ -531,6 +556,34 @@ struct TrainingSessionDetailView: View {
                     } label: {
                         Label("Exporter la feuille de présence", systemImage: "square.and.arrow.up")
                     }
+                    
+                    Button {
+                        showAvailabilityPoll = true
+                    } label: {
+                        Label {
+                            HStack {
+                                VStack(alignment: .leading, spacing: 2) {
+                                    Text("Sondage disponibilité")
+                                    Text("Demandez aux joueurs leur dispo")
+                                        .font(.caption)
+                                        .foregroundStyle(.secondary)
+                                }
+                                Spacer()
+                                if !session.availabilityResponses.isEmpty {
+                                    Text("\(session.availabilityResponses.count)")
+                                        .font(.caption2.bold())
+                                        .padding(.horizontal, 6)
+                                        .padding(.vertical, 2)
+                                        .background(Color.orange.opacity(0.15))
+                                        .foregroundStyle(.orange)
+                                        .cornerRadius(8)
+                                }
+                            }
+                        } icon: {
+                            Image(systemName: "paperplane.fill")
+                                .foregroundStyle(.orange)
+                        }
+                    }
                 }
                 
                 Section {
@@ -579,8 +632,23 @@ struct TrainingSessionDetailView: View {
                                 .font(.caption)
                                 .foregroundStyle(.secondary)
                         } else {
-                            ForEach(filteredGuestPlayers, id: \.player.id) { guest in
-                                HStack {
+                            let grouped = Dictionary(grouping: filteredGuestPlayers, by: { $0.categoryName })
+                            let sortedCategories = grouped.keys.sorted { $0.localizedCompare($1) == .orderedAscending }
+                            ForEach(sortedCategories, id: \.self) { categoryName in
+                                let guests = grouped[categoryName] ?? []
+                                let colorIndex = guests.first?.categoryColorIndex ?? 0
+                                HStack(spacing: 6) {
+                                    Circle()
+                                        .fill(ProfileManager.color(for: colorIndex))
+                                        .frame(width: 8, height: 8)
+                                    Text(categoryName)
+                                        .font(.caption.bold())
+                                        .foregroundStyle(ProfileManager.color(for: colorIndex))
+                                }
+                                .padding(.top, 6)
+                                .listRowSeparator(.hidden)
+
+                                ForEach(guests, id: \.player.id) { guest in
                                     PlayerAttendanceRow(
                                         player: guest.player,
                                         isPresent: presentGuestIds.contains(guest.player.id)
@@ -591,13 +659,6 @@ struct TrainingSessionDetailView: View {
                                             presentGuestIds.insert(guest.player.id)
                                         }
                                     }
-                                    Text(guest.categoryName)
-                                        .font(.system(size: 10, weight: .semibold))
-                                        .padding(.horizontal, 5)
-                                        .padding(.vertical, 2)
-                                        .background(ProfileManager.color(for: guest.categoryColorIndex).opacity(0.15))
-                                        .foregroundStyle(ProfileManager.color(for: guest.categoryColorIndex))
-                                        .cornerRadius(4)
                                 }
                             }
                         }
@@ -636,14 +697,16 @@ struct TrainingSessionDetailView: View {
                     }
                 }
             }
-            .onChange(of: exportURL) {
-                if exportURL != nil {
-                    showShareSheet = true
-                }
+            .sheet(item: $pdfPreviewItem) { item in
+                PDFPreviewView(pdfData: item.data, title: item.title)
             }
-            .sheet(isPresented: $showShareSheet) {
-                if let url = exportURL {
-                    ShareSheet(items: [url])
+            .sheet(isPresented: $showAvailabilityPoll) {
+                AvailabilityPollView(session: session, players: players) { updatedSession in
+                    // Mettre à jour l'état local pour refléter immédiatement les changements
+                    presentPlayerIds = Set(updatedSession.attendances.filter { $0.isPresent }.map { $0.id })
+                    presentGuestIds = Set(updatedSession.attendances.filter { $0.isPresent }.map { $0.id })
+                        .intersection(Set(guestPlayers.map { $0.player.id }))
+                    onSave(updatedSession)
                 }
             }
         }
@@ -675,10 +738,7 @@ struct TrainingSessionDetailView: View {
         let formatter = DateFormatter()
         formatter.dateFormat = "yyyy-MM-dd"
         let dateStr = formatter.string(from: date)
-        let fileName = "Entrainement_\(dateStr).pdf"
-        let tempURL = FileManager.default.temporaryDirectory.appendingPathComponent(fileName)
-        try? data.write(to: tempURL)
-        exportURL = tempURL
+        pdfPreviewItem = TrainingPDFPreviewItem(data: data, title: "Entrainement \(dateStr)")
     }
     
     private func saveSession() {
@@ -721,7 +781,11 @@ struct TrainingSessionDetailView: View {
                 }
             }
         }
-        guests.sort { $0.player.lastName.localizedCompare($1.player.lastName) == .orderedAscending }
+        guests.sort {
+            let catCompare = $0.categoryName.localizedCompare($1.categoryName)
+            if catCompare != .orderedSame { return catCompare == .orderedAscending }
+            return $0.player.lastName.localizedCompare($1.player.lastName) == .orderedAscending
+        }
         guestPlayers = guests
 
         // Restaurer les invités déjà présents dans la session existante
@@ -967,6 +1031,14 @@ struct TrainingStatsView: View {
     }
 }
 
+// MARK: - PDF Preview Item
+
+struct TrainingPDFPreviewItem: Identifiable {
+    let id = UUID()
+    let data: Data
+    let title: String
+}
+
 // MARK: - Export des présences
 
 struct TrainingExportView: View {
@@ -977,8 +1049,9 @@ struct TrainingExportView: View {
     @State private var startDate = Calendar.current.date(byAdding: .month, value: -1, to: Date()) ?? Date()
     @State private var endDate = Date()
     @State private var exportFormat: ExportFormat = .pdf
+    @State private var pdfPreviewItem: TrainingPDFPreviewItem?
     @State private var showShareSheet = false
-    @State private var exportURL: URL?
+    @State private var shareURL: URL?
     
     // Import states
     @State private var showImportPicker = false
@@ -1074,13 +1147,13 @@ struct TrainingExportView: View {
                     }
                 }
             }
-            .onChange(of: exportURL) {
-                if exportURL != nil {
-                    showShareSheet = true
-                }
+            .sheet(item: $pdfPreviewItem) { item in
+                PDFPreviewView(pdfData: item.data, title: item.title)
             }
-            .sheet(isPresented: $showShareSheet) {
-                if let url = exportURL {
+            .sheet(isPresented: $showShareSheet, onDismiss: {
+                shareURL = nil
+            }) {
+                if let url = shareURL {
                     ShareSheet(items: [url])
                 }
             }
@@ -1128,10 +1201,7 @@ struct TrainingExportView: View {
                 guestCategoryNames: guestNames
             )
             let dateStr = formatDateRange()
-            let fileName = "Presences_entrainements_\(dateStr).pdf"
-            let tempURL = FileManager.default.temporaryDirectory.appendingPathComponent(fileName)
-            try? data.write(to: tempURL)
-            exportURL = tempURL
+            pdfPreviewItem = TrainingPDFPreviewItem(data: data, title: "Presences_entrainements_\(dateStr)")
             
         case .json:
             if let data = ExportService.shared.exportTrainingAttendanceJSON(
@@ -1144,7 +1214,8 @@ struct TrainingExportView: View {
                 let fileName = "Presences_entrainements_\(dateStr).json"
                 let tempURL = FileManager.default.temporaryDirectory.appendingPathComponent(fileName)
                 try? data.write(to: tempURL)
-                exportURL = tempURL
+                shareURL = tempURL
+                showShareSheet = true
             }
         }
     }

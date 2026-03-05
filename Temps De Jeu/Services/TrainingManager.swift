@@ -119,4 +119,35 @@ class TrainingManager {
             session.date >= startOfDay && session.date < endOfDay
         }.sorted { $0.date > $1.date }
     }
+    
+    // MARK: - Sondage de disponibilité
+    
+    /// Applique une réponse de disponibilité reçue via deep link à une session
+    func applyAvailabilityResponse(_ response: AvailabilityResponse, forSession sessionId: UUID) {
+        var sessions = loadSessions()
+        guard let index = sessions.firstIndex(where: { $0.id == sessionId }) else {
+            print("[Training] Session \(sessionId) non trouvée pour la réponse de disponibilité")
+            return
+        }
+        
+        // Mettre à jour ou ajouter la réponse
+        if let existingIndex = sessions[index].availabilityResponses.firstIndex(where: { $0.id == response.id }) {
+            sessions[index].availabilityResponses[existingIndex] = response
+        } else {
+            sessions[index].availabilityResponses.append(response)
+        }
+        
+        saveSessions(sessions)
+        print("[Training] Réponse de disponibilité appliquée: \(response.playerName) → \(response.status.label)")
+    }
+    
+    /// Applique les réponses de disponibilité aux présences de la session
+    /// (convertit les réponses "Présent" en présence, les autres en absence)
+    func applyResponsesToAttendance(session: inout TrainingSession) {
+        for response in session.availabilityResponses {
+            if let attendanceIdx = session.attendances.firstIndex(where: { $0.id == response.id }) {
+                session.attendances[attendanceIdx].isPresent = (response.status == .present)
+            }
+        }
+    }
 }

@@ -7,18 +7,84 @@
 
 import Foundation
 
+/// Réponse de disponibilité d'un joueur (via sondage web)
+enum AvailabilityStatus: Int, Codable, CaseIterable, Identifiable {
+    case absent = 0
+    case present = 1
+    case incertain = 2
+    
+    var id: Int { rawValue }
+    
+    var label: String {
+        switch self {
+        case .absent: return "Absent"
+        case .present: return "Présent"
+        case .incertain: return "Incertain"
+        }
+    }
+    
+    var icon: String {
+        switch self {
+        case .absent: return "xmark.circle.fill"
+        case .present: return "checkmark.circle.fill"
+        case .incertain: return "questionmark.circle.fill"
+        }
+    }
+    
+    var color: String {
+        switch self {
+        case .absent: return "red"
+        case .present: return "green"
+        case .incertain: return "orange"
+        }
+    }
+}
+
+/// Réponse individuelle d'un joueur au sondage de disponibilité
+struct AvailabilityResponse: Identifiable, Codable, Equatable {
+    let id: UUID           // Référence au Player.id
+    var playerName: String
+    var status: AvailabilityStatus
+    var comment: String
+    var respondedAt: Date
+    
+    init(id: UUID, playerName: String, status: AvailabilityStatus, comment: String = "", respondedAt: Date = Date()) {
+        self.id = id
+        self.playerName = playerName
+        self.status = status
+        self.comment = comment
+        self.respondedAt = respondedAt
+    }
+}
+
 /// Un entraînement avec la liste des présences
 struct TrainingSession: Identifiable, Codable, Equatable {
     let id: UUID
     var date: Date
     var notes: String
     var attendances: [PlayerAttendance]
+    var availabilityResponses: [AvailabilityResponse]
     
-    init(id: UUID = UUID(), date: Date = Date(), notes: String = "", attendances: [PlayerAttendance] = []) {
+    init(id: UUID = UUID(), date: Date = Date(), notes: String = "", attendances: [PlayerAttendance] = [], availabilityResponses: [AvailabilityResponse] = []) {
         self.id = id
         self.date = date
         self.notes = notes
         self.attendances = attendances
+        self.availabilityResponses = availabilityResponses
+    }
+    
+    // Backward compat: availabilityResponses optionnel
+    enum CodingKeys: String, CodingKey {
+        case id, date, notes, attendances, availabilityResponses
+    }
+    
+    init(from decoder: Decoder) throws {
+        let container = try decoder.container(keyedBy: CodingKeys.self)
+        id = try container.decode(UUID.self, forKey: .id)
+        date = try container.decode(Date.self, forKey: .date)
+        notes = try container.decode(String.self, forKey: .notes)
+        attendances = try container.decode([PlayerAttendance].self, forKey: .attendances)
+        availabilityResponses = try container.decodeIfPresent([AvailabilityResponse].self, forKey: .availabilityResponses) ?? []
     }
     
     /// Nombre de joueurs présents

@@ -14,6 +14,7 @@ import Compression
 extension UTType {
     static let tdjRoster = UTType(exportedAs: "com.tempsdejeu.roster")
     static let tdjMatches = UTType("com.tempsdejeu.matches") ?? .json
+    static let tdjBackup = UTType("com.tempsdejeu.backup") ?? .json
 }
 
 /// Gestionnaire centralisé de l'import de fichiers .tdj et des deep links
@@ -42,6 +43,21 @@ class DeepLinkManager: ObservableObject {
     
     /// Indique qu'un import de matchs vient d'arriver
     @Published var shouldNavigateToExport: Bool = false
+    
+    /// Sauvegarde complète importée, en attente de traitement
+    @Published var pendingBackupImport: ExportService.FullBackupImportResult?
+    
+    /// Indique qu'un import de sauvegarde complète vient d'arriver
+    @Published var shouldNavigateToBackupImport: Bool = false
+    
+    /// Réponse de disponibilité importée, en attente de traitement
+    @Published var pendingAvailabilityResponse: AvailabilityResponse?
+    
+    /// Session ID associée à la réponse de disponibilité
+    @Published var pendingAvailabilitySessionId: UUID?
+    
+    /// Indique qu'une réponse de disponibilité vient d'arriver
+    @Published var shouldNavigateToAvailability: Bool = false
     
     /// Message d'erreur à afficher si l'import échoue
     @Published var importError: String?
@@ -162,7 +178,7 @@ class DeepLinkManager: ObservableObject {
         print("[DeepLink] handleURL appelé: \(url)")
         print("[DeepLink] Scheme: \(url.scheme ?? "nil")")
         
-        // Vérifier si c'est un URL scheme (lien iMessage)
+        // Vérifier si c'est un URL scheme (lien iMessage / disponibilité)
         if url.scheme == "tempsdejeu" {
             handleDeepLink(url)
             return
@@ -172,11 +188,18 @@ class DeepLinkManager: ObservableObject {
         handleFileURL(url)
     }
 
-    /// Traite un lien tempsdejeu://r/BASE64 (nouveau) ou tempsdejeu://roster?data=... (legacy)
+    /// Traite un lien tempsdejeu://r/BASE64, tempsdejeu://a/BASE64 ou tempsdejeu://roster?data=...
     private func handleDeepLink(_ url: URL) {
         print("[DeepLink] handleDeepLink: \(url)")
         
         let host = url.host ?? ""
+        
+        // Réponse de disponibilité: tempsdejeu://a/BASE64
+        if host == "a" {
+            handleAvailabilityResponse(url)
+            return
+        }
+        
         var base64: String = ""
         var isCompressed = false
         
@@ -256,9 +279,9 @@ class DeepLinkManager: ObservableObject {
         print("[DeepLink] handleFileURL: \(url)")
         print("[DeepLink] Scheme: \(url.scheme ?? "nil"), Extension: \(url.pathExtension)")
         
-        // Accepter les fichiers .tdj, .tdjm OU .json (compat)
+        // Accepter les fichiers .tdj, .tdjm, .tdjb OU .json (compat)
         let ext = url.pathExtension.lowercased()
-        guard ext == "tdj" || ext == "tdjm" || ext == "json" else {
+        guard ext == "tdj" || ext == "tdjm" || ext == "tdjb" || ext == "json" else {
             print("[DeepLink] Extension non supportée: \(ext)")
             return
         }
@@ -291,8 +314,15 @@ class DeepLinkManager: ObservableObject {
                 print("[DeepLink] Aperçu: \(preview)")
             }
             
+            // Essayer de décoder comme sauvegarde complète (.tdjb)
+            if let backupResult = ExportService.shared.importFullBackup(from: data) {
+                pendingBackupImport = backupResult
+                shouldNavigateToBackupImport = true
+                importError = nil
+                print("[DeepLink] Import sauvegarde complète: \(backupResult.profileCount) profils, \(backupResult.playerCount) joueurs")
+            }
             // Essayer de décoder comme RosterExport (composition de match)
-            if let rosterExport = ExportService.shared.importRosterExport(from: data) {
+            else if let rosterExport = ExportService.shared.importRosterExport(from: data) {
                 pendingRosterImport = rosterExport
                 shouldNavigateToMatch = true
                 importError = nil
@@ -377,8 +407,197 @@ class DeepLinkManager: ObservableObject {
         shouldNavigateToExport = false
     }
     
+    /// Consomme les données d'import sauvegarde complète
+    func clearPendingBackupImport() {
+        pendingBackupImport = nil
+        shouldNavigateToBackupImport = false
+    }
+    
+    /// Consomme la réponse de disponibilité
+    func clearPendingAvailabilityResponse() {
+        pendingAvailabilityResponse = nil
+        pendingAvailabilitySessionId = nil
+        shouldNavigateToAvailability = false
+    }
+    
     /// Efface le message d'erreur
     func clearError() {
         importError = nil
+    }
+    
+    // MARK: - Réponse de disponibilité (tempsdejeu://a/BASE64)
+    
+    /// Traite une réponse de disponibilité d'un joueur
+    private func handleAvailabilityResponse(_ url: URL) {
+        let path = url.path
+        var base64: String
+        if path.hasPrefix("/") {
+            base64 = String(path.dropFirst())
+        } else {
+            base64 = path
+        }
+        
+        guard !base64.isEmpty else {
+            print("[DeepLink] Availability: Base64 vide")
+            importError = "Réponse de disponibilité invalide."
+            return
+        }
+        
+        // Décoder le Base64 URL-safe
+        var base64Fixed = base64
+            .replacingOccurrences(of: "-", with: "+")
+            .replacingOccurrences(of: "_", with: "/")
+        let padLength = (4 - base64Fixed.count % 4) % 4
+        base64Fixed += String(repeating: "=", count: padLength)
+        
+        guard let rawData = Data(base64Encoded: base64Fixed) else {
+            print("[DeepLink] Availability: Impossible de décoder le Base64")
+            importError = "Réponse de disponibilité invalide."
+            return
+        }
+        
+        // Décoder le JSON
+        do {
+            let json = try JSONSerialization.jsonObject(with: rawData) as? [String: Any]
+            guard let shortSessionId = json?["s"] as? String,
+                  let playerIdStr = json?["i"] as? String,
+                  let playerName = json?["n"] as? String,
+                  let statusRaw = json?["r"] as? Int,
+                  let status = AvailabilityStatus(rawValue: statusRaw) else {
+                print("[DeepLink] Availability: JSON invalide")
+                importError = "Réponse de disponibilité invalide."
+                return
+            }
+            
+            let comment = json?["c"] as? String ?? ""
+            
+            // Résoudre les short IDs (8 chars) vers les UUIDs complets
+            let sessions = TrainingManager.shared.loadSessions()
+            
+            // Trouver la session par ses 8 premiers caractères
+            guard let session = sessions.first(where: { $0.id.uuidString.hasPrefix(shortSessionId.uppercased()) }) else {
+                print("[DeepLink] Availability: Session non trouvée pour short ID \(shortSessionId)")
+                importError = "Session d'entraînement non trouvée."
+                return
+            }
+            
+            // Trouver le joueur par ses 8 premiers caractères parmi les joueurs de la session
+            let allPlayers = TeamManager.shared.loadAllPlayers()
+            let playerId: UUID
+            if let fullUUID = UUID(uuidString: playerIdStr) {
+                // UUID complet (ancien format)
+                playerId = fullUUID
+            } else if let matchedPlayer = allPlayers.first(where: { $0.id.uuidString.hasPrefix(playerIdStr.uppercased()) }) {
+                // Short ID
+                playerId = matchedPlayer.id
+            } else {
+                print("[DeepLink] Availability: Joueur non trouvé pour short ID \(playerIdStr)")
+                importError = "Joueur non trouvé."
+                return
+            }
+            
+            let response = AvailabilityResponse(
+                id: playerId,
+                playerName: playerName,
+                status: status,
+                comment: comment
+            )
+            
+            // Appliquer directement la réponse dans la session d'entraînement
+            TrainingManager.shared.applyAvailabilityResponse(response, forSession: session.id)
+            
+            pendingAvailabilityResponse = response
+            pendingAvailabilitySessionId = session.id
+            shouldNavigateToAvailability = true
+            
+            let statusLabel = status.label
+            print("[DeepLink] Availability reçue: \(playerName) → \(statusLabel) pour session \(session.id)")
+            
+        } catch {
+            print("[DeepLink] Availability: Erreur décodage JSON: \(error)")
+            importError = "Réponse de disponibilité invalide."
+        }
+    }
+    
+    // MARK: - Génération de lien sondage disponibilité
+    
+    /// URL de base du site GitHub Pages
+    private static let webBaseURL = "https://boboul-cloud.github.io/Temps-De-Jeu"
+    
+    /// Crée un lien vers le formulaire web de disponibilité pour un entraînement
+    func createAvailabilityPollURL(
+        teamName: String,
+        sessionId: UUID,
+        sessionDate: Date,
+        players: [Player]
+    ) -> URL? {
+        let formatter = ISO8601DateFormatter()
+        formatter.formatOptions = [.withFullDate]
+        let dateStr = formatter.string(from: sessionDate)
+        
+        // Format compact: UUIDs raccourcis (8 premiers chars) + tableaux au lieu d'objets
+        // Chaque joueur: ["ABCD1234", "Prénom Nom"] au lieu de {"i":"ABCD1234-...", "n":"Prénom Nom"}
+        let playerList = players.map { player -> [Any] in
+            let shortId = String(player.id.uuidString.prefix(8))
+            return [shortId, player.fullName]
+        }
+        
+        // Session ID aussi raccourci
+        let shortSessionId = String(sessionId.uuidString.prefix(8))
+        
+        let pollData: [String: Any] = [
+            "t": teamName,
+            "d": dateStr,
+            "s": shortSessionId,
+            "p": playerList
+        ]
+        
+        guard let jsonData = try? JSONSerialization.data(withJSONObject: pollData, options: [.withoutEscapingSlashes]) else {
+            print("[DeepLink] Availability: Impossible de sérialiser le JSON")
+            return nil
+        }
+        
+        print("[DeepLink] Availability JSON: \(jsonData.count) bytes, \(players.count) joueurs")
+        
+        // Encoder en Base64 URL-safe
+        var base64 = jsonData.base64EncodedString()
+        base64 = base64
+            .replacingOccurrences(of: "+", with: "-")
+            .replacingOccurrences(of: "/", with: "_")
+            .replacingOccurrences(of: "=", with: "")
+        
+        // Utiliser URLComponents pour un encodage correct
+        var components = URLComponents(string: "\(Self.webBaseURL)/dispo.html")
+        components?.queryItems = [URLQueryItem(name: "d", value: base64)]
+        
+        guard let url = components?.url else {
+            print("[DeepLink] Availability: Impossible de construire l'URL")
+            return nil
+        }
+        
+        print("[DeepLink] Availability URL: \(url.absoluteString.count) chars")
+        return url
+    }
+    
+    /// Crée le message de partage pour le sondage de disponibilité
+    func createAvailabilityPollMessage(
+        teamName: String,
+        sessionDate: Date,
+        playerCount: Int,
+        pollURL: URL
+    ) -> String {
+        let formatter = DateFormatter()
+        formatter.dateStyle = .long
+        formatter.locale = Locale(identifier: "fr_FR")
+        let dateStr = formatter.string(from: sessionDate)
+        
+        return """
+        ⚽ Sondage disponibilité — \(teamName)
+        📅 \(dateStr)
+        👥 \(playerCount) joueurs convoqués
+        
+        Touche le lien pour répondre :
+        \(pollURL.absoluteString)
+        """
     }
 }

@@ -21,6 +21,11 @@ struct ContentView: View {
     @State private var matchImportAlertTitle = ""
     @State private var matchImportAlertMessage = ""
     @State private var showMatchImportAlert = false
+    
+    // Réponse de disponibilité reçue via deep link
+    @State private var showAvailabilityAlert = false
+    @State private var availabilityAlertTitle = ""
+    @State private var availabilityAlertMessage = ""
 
     var body: some View {
         VStack(spacing: 0) {
@@ -85,30 +90,30 @@ struct ContentView: View {
                     }
                     .tag(4)
 
-                // Tab 6 : Cartons (More)
+                // Tab 6 : Encadrement (More)
+                NavigationStack {
+                    StaffManagementView()
+                }
+                .tabItem {
+                    Label("Encadrement", systemImage: "person.badge.key.fill")
+                }
+                .tag(5)
+
+                // Tab 7 : Cartons (More)
                 NavigationStack {
                     CardsManagementView()
                 }
                 .tabItem {
                     Label("Cartons", systemImage: "rectangle.fill")
                 }
-                .tag(5)
+                .tag(6)
 
-                // Tab 7 : Saisons (More)
+                // Tab 8 : Saisons (More)
                 NavigationStack {
                     SeasonManagementView()
                 }
                 .tabItem {
                     Label("Saisons", systemImage: "calendar.circle.fill")
-                }
-                .tag(6)
-
-                // Tab 8 : Encadrement (More)
-                NavigationStack {
-                    StaffManagementView()
-                }
-                .tabItem {
-                    Label("Encadrement", systemImage: "person.badge.shield.checkmark.fill")
                 }
                 .tag(7)
 
@@ -158,6 +163,23 @@ struct ContentView: View {
                 selectedTab = 2
             }
         }
+        .onChange(of: deepLinkManager.shouldNavigateToAvailability) {
+            if deepLinkManager.shouldNavigateToAvailability {
+                // Naviguer vers le tab Présences et afficher l'alerte
+                selectedTab = 2
+                if let response = deepLinkManager.pendingAvailabilityResponse {
+                    let statusEmoji = response.status == .present ? "✅" : response.status == .absent ? "❌" : "🤔"
+                    availabilityAlertTitle = "⚽ Réponse reçue"
+                    var msg = "\(statusEmoji) \(response.playerName) : \(response.status.label)"
+                    if !response.comment.isEmpty {
+                        msg += "\n« \(response.comment) »"
+                    }
+                    availabilityAlertMessage = msg
+                    showAvailabilityAlert = true
+                }
+                deepLinkManager.clearPendingAvailabilityResponse()
+            }
+        }
         .onChange(of: deepLinkManager.shouldNavigateToExport) {
             if deepLinkManager.shouldNavigateToExport {
                 consumePendingMatchImport()
@@ -195,6 +217,11 @@ struct ContentView: View {
             }
         } message: {
             Text(deepLinkManager.importError ?? "")
+        }
+        .alert(availabilityAlertTitle, isPresented: $showAvailabilityAlert) {
+            Button("OK") {}
+        } message: {
+            Text(availabilityAlertMessage)
         }
     }
 
@@ -468,7 +495,7 @@ struct SettingsView: View {
                     HStack {
                         Text("Version")
                         Spacer()
-                        Text("1.2")
+                        Text(Bundle.main.infoDictionary?["CFBundleShortVersionString"] as? String ?? "?")
                             .foregroundStyle(.secondary)
                     }
                     HStack {
