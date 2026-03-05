@@ -353,9 +353,6 @@ struct AvailabilityPollView: View {
             withAnimation { showCopiedToast = false }
         }
     }
-        onUpdate(updatedSession)
-        dismiss()
-    }
     
     private func colorForStatus(_ status: AvailabilityStatus) -> Color {
         switch status {
