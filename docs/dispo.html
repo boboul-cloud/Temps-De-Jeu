@@ -332,8 +332,12 @@
             
             pollData = JSON.parse(decoded);
 
-            if (!pollData.t || !pollData.d || !pollData.s || !pollData.p || !pollData.p.length) {
-                throw new Error('Invalid data');
+            if (!pollData.t || !pollData.d || !pollData.s || !pollData.p) {
+                throw new Error('Invalid data: missing fields');
+            }
+            
+            if (!pollData.p.length) {
+                throw new Error('No players');
             }
 
             // Populate UI
@@ -342,9 +346,14 @@
             renderPlayers(pollData.p);
 
         } catch (e) {
-            console.error('Init error:', e);
+            console.error('Init error:', e, 'URL:', window.location.href);
             document.getElementById('mainForm').style.display = 'none';
-            document.getElementById('errorScreen').style.display = 'block';
+            const errScreen = document.getElementById('errorScreen');
+            errScreen.style.display = 'block';
+            if (e.message === 'No players') {
+                errScreen.querySelector('h2').textContent = 'Aucun joueur';
+                errScreen.querySelector('p').innerHTML = "Cette catégorie n'a pas encore de joueurs.<br>Ajoutez des joueurs dans l'app puis recréez le sondage.";
+            }
         }
     }
 
