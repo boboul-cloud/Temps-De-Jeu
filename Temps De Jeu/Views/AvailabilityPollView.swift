@@ -131,7 +131,9 @@ struct AvailabilityPollView: View {
                 }
             } else if let url = pollURL {
                 // Partager via le Share Sheet iOS
-                ShareLink(item: shareMessage) {
+                Button {
+                    showShareSheet = true
+                } label: {
                     Label {
                         VStack(alignment: .leading, spacing: 2) {
                             Text("Partager le sondage")
@@ -143,6 +145,10 @@ struct AvailabilityPollView: View {
                         Image(systemName: "square.and.arrow.up.fill")
                             .foregroundStyle(.orange)
                     }
+                }
+                .sheet(isPresented: $showShareSheet) {
+                    ActivityViewController(activityItems: [shareMessage])
+                        .presentationDetents([.medium, .large])
                 }
                 
                 // Copier le lien
@@ -344,6 +350,19 @@ private struct SummaryBadge: View {
         }
         .frame(maxWidth: .infinity)
     }
+}
+
+// MARK: - UIActivityViewController wrapper
+
+private struct ActivityViewController: UIViewControllerRepresentable {
+    let activityItems: [Any]
+    var applicationActivities: [UIActivity]? = nil
+
+    func makeUIViewController(context: Context) -> UIActivityViewController {
+        UIActivityViewController(activityItems: activityItems, applicationActivities: applicationActivities)
+    }
+
+    func updateUIViewController(_ uiViewController: UIActivityViewController, context: Context) {}
 }
 
 // MARK: - Alerte de réception de réponse
