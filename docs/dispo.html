@@ -305,14 +305,22 @@
     let selectedPlayerName = '';
     let selectedStatus = null;
 
-    // Parse data from URL fragment
+    // Parse data from URL (query param ?d= preferred, fallback to #fragment)
     function init() {
         try {
-            const hash = window.location.hash.substring(1);
-            if (!hash) throw new Error('No data');
+            // Try query parameter ?d= first (reliable across messaging apps)
+            const params = new URLSearchParams(window.location.search);
+            let encoded = params.get('d');
+            
+            // Fallback to hash fragment (legacy)
+            if (!encoded) {
+                encoded = window.location.hash.substring(1);
+            }
+            
+            if (!encoded) throw new Error('No data in URL');
 
             // Decode Base64 URL-safe
-            let base64 = hash.replace(/-/g, '+').replace(/_/g, '/');
+            let base64 = encoded.replace(/-/g, '+').replace(/_/g, '/');
             const pad = (4 - base64.length % 4) % 4;
             base64 += '='.repeat(pad);
 
