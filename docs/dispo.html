@@ -305,30 +305,57 @@
     let selectedPlayerName = '';
     let selectedStatus = null;
 
-    // Parse data from URL (query param ?d= preferred, fallback to #fragment)
-    function init() {
+    // Parse data from URL (query param ?z= compressed, ?d= uncompressed, #fragment legacy)
+    async function init() {
         try {
-            // Try query parameter ?d= first (reliable across messaging apps)
             const params = new URLSearchParams(window.location.search);
-            let encoded = params.get('d');
+            let compressed = params.get('z');  // zlib compressed (new)
+            let encoded = params.get('d');     // uncompressed (legacy)
             
             // Fallback to hash fragment (legacy)
-            if (!encoded) {
+            if (!compressed && !encoded) {
                 encoded = window.location.hash.substring(1);
             }
             
-            if (!encoded) throw new Error('No data in URL');
+            if (!compressed && !encoded) throw new Error('No data in URL');
 
-            // Decode Base64 URL-safe
-            let base64 = encoded.replace(/-/g, '+').replace(/_/g, '/');
-            const pad = (4 - base64.length % 4) % 4;
-            base64 += '='.repeat(pad);
-
-            const jsonStr = atob(base64);
-            // Handle UTF-8 properly
-            const bytes = new Uint8Array(jsonStr.length);
-            for (let i = 0; i < jsonStr.length; i++) bytes[i] = jsonStr.charCodeAt(i);
-            const decoded = new TextDecoder('utf-8').decode(bytes);
+            let decoded;
+            if (compressed) {
+                // Decode Base64 URL-safe → binary
+                let base64 = compressed.replace(/-/g, '+').replace(/_/g, '/');
+                const pad = (4 - base64.length % 4) % 4;
+                base64 += '='.repeat(pad);
+                const binaryStr = atob(base64);
+                const compressedBytes = new Uint8Array(binaryStr.length);
+                for (let i = 0; i < binaryStr.length; i++) compressedBytes[i] = binaryStr.charCodeAt(i);
+                
+                // Decompress zlib using DecompressionStream API
+                const ds = new DecompressionStream('deflate');
+                const writer = ds.writable.getWriter();
+                writer.write(compressedBytes);
+                writer.close();
+                const reader = ds.readable.getReader();
+                const chunks = [];
+                while (true) {
+                    const { done, value } = await reader.read();
+                    if (done) break;
+                    chunks.push(value);
+                }
+                const totalLen = chunks.reduce((a, c) => a + c.length, 0);
+                const result = new Uint8Array(totalLen);
+                let offset = 0;
+                chunks.forEach(c => { result.set(c, offset); offset += c.length; });
+                decoded = new TextDecoder('utf-8').decode(result);
+            } else {
+                // Decode Base64 URL-safe (uncompressed)
+                let base64 = encoded.replace(/-/g, '+').replace(/_/g, '/');
+                const pad = (4 - base64.length % 4) % 4;
+                base64 += '='.repeat(pad);
+                const jsonStr = atob(base64);
+                const bytes = new Uint8Array(jsonStr.length);
+                for (let i = 0; i < jsonStr.length; i++) bytes[i] = jsonStr.charCodeAt(i);
+                decoded = new TextDecoder('utf-8').decode(bytes);
+            }
             
             pollData = JSON.parse(decoded);
 
@@ -534,7 +561,11 @@
     }
 
     // Init on load
-    init();
+    init().catch(e => {
+        console.error('Init async error:', e);
+        document.getElementById('mainForm').style.display = 'none';
+        document.getElementById('errorScreen').style.display = 'block';
+    });
     </script>
 </body>
 </html>

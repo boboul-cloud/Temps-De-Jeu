@@ -559,16 +559,24 @@ class DeepLinkManager: ObservableObject {
         
         print("[DeepLink] Availability JSON: \(jsonData.count) bytes, \(players.count) joueurs")
         
+        // Compresser avec zlib pour réduire la taille de l'URL
+        guard let compressedData = try? (jsonData as NSData).compressed(using: .zlib) as Data else {
+            print("[DeepLink] Availability: Compression zlib échouée")
+            return nil
+        }
+        
+        print("[DeepLink] Availability compressé: \(compressedData.count) bytes (ratio \(Int(Double(compressedData.count) / Double(jsonData.count) * 100))%)")
+        
         // Encoder en Base64 URL-safe
-        var base64 = jsonData.base64EncodedString()
+        var base64 = compressedData.base64EncodedString()
         base64 = base64
             .replacingOccurrences(of: "+", with: "-")
             .replacingOccurrences(of: "/", with: "_")
             .replacingOccurrences(of: "=", with: "")
         
-        // Utiliser URLComponents pour un encodage correct
+        // ?z= pour indiquer que le contenu est compressé (vs ?d= non compressé)
         var components = URLComponents(string: "\(Self.webBaseURL)/dispo.html")
-        components?.queryItems = [URLQueryItem(name: "d", value: base64)]
+        components?.queryItems = [URLQueryItem(name: "z", value: base64)]
         
         guard let url = components?.url else {
             print("[DeepLink] Availability: Impossible de construire l'URL")
