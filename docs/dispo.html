@@ -1,0 +1,517 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>Disponibilité - Temps De Jeu</title>
+    <meta name="description" content="Indiquez votre disponibilité pour l'entraînement">
+    <meta name="theme-color" content="#FF9500">
+    <link rel="icon" type="image/svg+xml" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>⚽</text></svg>">
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        :root {
+            --green: #34C759; --orange: #FF9500; --red: #FF3B30;
+            --blue: #007AFF; --bg: #0a0a0a; --card: #1c1c1e;
+            --card-hover: #2c2c2e; --text: #ffffff; --text-muted: #8e8e93;
+            --separator: #38383a;
+        }
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'SF Pro Display', 'Segoe UI', Roboto, sans-serif;
+            background: var(--bg); color: var(--text);
+            line-height: 1.5; min-height: 100vh;
+            -webkit-font-smoothing: antialiased;
+        }
+        .container { max-width: 480px; margin: 0 auto; padding: 0 16px 100px; }
+
+        /* Header */
+        .header {
+            text-align: center; padding: 32px 16px 24px;
+            background: linear-gradient(180deg, rgba(255,149,0,0.15) 0%, transparent 100%);
+        }
+        .header .emoji { font-size: 48px; margin-bottom: 8px; }
+        .header h1 { font-size: 22px; font-weight: 700; margin-bottom: 4px; }
+        .header .team { font-size: 17px; color: var(--orange); font-weight: 600; }
+        .header .date { font-size: 15px; color: var(--text-muted); margin-top: 4px; }
+
+        /* Steps */
+        .step { margin-top: 24px; }
+        .step-header {
+            display: flex; align-items: center; gap: 10px;
+            margin-bottom: 12px; padding: 0 4px;
+        }
+        .step-number {
+            width: 28px; height: 28px; border-radius: 50%;
+            background: var(--orange); color: #fff;
+            display: flex; align-items: center; justify-content: center;
+            font-size: 14px; font-weight: 700; flex-shrink: 0;
+        }
+        .step-title { font-size: 17px; font-weight: 600; }
+
+        /* Player list */
+        .player-list {
+            background: var(--card); border-radius: 12px;
+            overflow: hidden;
+        }
+        .player-item {
+            display: flex; align-items: center; gap: 12px;
+            padding: 12px 16px; cursor: pointer;
+            transition: background 0.15s;
+            border-bottom: 0.5px solid var(--separator);
+        }
+        .player-item:last-child { border-bottom: none; }
+        .player-item:active { background: var(--card-hover); }
+        .player-item.selected { background: rgba(255,149,0,0.12); }
+        .player-avatar {
+            width: 36px; height: 36px; border-radius: 50%;
+            background: rgba(255,255,255,0.1);
+            display: flex; align-items: center; justify-content: center;
+            font-size: 13px; font-weight: 600; color: var(--text-muted);
+            flex-shrink: 0;
+        }
+        .player-item.selected .player-avatar {
+            background: var(--orange); color: #fff;
+        }
+        .player-name { font-size: 16px; flex: 1; }
+        .player-check {
+            width: 24px; height: 24px; border-radius: 50%;
+            border: 2px solid var(--separator);
+            display: flex; align-items: center; justify-content: center;
+            transition: all 0.2s; flex-shrink: 0;
+        }
+        .player-item.selected .player-check {
+            background: var(--orange); border-color: var(--orange);
+        }
+        .player-item.selected .player-check::after {
+            content: '✓'; color: #fff; font-size: 14px; font-weight: 700;
+        }
+        .search-box {
+            display: flex; align-items: center; gap: 8px;
+            padding: 10px 16px; background: var(--card);
+            border-radius: 12px 12px 0 0; border-bottom: 0.5px solid var(--separator);
+        }
+        .search-box input {
+            flex: 1; background: none; border: none; color: var(--text);
+            font-size: 16px; outline: none;
+        }
+        .search-box input::placeholder { color: var(--text-muted); }
+        .search-icon { color: var(--text-muted); font-size: 14px; }
+
+        /* Status buttons */
+        .status-group {
+            display: flex; gap: 8px; padding: 0;
+        }
+        .status-btn {
+            flex: 1; padding: 14px 8px; border-radius: 12px;
+            background: var(--card); border: 2px solid transparent;
+            color: var(--text); cursor: pointer;
+            text-align: center; transition: all 0.2s;
+            display: flex; flex-direction: column; align-items: center; gap: 6px;
+        }
+        .status-btn:active { transform: scale(0.97); }
+        .status-btn .status-icon { font-size: 28px; }
+        .status-btn .status-label { font-size: 13px; font-weight: 600; }
+        .status-btn.present.selected { border-color: var(--green); background: rgba(52,199,89,0.15); }
+        .status-btn.absent.selected { border-color: var(--red); background: rgba(255,59,48,0.15); }
+        .status-btn.uncertain.selected { border-color: var(--orange); background: rgba(255,149,0,0.15); }
+
+        /* Comment */
+        .comment-box {
+            background: var(--card); border-radius: 12px; padding: 0;
+            overflow: hidden;
+        }
+        .comment-box textarea {
+            width: 100%; background: none; border: none; color: var(--text);
+            font-size: 15px; padding: 12px 16px; resize: none; outline: none;
+            font-family: inherit; min-height: 60px;
+        }
+        .comment-box textarea::placeholder { color: var(--text-muted); }
+
+        /* Send section */
+        .send-section {
+            position: fixed; bottom: 0; left: 0; right: 0;
+            background: rgba(10,10,10,0.95); backdrop-filter: blur(20px);
+            -webkit-backdrop-filter: blur(20px);
+            padding: 12px 16px; padding-bottom: max(12px, env(safe-area-inset-bottom));
+            border-top: 0.5px solid var(--separator);
+        }
+        .send-section .container { padding: 0; }
+        .send-btn {
+            width: 100%; max-width: 480px; margin: 0 auto; display: block;
+            padding: 14px; border-radius: 12px; border: none;
+            background: var(--orange); color: #fff;
+            font-size: 17px; font-weight: 600; cursor: pointer;
+            transition: all 0.2s;
+        }
+        .send-btn:disabled {
+            background: var(--separator); color: var(--text-muted); cursor: not-allowed;
+        }
+        .send-btn:not(:disabled):active { transform: scale(0.98); opacity: 0.9; }
+
+        /* Response sent screen */
+        .success-screen {
+            display: none; text-align: center; padding: 60px 24px;
+        }
+        .success-screen.visible { display: block; }
+        .success-screen .emoji { font-size: 64px; margin-bottom: 16px; }
+        .success-screen h2 { font-size: 22px; font-weight: 700; margin-bottom: 8px; }
+        .success-screen p { color: var(--text-muted); font-size: 15px; margin-bottom: 24px; }
+        .share-buttons { display: flex; flex-direction: column; gap: 10px; max-width: 320px; margin: 0 auto; }
+        .share-btn {
+            display: flex; align-items: center; justify-content: center; gap: 10px;
+            padding: 14px; border-radius: 12px; border: none;
+            font-size: 16px; font-weight: 600; cursor: pointer;
+            transition: all 0.2s; text-decoration: none;
+        }
+        .share-btn:active { transform: scale(0.97); }
+        .share-btn.whatsapp { background: #25D366; color: #fff; }
+        .share-btn.sms { background: var(--green); color: #fff; }
+        .share-btn.copy { background: var(--card); color: var(--text); border: 1px solid var(--separator); }
+        .share-btn.deeplink { background: var(--blue); color: #fff; }
+        .copied-toast {
+            position: fixed; top: 50%; left: 50%; transform: translate(-50%, -50%);
+            background: rgba(0,0,0,0.85); color: #fff; padding: 12px 24px;
+            border-radius: 12px; font-size: 15px; font-weight: 600;
+            opacity: 0; transition: opacity 0.3s; pointer-events: none; z-index: 100;
+        }
+        .copied-toast.visible { opacity: 1; }
+
+        /* Error screen */
+        .error-screen {
+            text-align: center; padding: 60px 24px;
+        }
+        .error-screen .emoji { font-size: 64px; margin-bottom: 16px; }
+        .error-screen h2 { font-size: 20px; margin-bottom: 8px; }
+        .error-screen p { color: var(--text-muted); font-size: 15px; }
+
+        /* Light mode */
+        @media (prefers-color-scheme: light) {
+            :root {
+                --bg: #f2f2f7; --card: #ffffff; --card-hover: #f0f0f0;
+                --text: #000000; --text-muted: #8e8e93; --separator: #c6c6c8;
+            }
+            .send-section { background: rgba(242,242,247,0.95); }
+            .player-avatar { background: rgba(0,0,0,0.06); }
+        }
+    </style>
+</head>
+<body>
+    <!-- Main form -->
+    <div id="mainForm">
+        <div class="header">
+            <div class="emoji">⚽</div>
+            <h1>Disponibilité</h1>
+            <div class="team" id="teamName"></div>
+            <div class="date" id="sessionDate"></div>
+        </div>
+
+        <div class="container">
+            <!-- Step 1: Select name -->
+            <div class="step">
+                <div class="step-header">
+                    <div class="step-number">1</div>
+                    <div class="step-title">Sélectionnez votre nom</div>
+                </div>
+                <div class="search-box">
+                    <span class="search-icon">🔍</span>
+                    <input type="text" id="searchInput" placeholder="Rechercher..." oninput="filterPlayers()">
+                </div>
+                <div class="player-list" id="playerList"></div>
+            </div>
+
+            <!-- Step 2: Choose status -->
+            <div class="step">
+                <div class="step-header">
+                    <div class="step-number">2</div>
+                    <div class="step-title">Votre disponibilité</div>
+                </div>
+                <div class="status-group">
+                    <button class="status-btn present" onclick="selectStatus(1)" id="statusPresent">
+                        <span class="status-icon">✅</span>
+                        <span class="status-label">Présent</span>
+                    </button>
+                    <button class="status-btn uncertain" onclick="selectStatus(2)" id="statusUncertain">
+                        <span class="status-icon">🤔</span>
+                        <span class="status-label">Incertain</span>
+                    </button>
+                    <button class="status-btn absent" onclick="selectStatus(0)" id="statusAbsent">
+                        <span class="status-icon">❌</span>
+                        <span class="status-label">Absent</span>
+                    </button>
+                </div>
+            </div>
+
+            <!-- Step 3: Optional comment -->
+            <div class="step">
+                <div class="step-header">
+                    <div class="step-number">3</div>
+                    <div class="step-title">Commentaire <span style="color:var(--text-muted);font-weight:400;font-size:14px">(optionnel)</span></div>
+                </div>
+                <div class="comment-box">
+                    <textarea id="commentInput" placeholder="Ex: Je serai en retard de 15min..." rows="2"></textarea>
+                </div>
+            </div>
+        </div>
+
+        <div class="send-section">
+            <button class="send-btn" id="sendBtn" disabled onclick="showSendOptions()">
+                Envoyer ma réponse
+            </button>
+        </div>
+    </div>
+
+    <!-- Success screen -->
+    <div id="successScreen" class="success-screen">
+        <div class="emoji">✅</div>
+        <h2 id="successTitle">Réponse enregistrée !</h2>
+        <p id="successMessage">Envoyez votre réponse au coach via l'un des moyens ci-dessous.</p>
+        <div class="container">
+            <div class="share-buttons">
+                <button class="share-btn deeplink" id="btnDeepLink" onclick="openDeepLink()">
+                    📲 Importer dans Temps De Jeu
+                </button>
+                <button class="share-btn whatsapp" id="btnWhatsApp" onclick="shareWhatsApp()">
+                    💬 Envoyer par WhatsApp
+                </button>
+                <a class="share-btn sms" id="btnSMS" href="#">
+                    ✉️ Envoyer par SMS
+                </a>
+                <button class="share-btn copy" onclick="copyResponse()">
+                    📋 Copier le message
+                </button>
+            </div>
+            <div style="margin-top:24px">
+                <button class="share-btn copy" onclick="resetForm()" style="max-width:320px;margin:0 auto">
+                    ← Modifier ma réponse
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Error screen -->
+    <div id="errorScreen" style="display:none">
+        <div class="error-screen">
+            <div class="emoji">😕</div>
+            <h2>Lien invalide</h2>
+            <p>Ce lien de sondage semble invalide ou expiré.<br>Demandez un nouveau lien à votre entraîneur.</p>
+        </div>
+    </div>
+
+    <div class="copied-toast" id="copiedToast">Copié !</div>
+
+    <script>
+    // Poll data parsed from URL
+    let pollData = null;
+    let selectedPlayerId = null;
+    let selectedPlayerName = '';
+    let selectedStatus = null;
+
+    // Parse data from URL fragment
+    function init() {
+        try {
+            const hash = window.location.hash.substring(1);
+            if (!hash) throw new Error('No data');
+
+            // Decode Base64 URL-safe
+            let base64 = hash.replace(/-/g, '+').replace(/_/g, '/');
+            const pad = (4 - base64.length % 4) % 4;
+            base64 += '='.repeat(pad);
+
+            const jsonStr = atob(base64);
+            // Handle UTF-8 properly
+            const bytes = new Uint8Array(jsonStr.length);
+            for (let i = 0; i < jsonStr.length; i++) bytes[i] = jsonStr.charCodeAt(i);
+            const decoded = new TextDecoder('utf-8').decode(bytes);
+            
+            pollData = JSON.parse(decoded);
+
+            if (!pollData.t || !pollData.d || !pollData.s || !pollData.p || !pollData.p.length) {
+                throw new Error('Invalid data');
+            }
+
+            // Populate UI
+            document.getElementById('teamName').textContent = pollData.t;
+            document.getElementById('sessionDate').textContent = formatDate(pollData.d);
+            renderPlayers(pollData.p);
+
+        } catch (e) {
+            console.error('Init error:', e);
+            document.getElementById('mainForm').style.display = 'none';
+            document.getElementById('errorScreen').style.display = 'block';
+        }
+    }
+
+    function formatDate(isoDate) {
+        try {
+            const d = new Date(isoDate + 'T12:00:00');
+            return d.toLocaleDateString('fr-FR', {
+                weekday: 'long', day: 'numeric', month: 'long', year: 'numeric'
+            });
+        } catch { return isoDate; }
+    }
+
+    function renderPlayers(players) {
+        const list = document.getElementById('playerList');
+        list.innerHTML = '';
+        const search = document.getElementById('searchInput').value.toLowerCase();
+
+        const filtered = players.filter(p =>
+            !search || p.n.toLowerCase().includes(search)
+        );
+
+        if (filtered.length === 0) {
+            list.innerHTML = '<div style="padding:16px;text-align:center;color:var(--text-muted)">Aucun joueur trouvé</div>';
+            return;
+        }
+
+        filtered.forEach(player => {
+            const div = document.createElement('div');
+            div.className = 'player-item' + (player.i === selectedPlayerId ? ' selected' : '');
+            const initials = getInitials(player.n);
+            div.innerHTML = `
+                <div class="player-avatar">${initials}</div>
+                <div class="player-name">${escapeHtml(player.n)}</div>
+                <div class="player-check"></div>
+            `;
+            div.onclick = () => selectPlayer(player.i, player.n);
+            list.appendChild(div);
+        });
+    }
+
+    function getInitials(name) {
+        const parts = name.trim().split(/\s+/);
+        if (parts.length >= 2) {
+            return (parts[0][0] + parts[parts.length - 1][0]).toUpperCase();
+        }
+        return name.substring(0, 2).toUpperCase();
+    }
+
+    function escapeHtml(text) {
+        const d = document.createElement('div');
+        d.textContent = text;
+        return d.innerHTML;
+    }
+
+    function selectPlayer(id, name) {
+        selectedPlayerId = id;
+        selectedPlayerName = name;
+        renderPlayers(pollData.p);
+        updateSendButton();
+    }
+
+    function filterPlayers() {
+        if (pollData) renderPlayers(pollData.p);
+    }
+
+    function selectStatus(status) {
+        selectedStatus = status;
+        document.querySelectorAll('.status-btn').forEach(btn => btn.classList.remove('selected'));
+        if (status === 1) document.getElementById('statusPresent').classList.add('selected');
+        else if (status === 0) document.getElementById('statusAbsent').classList.add('selected');
+        else if (status === 2) document.getElementById('statusUncertain').classList.add('selected');
+        updateSendButton();
+    }
+
+    function updateSendButton() {
+        const btn = document.getElementById('sendBtn');
+        btn.disabled = !(selectedPlayerId && selectedStatus !== null);
+    }
+
+    // Generate response data
+    function buildResponse() {
+        const comment = document.getElementById('commentInput').value.trim();
+        return {
+            s: pollData.s,       // session ID
+            i: selectedPlayerId, // player ID
+            n: selectedPlayerName,
+            r: selectedStatus,   // 0=absent, 1=present, 2=uncertain
+            c: comment
+        };
+    }
+
+    function buildDeepLink() {
+        const response = buildResponse();
+        const json = JSON.stringify(response);
+        // Encode UTF-8 properly
+        const encoder = new TextEncoder();
+        const bytes = encoder.encode(json);
+        let binary = '';
+        bytes.forEach(b => binary += String.fromCharCode(b));
+        let base64 = btoa(binary);
+        // Make URL-safe
+        base64 = base64.replace(/\+/g, '-').replace(/\//g, '_').replace(/=+$/, '');
+        return 'tempsdejeu://a/' + base64;
+    }
+
+    function buildTextMessage() {
+        const statusEmoji = selectedStatus === 1 ? '✅' : selectedStatus === 0 ? '❌' : '🤔';
+        const statusText = selectedStatus === 1 ? 'Présent' : selectedStatus === 0 ? 'Absent' : 'Incertain';
+        const comment = document.getElementById('commentInput').value.trim();
+        const deepLink = buildDeepLink();
+
+        let msg = `⚽ Disponibilité ${pollData.t}\n`;
+        msg += `📅 ${formatDate(pollData.d)}\n`;
+        msg += `${statusEmoji} ${selectedPlayerName} — ${statusText}`;
+        if (comment) msg += `\n💬 ${comment}`;
+        msg += `\n\n👉 Touche pour importer :\n${deepLink}`;
+        return msg;
+    }
+
+    // Show send options
+    function showSendOptions() {
+        document.getElementById('mainForm').style.display = 'none';
+        const screen = document.getElementById('successScreen');
+        screen.classList.add('visible');
+
+        const statusEmoji = selectedStatus === 1 ? '✅' : selectedStatus === 0 ? '❌' : '🤔';
+        const statusText = selectedStatus === 1 ? 'Présent' : selectedStatus === 0 ? 'Absent' : 'Incertain';
+        document.getElementById('successTitle').textContent = `${statusEmoji} ${statusText}`;
+        document.getElementById('successMessage').textContent =
+            `${selectedPlayerName} — Envoyez votre réponse au coach.`;
+
+        // Setup SMS link
+        const msg = buildTextMessage();
+        const smsBody = encodeURIComponent(msg);
+        // iOS uses &body=, Android uses ?body=
+        const isIOS = /iPhone|iPad|iPod/i.test(navigator.userAgent);
+        document.getElementById('btnSMS').href = isIOS ? `sms:&body=${smsBody}` : `sms:?body=${smsBody}`;
+    }
+
+    function openDeepLink() {
+        window.location.href = buildDeepLink();
+    }
+
+    function shareWhatsApp() {
+        const msg = buildTextMessage();
+        window.open('https://wa.me/?text=' + encodeURIComponent(msg), '_blank');
+    }
+
+    function copyResponse() {
+        const msg = buildTextMessage();
+        navigator.clipboard.writeText(msg).then(() => {
+            const toast = document.getElementById('copiedToast');
+            toast.classList.add('visible');
+            setTimeout(() => toast.classList.remove('visible'), 1500);
+        }).catch(() => {
+            // Fallback for older browsers
+            const ta = document.createElement('textarea');
+            ta.value = msg;
+            document.body.appendChild(ta);
+            ta.select();
+            document.execCommand('copy');
+            document.body.removeChild(ta);
+            const toast = document.getElementById('copiedToast');
+            toast.classList.add('visible');
+            setTimeout(() => toast.classList.remove('visible'), 1500);
+        });
+    }
+
+    function resetForm() {
+        document.getElementById('successScreen').classList.remove('visible');
+        document.getElementById('mainForm').style.display = 'block';
+    }
+
+    // Init on load
+    init();
+    </script>
+</body>
+</html>
