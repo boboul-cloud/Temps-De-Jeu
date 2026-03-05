@@ -622,7 +622,13 @@ class ExportService {
                     ensureSpace(22)
 
                     let name = player.fullName.isEmpty ? "Joueur" : player.fullName
-                    name.draw(at: CGPoint(x: margin + 10, y: currentY), withAttributes: rowAttrs)
+                    let nameWithPhone: String
+                    if let phone = player.phoneNumber, !phone.isEmpty {
+                        nameWithPhone = "\(name)  📞 \(phone)"
+                    } else {
+                        nameWithPhone = name
+                    }
+                    nameWithPhone.draw(at: CGPoint(x: margin + 10, y: currentY), withAttributes: rowAttrs)
 
                     // Temps de jeu cumulé, nb matchs, moyenne
                     if let ps = statsById[player.id] {
@@ -752,6 +758,89 @@ class ExportService {
             }
             currentY += 10
 
+            // --- POSSESSION PAR ÉQUIPE ---
+            let totalPossession = match.homePossessionTime + match.awayPossessionTime
+            if totalPossession > 0 {
+                drawLine(context: context.cgContext, y: currentY, margin: margin, width: contentWidth)
+                currentY += 15
+
+                "Possession par équipe".draw(at: CGPoint(x: margin, y: currentY), withAttributes: headerAttrs)
+                currentY += 22
+
+                let homePct = Int((match.homePossessionTime / totalPossession) * 100)
+                let awayPct = 100 - homePct
+
+                let possessionRows: [(String, String)] = [
+                    (home, "\(TimeFormatters.formatTime(match.homePossessionTime))  (\(homePct)%)"),
+                    (away, "\(TimeFormatters.formatTime(match.awayPossessionTime))  (\(awayPct)%)")
+                ]
+
+                for (label, value) in possessionRows {
+                    ensureSpace(20)
+                    label.draw(at: CGPoint(x: margin + 10, y: currentY), withAttributes: bodyAttrs)
+                    value.draw(at: CGPoint(x: pageWidth - margin - 130, y: currentY), withAttributes: bodyBoldAttrs)
+                    currentY += 18
+                }
+
+                // Barre de possession graphique
+                ensureSpace(20)
+                let barY = currentY + 2
+                let barHeight: CGFloat = 12
+                let homeBarWidth = contentWidth * CGFloat(match.homePossessionTime / totalPossession)
+                let awayBarWidth = contentWidth - homeBarWidth
+
+                // Barre domicile
+                let homePath = UIBezierPath(roundedRect: CGRect(x: margin, y: barY, width: homeBarWidth, height: barHeight),
+                                            byRoundingCorners: [.topLeft, .bottomLeft],
+                                            cornerRadii: CGSize(width: 4, height: 4))
+                UIColor.systemBlue.setFill()
+                homePath.fill()
+
+                // Barre extérieur
+                let awayPath = UIBezierPath(roundedRect: CGRect(x: margin + homeBarWidth, y: barY, width: awayBarWidth, height: barHeight),
+                                            byRoundingCorners: [.topRight, .bottomRight],
+                                            cornerRadii: CGSize(width: 4, height: 4))
+                UIColor.systemOrange.setFill()
+                awayPath.fill()
+
+                // Pourcentages sur la barre
+                let barTextAttrs: [NSAttributedString.Key: Any] = [
+                    .font: UIFont.systemFont(ofSize: 8, weight: .bold),
+                    .foregroundColor: UIColor.white
+                ]
+                if homeBarWidth > 30 {
+                    "\(homePct)%".draw(at: CGPoint(x: margin + 4, y: barY + 1), withAttributes: barTextAttrs)
+                }
+                if awayBarWidth > 30 {
+                    "\(awayPct)%".draw(at: CGPoint(x: margin + homeBarWidth + awayBarWidth - 28, y: barY + 1), withAttributes: barTextAttrs)
+                }
+
+                currentY += barHeight + 12
+            }
+
+            // --- PASSES PAR ÉQUIPE ---
+            let totalPasses = match.homePasses + match.awayPasses
+            if totalPasses > 0 {
+                ensureSpace(60)
+                drawLine(context: context.cgContext, y: currentY, margin: margin, width: contentWidth)
+                currentY += 15
+
+                "Passes par équipe".draw(at: CGPoint(x: margin, y: currentY), withAttributes: headerAttrs)
+                currentY += 22
+
+                let passesRows: [(String, String)] = [
+                    (home, "\(match.homePasses)"),
+                    (away, "\(match.awayPasses)")
+                ]
+
+                for (label, value) in passesRows {
+                    label.draw(at: CGPoint(x: margin + 10, y: currentY), withAttributes: bodyAttrs)
+                    value.draw(at: CGPoint(x: margin + contentWidth - 100, y: currentY), withAttributes: bodyBoldAttrs)
+                    currentY += 18
+                }
+                currentY += 8
+            }
+
             // --- PAR PÉRIODE ---
             drawLine(context: context.cgContext, y: currentY, margin: margin, width: contentWidth)
             currentY += 15
@@ -866,6 +955,25 @@ class ExportService {
                 for (playerName, fouls) in foulsByPlayer.sorted(by: { $0.value.count > $1.value.count }) {
                     ensureSpace(20)
                     let line = "\(playerName) : \(fouls.count) faute\(fouls.count > 1 ? "s" : "")"
+                    line.draw(at: CGPoint(x: margin + 10, y: currentY), withAttributes: bodyAttrs)
+                    currentY += 18
+                }
+                currentY += 10
+            }
+
+            // --- PASSES DÉCISIVES ---
+            if !match.assists.isEmpty {
+                drawLine(context: context.cgContext, y: currentY, margin: margin, width: contentWidth)
+                currentY += 15
+                "Passes décisives (\(match.assists.count))".draw(at: CGPoint(x: margin, y: currentY), withAttributes: headerAttrs)
+                currentY += 22
+
+                // Regrouper par joueur
+                let assistsByPlayer = Dictionary(grouping: match.assists, by: { $0.playerName })
+                for (playerName, assists) in assistsByPlayer.sorted(by: { $0.value.count > $1.value.count }) {
+                    ensureSpace(20)
+                    let minutes = assists.map { "\(Int($0.minute / 60))'" }.joined(separator: ", ")
+                    let line = "\(playerName) : \(assists.count) passe\(assists.count > 1 ? "s" : "") (\(minutes))"
                     line.draw(at: CGPoint(x: margin + 10, y: currentY), withAttributes: bodyAttrs)
                     currentY += 18
                 }
@@ -1145,6 +1253,34 @@ class ExportService {
                 for scorer in scorers.prefix(10) {
                     ensureSpace(20)
                     "  \(scorer.name) : \(scorer.count) but\(scorer.count > 1 ? "s" : "")".draw(at: CGPoint(x: margin + 20, y: currentY), withAttributes: bodyAttrs)
+                    currentY += 16
+                }
+                currentY += 10
+            }
+
+            // Passes décisives
+            let myAssists = finishedMatches.flatMap { match in
+                match.assists.filter { $0.playerId != nil }
+            }
+            if !myAssists.isEmpty {
+                ensureSpace(60)
+                drawLine(context: context.cgContext, y: currentY, margin: margin, width: contentWidth)
+                currentY += 15
+                "Passes décisives".draw(at: CGPoint(x: margin, y: currentY), withAttributes: headerAttrs)
+                currentY += 22
+
+                "Total : \(myAssists.count) passe\(myAssists.count > 1 ? "s" : "") décisive\(myAssists.count > 1 ? "s" : "")".draw(at: CGPoint(x: margin + 10, y: currentY), withAttributes: bodyBoldAttrs)
+                currentY += 22
+
+                let assisters = Dictionary(grouping: myAssists, by: { $0.playerName })
+                    .map { (name: $0.key, count: $0.value.count) }
+                    .sorted { $0.count > $1.count }
+
+                "Top passeurs :".draw(at: CGPoint(x: margin + 10, y: currentY), withAttributes: bodyBoldAttrs)
+                currentY += 18
+                for assister in assisters.prefix(10) {
+                    ensureSpace(20)
+                    "  \(assister.name) : \(assister.count) passe\(assister.count > 1 ? "s" : "")".draw(at: CGPoint(x: margin + 20, y: currentY), withAttributes: bodyAttrs)
                     currentY += 16
                 }
                 currentY += 10
@@ -1549,6 +1685,440 @@ class ExportService {
             ]
             footer.draw(at: CGPoint(x: margin, y: currentY), withAttributes: footerAttrs)
         }
+    }
+
+    // MARK: - Export / Import Encadrement JSON
+
+    /// Structure d'export de l'encadrement avec métadonnées
+    struct StaffExportWrapper: Codable {
+        let teamCode: String?
+        let teamName: String?
+        let staffMembers: [StaffMember]
+        let staffRoles: [StaffRole]
+    }
+
+    /// Résultat de l'import de l'encadrement
+    struct StaffImportResult {
+        let staffMembers: [StaffMember]
+        let staffRoles: [StaffRole]
+        let teamCode: String?
+        let teamName: String?
+    }
+
+    /// Exporte l'encadrement en JSON (encadrants + rôles)
+    func exportStaffJSON(_ staffMembers: [StaffMember], roles: [StaffRole]) -> Data? {
+        let encoder = JSONEncoder()
+        encoder.outputFormatting = [.prettyPrinted, .sortedKeys]
+        encoder.dateEncodingStrategy = .iso8601
+
+        let activeProfile = ProfileManager.shared.activeProfile
+        let wrapper = StaffExportWrapper(
+            teamCode: activeProfile?.teamCode,
+            teamName: activeProfile?.name,
+            staffMembers: staffMembers,
+            staffRoles: roles
+        )
+
+        return try? encoder.encode(wrapper)
+    }
+
+    /// Importe l'encadrement depuis un JSON
+    func importStaffWithMetadata(from data: Data) -> StaffImportResult? {
+        let decoder = JSONDecoder()
+        decoder.dateDecodingStrategy = .iso8601
+
+        // Nouveau format avec wrapper
+        if let wrapper = try? decoder.decode(StaffExportWrapper.self, from: data) {
+            return StaffImportResult(
+                staffMembers: wrapper.staffMembers,
+                staffRoles: wrapper.staffRoles,
+                teamCode: wrapper.teamCode,
+                teamName: wrapper.teamName
+            )
+        }
+
+        // Fallback : simple tableau d'encadrants (sans rôles)
+        if let members = try? decoder.decode([StaffMember].self, from: data) {
+            return StaffImportResult(
+                staffMembers: members,
+                staffRoles: [],
+                teamCode: nil,
+                teamName: nil
+            )
+        }
+
+        return nil
+    }
+
+    // MARK: - Export Encadrement PDF
+
+    /// Génère un PDF récapitulatif de l'encadrement
+    func generateStaffPDF(staffMembers: [StaffMember], roles: [StaffRole]) -> Data {
+        let pageWidth: CGFloat = 595.0   // A4
+        let pageHeight: CGFloat = 842.0
+        let margin: CGFloat = 40.0
+        let contentWidth = pageWidth - 2 * margin
+
+        // Grouper par rôle
+        let knownRoleIds = Set(roles.map { $0.id })
+        var grouped: [(roleName: String, members: [StaffMember])] = []
+        for role in roles {
+            let members = staffMembers.filter { $0.roleId == role.id }
+                .sorted { $0.lastName.localizedCompare($1.lastName) == .orderedAscending }
+            if !members.isEmpty {
+                grouped.append((roleName: role.name, members: members))
+            }
+        }
+        let orphans = staffMembers.filter { !knownRoleIds.contains($0.roleId) }
+            .sorted { $0.lastName.localizedCompare($1.lastName) == .orderedAscending }
+        if !orphans.isEmpty {
+            grouped.append((roleName: "Autre", members: orphans))
+        }
+
+        let renderer = UIGraphicsPDFRenderer(bounds: CGRect(x: 0, y: 0, width: pageWidth, height: pageHeight))
+
+        return renderer.pdfData { context in
+            var currentY: CGFloat = 0
+
+            func ensureSpace(_ height: CGFloat) {
+                if currentY + height > pageHeight - margin {
+                    context.beginPage()
+                    currentY = margin
+                }
+            }
+
+            func beginNewPage() {
+                context.beginPage()
+                currentY = margin
+            }
+
+            // Page 1
+            beginNewPage()
+
+            // Titre
+            let titleAttrs: [NSAttributedString.Key: Any] = [
+                .font: UIFont.systemFont(ofSize: 24, weight: .bold),
+                .foregroundColor: UIColor.black
+            ]
+            "Encadrement - Temps De Jeu".draw(at: CGPoint(x: margin, y: currentY), withAttributes: titleAttrs)
+            currentY += 40
+
+            // Sous-titre : profil actif
+            let subtitleAttrs: [NSAttributedString.Key: Any] = [
+                .font: UIFont.systemFont(ofSize: 14, weight: .medium),
+                .foregroundColor: UIColor.gray
+            ]
+            if let profileName = ProfileManager.shared.activeProfile?.name {
+                "Catégorie : \(profileName)".draw(at: CGPoint(x: margin, y: currentY), withAttributes: subtitleAttrs)
+                currentY += 22
+            }
+
+            // Date
+            let dateAttrs: [NSAttributedString.Key: Any] = [
+                .font: UIFont.systemFont(ofSize: 12),
+                .foregroundColor: UIColor.gray
+            ]
+            "Exporté le \(dateFormatter.string(from: Date()))".draw(at: CGPoint(x: margin, y: currentY), withAttributes: dateAttrs)
+            currentY += 30
+
+            // Résumé
+            let summaryAttrs: [NSAttributedString.Key: Any] = [
+                .font: UIFont.systemFont(ofSize: 14),
+                .foregroundColor: UIColor.darkGray
+            ]
+            let rolesCount = Set(staffMembers.map { $0.roleId }).count
+            "\(staffMembers.count) encadrant\(staffMembers.count > 1 ? "s" : "") · \(rolesCount) rôle\(rolesCount > 1 ? "s" : "")".draw(at: CGPoint(x: margin, y: currentY), withAttributes: summaryAttrs)
+            currentY += 20
+
+            drawLine(context: context.cgContext, y: currentY, margin: margin, width: contentWidth)
+            currentY += 15
+
+            // Styles
+            let sectionHeaderAttrs: [NSAttributedString.Key: Any] = [
+                .font: UIFont.systemFont(ofSize: 14, weight: .semibold),
+                .foregroundColor: UIColor.systemGreen
+            ]
+            let nameAttrs: [NSAttributedString.Key: Any] = [
+                .font: UIFont.systemFont(ofSize: 13, weight: .semibold),
+                .foregroundColor: UIColor.black
+            ]
+            let detailAttrs: [NSAttributedString.Key: Any] = [
+                .font: UIFont.systemFont(ofSize: 11),
+                .foregroundColor: UIColor.darkGray
+            ]
+            let contactAttrs: [NSAttributedString.Key: Any] = [
+                .font: UIFont.systemFont(ofSize: 11),
+                .foregroundColor: UIColor.systemBlue
+            ]
+
+            // Contenu par rôle
+            for group in grouped {
+                // En-tête du rôle
+                ensureSpace(50)
+                group.roleName.draw(at: CGPoint(x: margin, y: currentY), withAttributes: sectionHeaderAttrs)
+                currentY += 22
+
+                for member in group.members {
+                    // Hauteur estimée : nom + contact
+                    let itemHeight: CGFloat = member.phone.isEmpty && member.email.isEmpty ? 30 : 48
+                    ensureSpace(itemHeight)
+
+                    // Photo du membre (si disponible)
+                    let textX: CGFloat
+                    if let photoData = member.photoData,
+                       let uiImage = UIImage(data: photoData) {
+                        let photoSize: CGFloat = 36
+                        let photoRect = CGRect(x: margin + 4, y: currentY, width: photoSize, height: photoSize)
+                        // Dessiner la photo arrondie
+                        UIGraphicsGetCurrentContext()?.saveGState()
+                        let clipPath = UIBezierPath(ovalIn: photoRect)
+                        clipPath.addClip()
+                        uiImage.draw(in: photoRect)
+                        UIGraphicsGetCurrentContext()?.restoreGState()
+                        textX = margin + 48
+                    } else {
+                        // Initiale
+                        let initial = String(member.firstName.prefix(1)).uppercased()
+                        let circleSize: CGFloat = 36
+                        let circleRect = CGRect(x: margin + 4, y: currentY, width: circleSize, height: circleSize)
+                        UIColor.systemGray4.setFill()
+                        UIBezierPath(ovalIn: circleRect).fill()
+                        let initialAttrs: [NSAttributedString.Key: Any] = [
+                            .font: UIFont.systemFont(ofSize: 16, weight: .semibold),
+                            .foregroundColor: UIColor.white
+                        ]
+                        let initialSize = initial.size(withAttributes: initialAttrs)
+                        let initialPoint = CGPoint(
+                            x: circleRect.midX - initialSize.width / 2,
+                            y: circleRect.midY - initialSize.height / 2
+                        )
+                        initial.draw(at: initialPoint, withAttributes: initialAttrs)
+                        textX = margin + 48
+                    }
+
+                    // Nom
+                    member.fullName.draw(at: CGPoint(x: textX, y: currentY + 2), withAttributes: nameAttrs)
+
+                    // Contact (ligne 2)
+                    var contactParts: [String] = []
+                    if !member.phone.isEmpty { contactParts.append("📞 \(member.phone)") }
+                    if !member.email.isEmpty { contactParts.append("✉️ \(member.email)") }
+                    if !contactParts.isEmpty {
+                        let contactStr = contactParts.joined(separator: "   ")
+                        contactStr.draw(at: CGPoint(x: textX, y: currentY + 20), withAttributes: contactAttrs)
+                    }
+
+                    // Catégories si multi-profil
+                    let profileNames = ProfileManager.shared.profiles
+                        .filter { member.profileIds.contains($0.id) }
+                        .map { $0.name }
+                    if profileNames.count > 1 {
+                        let catStr = "Catégories : \(profileNames.joined(separator: ", "))"
+                        let catY = contactParts.isEmpty ? currentY + 20 : currentY + 35
+                        catStr.draw(at: CGPoint(x: textX, y: catY), withAttributes: detailAttrs)
+                        currentY += (contactParts.isEmpty ? 44 : 56)
+                    } else {
+                        currentY += itemHeight
+                    }
+                }
+
+                // Séparation entre groupes
+                currentY += 5
+                drawLine(context: context.cgContext, y: currentY, margin: margin, width: contentWidth)
+                currentY += 10
+            }
+
+            // Footer
+            ensureSpace(40)
+            currentY += 30
+            drawLine(context: context.cgContext, y: currentY, margin: margin, width: contentWidth)
+            currentY += 10
+            let footer = "Temps De Jeu · \(dateFormatter.string(from: Date()))"
+            let footerAttrs: [NSAttributedString.Key: Any] = [
+                .font: UIFont.systemFont(ofSize: 9),
+                .foregroundColor: UIColor.lightGray
+            ]
+            footer.draw(at: CGPoint(x: margin, y: currentY), withAttributes: footerAttrs)
+        }
+    }
+
+    // MARK: - Sauvegarde complète (Full Backup)
+
+    /// Données d'un profil individuel pour la sauvegarde
+    struct ProfileBackupData: Codable {
+        let profile: TeamProfile
+        let matches: [Match]
+        let trainingSessions: [TrainingSession]
+        let currentSeason: Season?
+        let seasonArchives: [SeasonArchive]
+    }
+
+    /// Sauvegarde complète de l'application
+    struct FullBackup: Codable {
+        let version: Int                    // Version du format de sauvegarde
+        let exportDate: Date
+        let appVersion: String?
+        let players: [Player]               // Base globale de joueurs
+        let staffMembers: [StaffMember]     // Encadrants
+        let staffRoles: [StaffRole]         // Rôles d'encadrement
+        let profilesData: [ProfileBackupData]  // Données par profil
+    }
+
+    /// Résultat de l'import d'une sauvegarde complète
+    struct FullBackupImportResult {
+        let backup: FullBackup
+        let profileCount: Int
+        let playerCount: Int
+        let totalMatches: Int
+        let totalTrainingSessions: Int
+        let staffCount: Int
+    }
+
+    /// Exporte toutes les données de l'application en un seul fichier JSON
+    func exportFullBackup() -> Data? {
+        let encoder = JSONEncoder()
+        encoder.outputFormatting = [.prettyPrinted, .sortedKeys]
+        encoder.dateEncodingStrategy = .iso8601
+
+        // Joueurs globaux
+        let allPlayers = TeamManager.shared.loadAllPlayers()
+
+        // Staff
+        let staffMembers = StaffManager.shared.loadAllStaff()
+        let staffRoles = StaffManager.shared.loadRoles()
+
+        // Collecter les données de chaque profil
+        var profilesData: [ProfileBackupData] = []
+        for profile in ProfileManager.shared.profiles {
+            let matches = DataManager.shared.loadMatches(forProfileId: profile.id)
+            let trainingSessions = TrainingManager.shared.loadSessions(forProfileId: profile.id)
+
+            // Saison courante et archives pour ce profil
+            let prefix = "profile_\(profile.id.uuidString)_"
+            let currentSeason: Season? = {
+                guard let data = UserDefaults.standard.data(forKey: "\(prefix)currentSeason") else { return nil }
+                let decoder = JSONDecoder()
+                return try? decoder.decode(Season.self, from: data)
+            }()
+            let seasonArchives: [SeasonArchive] = {
+                guard let data = UserDefaults.standard.data(forKey: "\(prefix)seasonArchives") else { return [] }
+                let decoder = JSONDecoder()
+                return (try? decoder.decode([SeasonArchive].self, from: data)) ?? []
+            }()
+
+            profilesData.append(ProfileBackupData(
+                profile: profile,
+                matches: matches,
+                trainingSessions: trainingSessions,
+                currentSeason: currentSeason,
+                seasonArchives: seasonArchives
+            ))
+        }
+
+        let appVersion = Bundle.main.infoDictionary?["CFBundleShortVersionString"] as? String
+
+        let backup = FullBackup(
+            version: 1,
+            exportDate: Date(),
+            appVersion: appVersion,
+            players: allPlayers,
+            staffMembers: staffMembers,
+            staffRoles: staffRoles,
+            profilesData: profilesData
+        )
+
+        return try? encoder.encode(backup)
+    }
+
+    /// Importe et valide une sauvegarde complète
+    func importFullBackup(from data: Data) -> FullBackupImportResult? {
+        let decoder = JSONDecoder()
+        decoder.dateDecodingStrategy = .iso8601
+
+        guard let backup = try? decoder.decode(FullBackup.self, from: data) else {
+            return nil
+        }
+
+        let totalMatches = backup.profilesData.reduce(0) { $0 + $1.matches.count }
+        let totalSessions = backup.profilesData.reduce(0) { $0 + $1.trainingSessions.count }
+
+        return FullBackupImportResult(
+            backup: backup,
+            profileCount: backup.profilesData.count,
+            playerCount: backup.players.count,
+            totalMatches: totalMatches,
+            totalTrainingSessions: totalSessions,
+            staffCount: backup.staffMembers.count
+        )
+    }
+
+    /// Applique une sauvegarde complète : remplace toutes les données de l'application
+    func applyFullBackup(_ backup: FullBackup) {
+        // 1. Remplacer les joueurs globaux
+        TeamManager.shared.saveToGlobalStorage(backup.players)
+
+        // 2. Remplacer le staff
+        StaffManager.shared.saveAllStaff(backup.staffMembers)
+        StaffManager.shared.saveRoles(backup.staffRoles)
+
+        // 3. Supprimer les profils existants (données UserDefaults)
+        for existingProfile in ProfileManager.shared.profiles {
+            let prefix = "profile_\(existingProfile.id.uuidString)_"
+            let keysToRemove = [
+                "\(prefix)savedMatches",
+                "\(prefix)trainingSessions",
+                "\(prefix)currentSeason",
+                "\(prefix)seasonArchives",
+                "\(prefix)matchSetupDraft"
+            ]
+            for key in keysToRemove {
+                UserDefaults.standard.removeObject(forKey: key)
+            }
+        }
+
+        // 4. Recréer les profils et leurs données
+        var restoredProfiles: [TeamProfile] = []
+        for profileData in backup.profilesData {
+            let profile = profileData.profile
+            restoredProfiles.append(profile)
+
+            let prefix = "profile_\(profile.id.uuidString)_"
+
+            // Matchs
+            if let matchData = try? JSONEncoder().encode(profileData.matches) {
+                UserDefaults.standard.set(matchData, forKey: "\(prefix)savedMatches")
+            }
+
+            // Entraînements
+            if let sessionsData = try? JSONEncoder().encode(profileData.trainingSessions) {
+                UserDefaults.standard.set(sessionsData, forKey: "\(prefix)trainingSessions")
+            }
+
+            // Saison courante
+            if let season = profileData.currentSeason,
+               let seasonData = try? JSONEncoder().encode(season) {
+                UserDefaults.standard.set(seasonData, forKey: "\(prefix)currentSeason")
+            }
+
+            // Archives de saisons
+            if !profileData.seasonArchives.isEmpty,
+               let archivesData = try? JSONEncoder().encode(profileData.seasonArchives) {
+                UserDefaults.standard.set(archivesData, forKey: "\(prefix)seasonArchives")
+            }
+        }
+
+        // 5. Sauvegarder les profils et activer le premier
+        if let data = try? JSONEncoder().encode(restoredProfiles) {
+            UserDefaults.standard.set(data, forKey: "teamProfiles")
+        }
+        if let firstProfile = restoredProfiles.first {
+            UserDefaults.standard.set(firstProfile.id.uuidString, forKey: "activeProfileId")
+        }
+
+        // 6. Recharger les managers
+        ProfileManager.shared.profiles = restoredProfiles
+        ProfileManager.shared.activeProfileId = restoredProfiles.first?.id
+        SeasonManager.shared.reloadForCurrentProfile()
     }
 
     // MARK: - Helpers
