@@ -287,6 +287,21 @@
         </div>
     </div>
 
+    <!-- Redirect screen (for response links opened from WhatsApp/SMS) -->
+    <div id="redirectScreen" style="display:none">
+        <div class="header">
+            <div class="emoji">⚽</div>
+            <h1>Temps De Jeu</h1>
+        </div>
+        <div class="container" style="text-align:center;padding-top:24px">
+            <p style="font-size:17px;margin-bottom:24px">Ouverture de l'app en cours...</p>
+            <button class="share-btn deeplink" id="btnOpenApp" style="max-width:320px;margin:0 auto">
+                📲 Ouvrir Temps De Jeu
+            </button>
+            <p style="font-size:13px;color:var(--text-muted);margin-top:16px">Si l'app ne s'ouvre pas automatiquement, appuyez sur le bouton ci-dessus.</p>
+        </div>
+    </div>
+
     <!-- Error screen -->
     <div id="errorScreen" style="display:none">
         <div class="error-screen">
@@ -305,8 +320,36 @@
     let selectedPlayerName = '';
     let selectedStatus = null;
 
+    // Check if this is a response redirect (?r=BASE64)
+    // WhatsApp doesn't support custom URL schemes, so we use an HTTPS link
+    // that redirects to the app via tempsdejeu://a/BASE64
+    function checkResponseRedirect() {
+        const params = new URLSearchParams(window.location.search);
+        const responseData = params.get('r');
+        if (!responseData) return false;
+
+        // Show redirect UI
+        document.getElementById('mainForm').style.display = 'none';
+        document.getElementById('redirectScreen').style.display = 'block';
+
+        const deepLink = 'tempsdejeu://a/' + responseData;
+
+        // Try to open the app automatically
+        window.location.href = deepLink;
+
+        // Setup manual button as fallback
+        document.getElementById('btnOpenApp').onclick = function() {
+            window.location.href = deepLink;
+        };
+
+        return true;
+    }
+
     // Parse data from URL (query param ?z= compressed, ?d= uncompressed, #fragment legacy)
     async function init() {
+        // Handle response redirect first
+        if (checkResponseRedirect()) return;
+
         try {
             const params = new URLSearchParams(window.location.search);
             let compressed = params.get('z');  // zlib compressed (new)
@@ -478,7 +521,7 @@
         };
     }
 
-    function buildDeepLink() {
+    function buildResponseBase64() {
         const response = buildResponse();
         const json = JSON.stringify(response);
         // Encode UTF-8 properly
@@ -489,20 +532,31 @@
         let base64 = btoa(binary);
         // Make URL-safe
         base64 = base64.replace(/\+/g, '-').replace(/\//g, '_').replace(/=+$/, '');
-        return 'tempsdejeu://a/' + base64;
+        return base64;
+    }
+
+    function buildDeepLink() {
+        return 'tempsdejeu://a/' + buildResponseBase64();
+    }
+
+    // Build an HTTPS link that redirects to the app — works in WhatsApp, SMS, etc.
+    function buildWebLink() {
+        const base64 = buildResponseBase64();
+        return 'https://boboul-cloud.github.io/Temps-De-Jeu/dispo.html?r=' + base64;
     }
 
     function buildTextMessage() {
         const statusEmoji = selectedStatus === 1 ? '✅' : selectedStatus === 0 ? '❌' : '🤔';
         const statusText = selectedStatus === 1 ? 'Présent' : selectedStatus === 0 ? 'Absent' : 'Incertain';
         const comment = document.getElementById('commentInput').value.trim();
-        const deepLink = buildDeepLink();
+        // Use HTTPS link so it's clickable in WhatsApp and all messaging apps
+        const link = buildWebLink();
 
         let msg = `⚽ Disponibilité ${pollData.t}\n`;
         msg += `📅 ${formatDate(pollData.d)}\n`;
         msg += `${statusEmoji} ${selectedPlayerName} — ${statusText}`;
         if (comment) msg += `\n💬 ${comment}`;
-        msg += `\n\n👉 Touche pour importer :\n${deepLink}`;
+        msg += `\n\n👉 Touche pour importer :\n${link}`;
         return msg;
     }
 
