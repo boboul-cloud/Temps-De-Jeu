@@ -17,6 +17,7 @@ struct TrainingAttendanceView: View {
     @State private var showStats = false
     @State private var showExport = false
     @ObservedObject private var profileManager = ProfileManager.shared
+    @ObservedObject private var trainingManager = TrainingManager.shared
     
     var sortedSessions: [TrainingSession] {
         sessions.sorted { $0.date > $1.date }
@@ -87,6 +88,9 @@ struct TrainingAttendanceView: View {
                 loadData()
             }
             .onChange(of: profileManager.activeProfileId) {
+                loadData()
+            }
+            .onChange(of: trainingManager.sessionsUpdateTrigger) {
                 loadData()
             }
             .onChange(of: showNewSession) {
@@ -163,7 +167,7 @@ struct TrainingSessionRow: View {
     private var dateFormatter: DateFormatter {
         let f = DateFormatter()
         f.dateStyle = .full
-        f.timeStyle = .none
+        f.timeStyle = .short
         f.locale = Locale(identifier: "fr_FR")
         return f
     }
@@ -255,9 +259,11 @@ struct NewTrainingSessionView: View {
     var body: some View {
         NavigationStack {
             Form {
-                Section("Date de l'entraînement") {
+                Section("Date et heure de l'entraînement") {
                     DatePicker("Date", selection: $date, displayedComponents: .date)
                         .datePickerStyle(.graphical)
+                        .environment(\.locale, Locale(identifier: "fr_FR"))
+                    DatePicker("Heure", selection: $date, displayedComponents: .hourAndMinute)
                         .environment(\.locale, Locale(identifier: "fr_FR"))
                 }
                 
@@ -513,7 +519,7 @@ struct TrainingSessionDetailView: View {
     private var dateFormatter: DateFormatter {
         let f = DateFormatter()
         f.dateStyle = .full
-        f.timeStyle = .none
+        f.timeStyle = .short
         f.locale = Locale(identifier: "fr_FR")
         return f
     }
@@ -540,9 +546,11 @@ struct TrainingSessionDetailView: View {
     var body: some View {
         NavigationStack {
             Form {
-                Section("Date de l'entraînement") {
+                Section("Date et heure de l'entraînement") {
                     DatePicker("Date", selection: $date, displayedComponents: .date)
                         .datePickerStyle(.graphical)
+                        .environment(\.locale, Locale(identifier: "fr_FR"))
+                    DatePicker("Heure", selection: $date, displayedComponents: .hourAndMinute)
                         .environment(\.locale, Locale(identifier: "fr_FR"))
                 }
                 

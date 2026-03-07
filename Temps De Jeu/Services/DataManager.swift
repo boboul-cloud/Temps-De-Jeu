@@ -104,6 +104,8 @@ class DataManager {
         do {
             let data = try JSONEncoder().encode(matches)
             UserDefaults.standard.set(data, forKey: matchesKey)
+            // Mettre à jour le widget
+            WidgetDataBridge.shared.updateWidgetData()
         } catch {
             print("Erreur sauvegarde: \(error)")
         }

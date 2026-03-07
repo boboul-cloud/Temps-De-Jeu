@@ -97,6 +97,21 @@ struct MatchSetupView: View {
                         )
                         CustomTextField(placeholder: "Compétition", text: $viewModel.match.competition, icon: "trophy.fill")
 
+                        // Date et heure du match
+                        HStack(spacing: 12) {
+                            Image(systemName: "calendar")
+                                .foregroundStyle(.green)
+                                .frame(width: 24)
+                            DatePicker(
+                                "Date du match",
+                                selection: $viewModel.match.date,
+                                displayedComponents: [.date, .hourAndMinute]
+                            )
+                            .labelsHidden()
+                            .environment(\.locale, Locale(identifier: "fr_FR"))
+                        }
+                        .padding(.vertical, 4)
+
                         // Sélecteur de couleurs de maillot
                         VStack(spacing: 12) {
                             Text("Couleurs de maillot")
@@ -561,6 +576,8 @@ struct MatchSetupView: View {
             .onChange(of: viewModel.matchRoster) { saveDraftState() }
             .onChange(of: viewModel.match.myTeamName) { saveDraftState() }
             .onChange(of: viewModel.match.date) { saveDraftState() }
+            .onChange(of: viewModel.match.homeJerseyColor) { saveDraftState() }
+            .onChange(of: viewModel.match.awayJerseyColor) { saveDraftState() }
         }
     }
 

@@ -12,6 +12,7 @@ struct ContentView: View {
     @StateObject private var storeManager = StoreManager.shared
     @StateObject private var profileManager = ProfileManager.shared
     @EnvironmentObject var deepLinkManager: DeepLinkManager
+    @Environment(\.scenePhase) private var scenePhase
     @State private var showMatch = false
     @State private var selectedTab = 0
 
@@ -128,11 +129,18 @@ struct ContentView: View {
         }
         .onAppear {
             updateGlobalTint()
+            WidgetDataBridge.shared.updateWidgetData()
+        }
+        .onChange(of: scenePhase) {
+            if scenePhase == .active {
+                WidgetDataBridge.shared.updateWidgetData()
+            }
         }
         .onChange(of: profileManager.activeProfileId) { oldProfileId, newProfileId in
             // Le changement de profil est géré par MatchSetupView (sauvegarde ancien brouillon + chargement nouveau)
             // ContentView n'intervient pas pour éviter les conflits de double écriture
             updateGlobalTint()
+            WidgetDataBridge.shared.updateWidgetData()
         }
         .onChange(of: deepLinkManager.shouldNavigateToMatch) {
             if deepLinkManager.shouldNavigateToMatch {

@@ -454,6 +454,8 @@ class MatchViewModel: ObservableObject {
         do {
             let data = try JSONEncoder().encode(draft)
             UserDefaults.standard.set(data, forKey: Self.draftKey)
+            // Mettre à jour le widget avec les infos du brouillon
+            WidgetDataBridge.shared.updateWidgetData()
         } catch {
             print("Erreur sauvegarde brouillon: \(error)")
         }

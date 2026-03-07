@@ -472,10 +472,28 @@ class DeepLinkManager: ObservableObject {
             let comment = json?["c"] as? String ?? ""
             
             // Résoudre les short IDs (8 chars) vers les UUIDs complets
-            let sessions = TrainingManager.shared.loadSessions()
+            // Chercher la session dans TOUS les profils (pas seulement le profil actif)
+            var session: TrainingSession?
+            var sessionProfileId: UUID?
             
-            // Trouver la session par ses 8 premiers caractères
-            guard let session = sessions.first(where: { $0.id.uuidString.hasPrefix(shortSessionId.uppercased()) }) else {
+            // D'abord chercher dans le profil actif
+            let activeSessions = TrainingManager.shared.loadSessions()
+            session = activeSessions.first(where: { $0.id.uuidString.hasPrefix(shortSessionId.uppercased()) })
+            
+            // Si pas trouvée, chercher dans tous les autres profils
+            if session == nil {
+                for profile in ProfileManager.shared.profiles {
+                    if profile.id == ProfileManager.shared.activeProfileId { continue }
+                    let profileSessions = TrainingManager.shared.loadSessions(forProfileId: profile.id)
+                    if let found = profileSessions.first(where: { $0.id.uuidString.hasPrefix(shortSessionId.uppercased()) }) {
+                        session = found
+                        sessionProfileId = profile.id
+                        break
+                    }
+                }
+            }
+            
+            guard let session = session else {
                 print("[DeepLink] Availability: Session non trouvée pour short ID \(shortSessionId)")
                 importError = "Session d'entraînement non trouvée."
                 return
@@ -504,7 +522,11 @@ class DeepLinkManager: ObservableObject {
             )
             
             // Appliquer directement la réponse dans la session d'entraînement
-            TrainingManager.shared.applyAvailabilityResponse(response, forSession: session.id)
+            if let profileId = sessionProfileId {
+                TrainingManager.shared.applyAvailabilityResponse(response, forSession: session.id, inProfileId: profileId)
+            } else {
+                TrainingManager.shared.applyAvailabilityResponse(response, forSession: session.id)
+            }
             
             // Notification locale
             NotificationManager.shared.notifyAvailabilityResponse(

@@ -235,6 +235,44 @@ struct UserGuideView: View {
                     
                     Divider()
                     
+                    // 14. Sondage de disponibilité
+                    guideSection(
+                        number: "14",
+                        title: "Sondage de disponibilité",
+                        icon: "paperplane.fill",
+                        color: .orange,
+                        steps: [
+                            "Ouvrez un entraînement existant et appuyez sur **Sondage disponibilité**",
+                            "**Partagez le lien** à vos joueurs via WhatsApp, SMS, iMessage…",
+                            "Les joueurs répondent depuis **n'importe quel téléphone** (iPhone ou Android)",
+                            "Les réponses apparaissent en temps réel : **Présent**, **Absent** ou **Incertain**",
+                            "Appuyez sur **Appliquer aux présences** pour reporter automatiquement les réponses",
+                            "Les joueurs ajoutés après la création de l'entraînement sont **intégrés automatiquement**",
+                            "Programmez un **rappel** pour relancer les joueurs n'ayant pas répondu"
+                        ]
+                    )
+                    
+                    Divider()
+                    
+                    // 15. Widget Prochain événement
+                    guideSection(
+                        number: "15",
+                        title: "Widget écran d'accueil",
+                        icon: "square.grid.2x2.fill",
+                        color: .blue,
+                        steps: [
+                            "Ajoutez le widget **Prochain événement** sur votre écran d'accueil ou écran de verrouillage",
+                            "Maintenez appuyé sur l'écran d'accueil → **+** → cherchez **Temps De Jeu**",
+                            "**3 tailles disponibles** : petit, moyen et rectangle écran de verrouillage",
+                            "Le widget affiche le **prochain match** (adversaire, date, domicile/extérieur)",
+                            "Il affiche aussi le **prochain entraînement** avec le nombre de réponses au sondage",
+                            "Choisissez la **catégorie** à afficher en maintenant appuyé sur le widget → **Modifier le widget**",
+                            "Les données se mettent à jour **automatiquement** toutes les 30 minutes"
+                        ]
+                    )
+                    
+                    Divider()
+                    
                     // Tips
                     tipsSection
                     
@@ -267,7 +305,7 @@ struct UserGuideView: View {
                 }
             }
             
-            Text("Cette application vous aide à gérer équitablement le temps de jeu de vos joueurs pendant les matchs de football.")
+            Text("Cette application vous aide à gérer équitablement le temps de jeu de vos joueurs pendant les matchs de football, les entraînements et bien plus encore.")
                 .foregroundStyle(.secondary)
         }
     }

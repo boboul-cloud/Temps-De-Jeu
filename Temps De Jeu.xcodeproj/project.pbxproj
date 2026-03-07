@@ -6,11 +6,45 @@
 	objectVersion = 77;
 	objects = {
 
+/* Begin PBXBuildFile section */
+		AA000D0026A000000052F6D8 /* TempsDeJeuWidgetExtension.appex in Embed Foundation Extensions */ = {isa = PBXBuildFile; fileRef = AA00010026A000000052F6D8 /* TempsDeJeuWidgetExtension.appex */; settings = {ATTRIBUTES = (RemoveHeadersOnCopy, ); }; };
+/* End PBXBuildFile section */
+
+/* Begin PBXContainerItemProxy section */
+		AA000A0026A000000052F6D8 /* PBXContainerItemProxy */ = {
+			isa = PBXContainerItemProxy;
+			containerPortal = BF82E3C42F368BC60052F6D8 /* Project object */;
+			proxyType = 1;
+			remoteGlobalIDString = AA00060026A000000052F6D8;
+			remoteInfo = TempsDeJeuWidgetExtension;
+		};
+/* End PBXContainerItemProxy section */
+
+/* Begin PBXCopyFilesBuildPhase section */
+		AA000C0026A000000052F6D8 /* Embed Foundation Extensions */ = {
+			isa = PBXCopyFilesBuildPhase;
+			buildActionMask = 2147483647;
+			dstPath = "";
+			dstSubfolderSpec = 13;
+			files = (
+				AA000D0026A000000052F6D8 /* TempsDeJeuWidgetExtension.appex in Embed Foundation Extensions */,
+			);
+			name = "Embed Foundation Extensions";
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+/* End PBXCopyFilesBuildPhase section */
+
 /* Begin PBXFileReference section */
+		AA00010026A000000052F6D8 /* TempsDeJeuWidgetExtension.appex */ = {isa = PBXFileReference; explicitFileType = "wrapper.app-extension"; includeInIndex = 0; path = TempsDeJeuWidgetExtension.appex; sourceTree = BUILT_PRODUCTS_DIR; };
 		BF82E3CC2F368BC60052F6D8 /* Temps De Jeu.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = "Temps De Jeu.app"; sourceTree = BUILT_PRODUCTS_DIR; };
 /* End PBXFileReference section */
 
 /* Begin PBXFileSystemSynchronizedRootGroup section */
+		AA00020026A000000052F6D8 /* TempsDeJeuWidget */ = {
+			isa = PBXFileSystemSynchronizedRootGroup;
+			path = TempsDeJeuWidget;
+			sourceTree = "<group>";
+		};
 		BF82E3CE2F368BC60052F6D8 /* Temps De Jeu */ = {
 			isa = PBXFileSystemSynchronizedRootGroup;
 			path = "Temps De Jeu";
@@ -19,6 +53,13 @@
 /* End PBXFileSystemSynchronizedRootGroup section */
 
 /* Begin PBXFrameworksBuildPhase section */
+		AA00030026A000000052F6D8 /* Frameworks */ = {
+			isa = PBXFrameworksBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
 		BF82E3C92F368BC60052F6D8 /* Frameworks */ = {
 			isa = PBXFrameworksBuildPhase;
 			buildActionMask = 2147483647;
@@ -33,6 +74,7 @@
 			isa = PBXGroup;
 			children = (
 				BF82E3CE2F368BC60052F6D8 /* Temps De Jeu */,
+				AA00020026A000000052F6D8 /* TempsDeJeuWidget */,
 				BF82E3CD2F368BC60052F6D8 /* Products */,
 			);
 			sourceTree = "<group>";
@@ -41,6 +83,7 @@
 			isa = PBXGroup;
 			children = (
 				BF82E3CC2F368BC60052F6D8 /* Temps De Jeu.app */,
+				AA00010026A000000052F6D8 /* TempsDeJeuWidgetExtension.appex */,
 			);
 			name = Products;
 			sourceTree = "<group>";
@@ -48,6 +91,28 @@
 /* End PBXGroup section */
 
 /* Begin PBXNativeTarget section */
+		AA00060026A000000052F6D8 /* TempsDeJeuWidgetExtension */ = {
+			isa = PBXNativeTarget;
+			buildConfigurationList = AA00090026A000000052F6D8 /* Build configuration list for PBXNativeTarget "TempsDeJeuWidgetExtension" */;
+			buildPhases = (
+				AA00050026A000000052F6D8 /* Sources */,
+				AA00030026A000000052F6D8 /* Frameworks */,
+				AA00040026A000000052F6D8 /* Resources */,
+			);
+			buildRules = (
+			);
+			dependencies = (
+			);
+			fileSystemSynchronizedGroups = (
+				AA00020026A000000052F6D8 /* TempsDeJeuWidget */,
+			);
+			name = TempsDeJeuWidgetExtension;
+			packageProductDependencies = (
+			);
+			productName = TempsDeJeuWidgetExtension;
+			productReference = AA00010026A000000052F6D8 /* TempsDeJeuWidgetExtension.appex */;
+			productType = "com.apple.product-type.app-extension";
+		};
 		BF82E3CB2F368BC60052F6D8 /* Temps De Jeu */ = {
 			isa = PBXNativeTarget;
 			buildConfigurationList = BF82E3D72F368BC70052F6D8 /* Build configuration list for PBXNativeTarget "Temps De Jeu" */;
@@ -55,10 +120,12 @@
 				BF82E3C82F368BC60052F6D8 /* Sources */,
 				BF82E3C92F368BC60052F6D8 /* Frameworks */,
 				BF82E3CA2F368BC60052F6D8 /* Resources */,
+				AA000C0026A000000052F6D8 /* Embed Foundation Extensions */,
 			);
 			buildRules = (
 			);
 			dependencies = (
+				AA000B0026A000000052F6D8 /* PBXTargetDependency */,
 			);
 			fileSystemSynchronizedGroups = (
 				BF82E3CE2F368BC60052F6D8 /* Temps De Jeu */,
@@ -80,6 +147,9 @@
 				LastSwiftUpdateCheck = 2610;
 				LastUpgradeCheck = 2610;
 				TargetAttributes = {
+					AA00060026A000000052F6D8 = {
+						CreatedOnToolsVersion = 26.1.1;
+					};
 					BF82E3CB2F368BC60052F6D8 = {
 						CreatedOnToolsVersion = 26.1.1;
 					};
@@ -100,11 +170,19 @@
 			projectRoot = "";
 			targets = (
 				BF82E3CB2F368BC60052F6D8 /* Temps De Jeu */,
+				AA00060026A000000052F6D8 /* TempsDeJeuWidgetExtension */,
 			);
 		};
 /* End PBXProject section */
 
 /* Begin PBXResourcesBuildPhase section */
+		AA00040026A000000052F6D8 /* Resources */ = {
+			isa = PBXResourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
 		BF82E3CA2F368BC60052F6D8 /* Resources */ = {
 			isa = PBXResourcesBuildPhase;
 			buildActionMask = 2147483647;
@@ -115,6 +193,13 @@
 /* End PBXResourcesBuildPhase section */
 
 /* Begin PBXSourcesBuildPhase section */
+		AA00050026A000000052F6D8 /* Sources */ = {
+			isa = PBXSourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
 		BF82E3C82F368BC60052F6D8 /* Sources */ = {
 			isa = PBXSourcesBuildPhase;
 			buildActionMask = 2147483647;
@@ -124,7 +209,71 @@
 		};
 /* End PBXSourcesBuildPhase section */
 
+/* Begin PBXTargetDependency section */
+		AA000B0026A000000052F6D8 /* PBXTargetDependency */ = {
+			isa = PBXTargetDependency;
+			target = AA00060026A000000052F6D8 /* TempsDeJeuWidgetExtension */;
+			targetProxy = AA000A0026A000000052F6D8 /* PBXContainerItemProxy */;
+		};
+/* End PBXTargetDependency section */
+
 /* Begin XCBuildConfiguration section */
+		AA00070026A000000052F6D8 /* Debug */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				ASSETCATALOG_COMPILER_GLOBAL_ACCENT_COLOR_NAME = AccentColor;
+				ASSETCATALOG_COMPILER_WIDGET_BACKGROUND_COLOR_NAME = WidgetBackground;
+				CODE_SIGN_ENTITLEMENTS = TempsDeJeuWidget/TempsDeJeuWidget.entitlements;
+				CODE_SIGN_STYLE = Automatic;
+				CURRENT_PROJECT_VERSION = 24;
+				DEVELOPMENT_TEAM = 38DQ8FW23J;
+				GENERATE_INFOPLIST_FILE = YES;
+				INFOPLIST_FILE = TempsDeJeuWidgetInfo.plist;
+				INFOPLIST_KEY_CFBundleDisplayName = "Temps De Jeu Widget";
+				INFOPLIST_KEY_NSHumanReadableCopyright = "";
+				LD_RUNPATH_SEARCH_PATHS = (
+					"$(inherited)",
+					"@executable_path/Frameworks",
+					"@executable_path/../../Frameworks",
+				);
+				MARKETING_VERSION = 1.4;
+				PRODUCT_BUNDLE_IDENTIFIER = "bob.oulhen-gmail.com.Temps-De-Jeu.Widget";
+				PRODUCT_NAME = "$(TARGET_NAME)";
+				SKIP_INSTALL = YES;
+				SWIFT_EMIT_LOC_STRINGS = YES;
+				SWIFT_VERSION = 5.0;
+				TARGETED_DEVICE_FAMILY = "1,2";
+			};
+			name = Debug;
+		};
+		AA00080026A000000052F6D8 /* Release */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				ASSETCATALOG_COMPILER_GLOBAL_ACCENT_COLOR_NAME = AccentColor;
+				ASSETCATALOG_COMPILER_WIDGET_BACKGROUND_COLOR_NAME = WidgetBackground;
+				CODE_SIGN_ENTITLEMENTS = TempsDeJeuWidget/TempsDeJeuWidget.entitlements;
+				CODE_SIGN_STYLE = Automatic;
+				CURRENT_PROJECT_VERSION = 24;
+				DEVELOPMENT_TEAM = 38DQ8FW23J;
+				GENERATE_INFOPLIST_FILE = YES;
+				INFOPLIST_FILE = TempsDeJeuWidgetInfo.plist;
+				INFOPLIST_KEY_CFBundleDisplayName = "Temps De Jeu Widget";
+				INFOPLIST_KEY_NSHumanReadableCopyright = "";
+				LD_RUNPATH_SEARCH_PATHS = (
+					"$(inherited)",
+					"@executable_path/Frameworks",
+					"@executable_path/../../Frameworks",
+				);
+				MARKETING_VERSION = 1.4;
+				PRODUCT_BUNDLE_IDENTIFIER = "bob.oulhen-gmail.com.Temps-De-Jeu.Widget";
+				PRODUCT_NAME = "$(TARGET_NAME)";
+				SKIP_INSTALL = YES;
+				SWIFT_EMIT_LOC_STRINGS = YES;
+				SWIFT_VERSION = 5.0;
+				TARGETED_DEVICE_FAMILY = "1,2";
+			};
+			name = Release;
+		};
 		BF82E3D52F368BC70052F6D8 /* Debug */ = {
 			isa = XCBuildConfiguration;
 			buildSettings = {
@@ -251,6 +400,7 @@
 			buildSettings = {
 				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
 				ASSETCATALOG_COMPILER_GLOBAL_ACCENT_COLOR_NAME = AccentColor;
+				CODE_SIGN_ENTITLEMENTS = "Temps De Jeu/Temps De Jeu.entitlements";
 				CODE_SIGN_STYLE = Automatic;
 				CURRENT_PROJECT_VERSION = 24;
 				DEVELOPMENT_TEAM = 38DQ8FW23J;
@@ -281,6 +431,7 @@
 			buildSettings = {
 				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
 				ASSETCATALOG_COMPILER_GLOBAL_ACCENT_COLOR_NAME = AccentColor;
+				CODE_SIGN_ENTITLEMENTS = "Temps De Jeu/Temps De Jeu.entitlements";
 				CODE_SIGN_STYLE = Automatic;
 				CURRENT_PROJECT_VERSION = 24;
 				DEVELOPMENT_TEAM = 38DQ8FW23J;
@@ -309,6 +460,15 @@
 /* End XCBuildConfiguration section */
 
 /* Begin XCConfigurationList section */
+		AA00090026A000000052F6D8 /* Build configuration list for PBXNativeTarget "TempsDeJeuWidgetExtension" */ = {
+			isa = XCConfigurationList;
+			buildConfigurations = (
+				AA00070026A000000052F6D8 /* Debug */,
+				AA00080026A000000052F6D8 /* Release */,
+			);
+			defaultConfigurationIsVisible = 0;
+			defaultConfigurationName = Release;
+		};
 		BF82E3C72F368BC60052F6D8 /* Build configuration list for PBXProject "Temps De Jeu" */ = {
 			isa = XCConfigurationList;
 			buildConfigurations = (

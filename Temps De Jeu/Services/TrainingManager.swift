@@ -6,11 +6,15 @@
 //
 
 import Foundation
+import Combine
 
 /// Gestionnaire des entraînements et présences
 @MainActor
-class TrainingManager {
+class TrainingManager: ObservableObject {
     static let shared = TrainingManager()
+    
+    /// Signal de mise à jour des sessions (incrémenté quand une réponse de disponibilité est appliquée)
+    @Published var sessionsUpdateTrigger: Int = 0
     
     /// Clé de stockage préfixée par le profil actif
     private var sessionsKey: String {
@@ -25,6 +29,8 @@ class TrainingManager {
         do {
             let data = try JSONEncoder().encode(sessions)
             UserDefaults.standard.set(data, forKey: sessionsKey)
+            // Mettre à jour le widget
+            WidgetDataBridge.shared.updateWidgetData()
         } catch {
             print("Erreur sauvegarde entraînements: \(error)")
         }
@@ -138,15 +144,61 @@ class TrainingManager {
         }
         
         saveSessions(sessions)
+        sessionsUpdateTrigger += 1
         print("[Training] Réponse de disponibilité appliquée: \(response.playerName) → \(response.status.label)")
+    }
+    
+    /// Applique une réponse de disponibilité dans un profil spécifique (pas forcément le profil actif)
+    func applyAvailabilityResponse(_ response: AvailabilityResponse, forSession sessionId: UUID, inProfileId profileId: UUID) {
+        var sessions = loadSessions(forProfileId: profileId)
+        guard let index = sessions.firstIndex(where: { $0.id == sessionId }) else {
+            print("[Training] Session \(sessionId) non trouvée dans le profil \(profileId)")
+            return
+        }
+        
+        if let existingIndex = sessions[index].availabilityResponses.firstIndex(where: { $0.id == response.id }) {
+            sessions[index].availabilityResponses[existingIndex] = response
+        } else {
+            sessions[index].availabilityResponses.append(response)
+        }
+        
+        let key = "profile_\(profileId.uuidString)_trainingSessions"
+        if let data = try? JSONEncoder().encode(sessions) {
+            UserDefaults.standard.set(data, forKey: key)
+        }
+        sessionsUpdateTrigger += 1
+        print("[Training] Réponse de disponibilité appliquée (profil \(profileId)): \(response.playerName) → \(response.status.label)")
     }
     
     /// Applique les réponses de disponibilité aux présences de la session
     /// (convertit les réponses "Présent" en présence, les autres en absence)
+    /// Si un joueur a répondu au sondage mais n'a pas encore de fiche de présence
+    /// (ex: joueur ajouté après la création de la session), une entrée est créée automatiquement.
     func applyResponsesToAttendance(session: inout TrainingSession) {
         for response in session.availabilityResponses {
             if let attendanceIdx = session.attendances.firstIndex(where: { $0.id == response.id }) {
                 session.attendances[attendanceIdx].isPresent = (response.status == .present)
+            } else {
+                // Joueur absent de la liste de présence (ajouté après la création de la session)
+                // → on cherche ses infos dans le TeamManager, sinon on découpe le nom du sondage
+                let allPlayers = TeamManager.shared.loadAllPlayers()
+                let firstName: String
+                let lastName: String
+                if let player = allPlayers.first(where: { $0.id == response.id }) {
+                    firstName = player.firstName
+                    lastName = player.lastName
+                } else {
+                    let parts = response.playerName.split(separator: " ", maxSplits: 1)
+                    firstName = String(parts.first ?? "")
+                    lastName = parts.count > 1 ? String(parts.last ?? "") : ""
+                }
+                let newAttendance = PlayerAttendance(
+                    id: response.id,
+                    firstName: firstName,
+                    lastName: lastName,
+                    isPresent: response.status == .present
+                )
+                session.attendances.append(newAttendance)
             }
         }
     }
