@@ -142,6 +142,15 @@ class WidgetDataBridge {
             .sorted { $0.date < $1.date }
             .first
 
+        // Nombre de joueurs réel du profil (pas seulement ceux dans la session)
+        let playerCount: Int
+        if let pid = profileId,
+           let prof = ProfileManager.shared.profiles.first(where: { $0.id == pid }) {
+            playerCount = prof.playerIds.count
+        } else {
+            playerCount = TeamManager.shared.loadPlayers().count
+        }
+
         return WidgetData(
             teamName: profileName,
             seasonCategory: seasonCategory,
@@ -151,7 +160,7 @@ class WidgetDataBridge {
             nextMatchIsHome: nextMatch?.isMyTeamHome,
             nextTrainingDate: nextTraining?.date,
             nextTrainingResponseCount: nextTraining?.availabilityResponses.count,
-            nextTrainingPlayerCount: nextTraining?.attendances.count,
+            nextTrainingPlayerCount: nextTraining != nil ? playerCount : nil,
             matchesPlayed: matchesPlayed,
             lastUpdated: Date()
         )

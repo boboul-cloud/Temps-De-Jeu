@@ -104,6 +104,7 @@ class TeamManager {
         do {
             let data = try JSONEncoder().encode(players)
             UserDefaults.standard.set(data, forKey: playersKey)
+            WidgetDataBridge.shared.updateWidgetData()
         } catch {
             print("Erreur sauvegarde joueurs: \(error)")
         }
