@@ -419,7 +419,26 @@
             // Populate UI
             document.getElementById('teamName').textContent = pollData.t;
             document.getElementById('sessionDate').textContent = formatDate(pollData.d);
-            renderPlayers(pollData.p);
+            
+            // Mode individuel: 1 seul joueur = auto-sélection, pas de choix
+            if (pollData.p.length === 1) {
+                const player = pollData.p[0];
+                selectPlayer(player.i, player.n);
+                const stepEl = document.querySelector('.step:first-child');
+                const firstName = player.n.split(' ')[0];
+                stepEl.innerHTML = `
+                    <div style="background:var(--card);border-radius:12px;padding:16px;text-align:center">
+                        <div style="font-size:15px;color:var(--text-muted)">Bonjour</div>
+                        <div style="font-size:20px;font-weight:700;margin-top:4px">${escapeHtml(firstName)} 👋</div>
+                    </div>
+                `;
+                // Re-number remaining steps
+                document.querySelectorAll('.step:not(:first-child) .step-number').forEach((el, i) => {
+                    el.textContent = i + 1;
+                });
+            } else {
+                renderPlayers(pollData.p);
+            }
 
         } catch (e) {
             console.error('Init error:', e, 'URL:', window.location.href);
@@ -577,7 +596,16 @@
         const smsBody = encodeURIComponent(msg);
         // iOS uses &body=, Android uses ?body=
         const isIOS = /iPhone|iPad|iPod/i.test(navigator.userAgent);
-        document.getElementById('btnSMS').href = isIOS ? `sms:&body=${smsBody}` : `sms:?body=${smsBody}`;
+        const coachNum = pollData.c || '';
+        if (coachNum) {
+            document.getElementById('btnSMS').href = isIOS
+                ? `sms:${coachNum}&body=${smsBody}`
+                : `sms:${coachNum}?body=${smsBody}`;
+        } else {
+            document.getElementById('btnSMS').href = isIOS
+                ? `sms:&body=${smsBody}`
+                : `sms:?body=${smsBody}`;
+        }
     }
 
     function openDeepLink() {
