@@ -198,6 +198,13 @@ struct TrainingSessionRow: View {
                         .lineLimit(1)
                 }
                 
+                if !session.location.isEmpty {
+                    Label(session.location, systemImage: "mappin.circle.fill")
+                        .font(.caption)
+                        .foregroundStyle(.secondary)
+                        .lineLimit(1)
+                }
+                
                 // Badge réponses de disponibilité
                 if !session.availabilityResponses.isEmpty {
                     let presentR = session.availabilityResponses.filter { $0.status == .present }.count
@@ -231,6 +238,7 @@ struct NewTrainingSessionView: View {
     @Environment(\.dismiss) private var dismiss
     @State private var date = Date()
     @State private var notes = ""
+    @State private var location = ""
     @State private var presentPlayerIds: Set<UUID> = []
     @State private var searchText = ""
     @State private var showGuestPlayers = false
@@ -238,8 +246,7 @@ struct NewTrainingSessionView: View {
     @State private var presentGuestIds: Set<UUID> = []
     
     private var availablePlayers: [Player] {
-        players.filter { $0.availability == .disponible }
-            .sorted { $0.lastName.localizedCompare($1.lastName) == .orderedAscending }
+        players.sorted { $0.lastName.localizedCompare($1.lastName) == .orderedAscending }
     }
     
     private var filteredPlayers: [Player] {
@@ -271,6 +278,10 @@ struct NewTrainingSessionView: View {
                     TextField("Ex: Travail tactique, préparation match...", text: $notes)
                 }
                 
+                Section("Lieu (optionnel)") {
+                    TextField("Ex: Stade municipal, Gymnase...", text: $location)
+                }
+                
                 Section {
                     HStack {
                         Text("Présents")
@@ -297,7 +308,7 @@ struct NewTrainingSessionView: View {
                 
                 Section {
                     if availablePlayers.isEmpty {
-                        Text("Aucun joueur disponible")
+                        Text("Aucun joueur dans l'effectif")
                             .foregroundStyle(.secondary)
                     } else {
                         ForEach(filteredPlayers) { player in
@@ -404,6 +415,7 @@ struct NewTrainingSessionView: View {
         let session = TrainingSession(
             date: date,
             notes: notes,
+            location: location,
             attendances: attendances
         )
         
@@ -411,7 +423,7 @@ struct NewTrainingSessionView: View {
         dismiss()
     }
 
-    /// Charge les joueurs des autres catégories (disponibles, pas déjà dans la catégorie active)
+    /// Charge les joueurs des autres catégories (pas déjà dans la catégorie active)
     private func loadGuestPlayers() {
         let profiles = ProfileManager.shared.profiles
         guard let activeId = ProfileManager.shared.activeProfileId,
@@ -425,8 +437,7 @@ struct NewTrainingSessionView: View {
             for playerId in profile.playerIds {
                 guard !localIds.contains(playerId),
                       !activeProfile.playerIds.contains(playerId),
-                      let player = allGlobal.first(where: { $0.id == playerId }),
-                      player.availability == .disponible else { continue }
+                      let player = allGlobal.first(where: { $0.id == playerId }) else { continue }
                 // Éviter les doublons si le joueur est dans plusieurs autres catégories
                 if !guests.contains(where: { $0.player.id == playerId }) {
                     guests.append((player: player, categoryName: profile.name, categoryColorIndex: profile.colorIndex))
@@ -499,6 +510,7 @@ struct TrainingSessionDetailView: View {
     @Environment(\.dismiss) private var dismiss
     @State private var date: Date
     @State private var notes: String
+    @State private var location: String
     @State private var presentPlayerIds: Set<UUID>
     @State private var searchText = ""
     @State private var pdfPreviewItem: TrainingPDFPreviewItem?
@@ -513,6 +525,7 @@ struct TrainingSessionDetailView: View {
         self.onSave = onSave
         _date = State(initialValue: session.date)
         _notes = State(initialValue: session.notes)
+        _location = State(initialValue: session.location)
         _presentPlayerIds = State(initialValue: Set(session.attendances.filter { $0.isPresent }.map { $0.id }))
     }
     
@@ -525,8 +538,7 @@ struct TrainingSessionDetailView: View {
     }
     
     private var availablePlayers: [Player] {
-        players.filter { $0.availability == .disponible }
-            .sorted { $0.lastName.localizedCompare($1.lastName) == .orderedAscending }
+        players.sorted { $0.lastName.localizedCompare($1.lastName) == .orderedAscending }
     }
     
     private var filteredPlayers: [Player] {
@@ -556,6 +568,10 @@ struct TrainingSessionDetailView: View {
                 
                 Section("Notes (optionnel)") {
                     TextField("Ex: Travail tactique, préparation match...", text: $notes)
+                }
+                
+                Section("Lieu (optionnel)") {
+                    TextField("Ex: Stade municipal, Gymnase...", text: $location)
                 }
                 
                 Section {
@@ -733,6 +749,7 @@ struct TrainingSessionDetailView: View {
         var currentSession = session
         currentSession.date = date
         currentSession.notes = notes
+        currentSession.location = location
         currentSession.attendances = attendances
         
         // Construire le dictionnaire des noms de catégories pour les invités
@@ -761,13 +778,14 @@ struct TrainingSessionDetailView: View {
         var updatedSession = session
         updatedSession.date = date
         updatedSession.notes = notes
+        updatedSession.location = location
         updatedSession.attendances = attendances
         
         onSave(updatedSession)
         dismiss()
     }
 
-    /// Charge les joueurs des autres catégories (disponibles, pas déjà dans la catégorie active)
+    /// Charge les joueurs des autres catégories (pas déjà dans la catégorie active)
     private func loadGuestPlayers() {
         let profiles = ProfileManager.shared.profiles
         guard let activeId = ProfileManager.shared.activeProfileId,
@@ -781,8 +799,7 @@ struct TrainingSessionDetailView: View {
             for playerId in profile.playerIds {
                 guard !localIds.contains(playerId),
                       !activeProfile.playerIds.contains(playerId),
-                      let player = allGlobal.first(where: { $0.id == playerId }),
-                      player.availability == .disponible else { continue }
+                      let player = allGlobal.first(where: { $0.id == playerId }) else { continue }
                 // Éviter les doublons si le joueur est dans plusieurs autres catégories
                 if !guests.contains(where: { $0.player.id == playerId }) {
                     guests.append((player: player, categoryName: profile.name, categoryColorIndex: profile.colorIndex))

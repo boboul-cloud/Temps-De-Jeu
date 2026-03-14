@@ -6,6 +6,7 @@
 //
 
 import SwiftUI
+import MessageUI
 
 /// Vue de sondage de disponibilité — permet au coach de créer un sondage,
 /// de le partager aux joueurs et de voir les réponses
@@ -16,9 +17,23 @@ struct AvailabilityPollView: View {
     
     @Environment(\.dismiss) private var dismiss
     @State private var showShareSheet = false
+    @State private var showSMSComposer = false
     @State private var pollURL: URL?
     @State private var shareMessage = ""
     @State private var showCopiedToast = false
+    @State private var showIndividualLinks = false
+    @State private var showIndividualShareSheet = false
+    @State private var showIndividualSMS = false
+    @State private var individualShareMessage = ""
+    @State private var individualSMSRecipient = ""
+    @State private var smsQueue: [Player] = []
+    @State private var smsSentCount = 0
+    @State private var smsTotalCount = 0
+    
+    /// Joueurs ayant un numéro de téléphone renseigné
+    private var playersWithPhone: [Player] {
+        players.filter { $0.phoneNumber != nil && !($0.phoneNumber?.trimmingCharacters(in: .whitespaces).isEmpty ?? true) }
+    }
     
     private var responses: [AvailabilityResponse] {
         session.availabilityResponses.sorted { $0.playerName.localizedCompare($1.playerName) == .orderedAscending }
@@ -44,6 +59,15 @@ struct AvailabilityPollView: View {
         ProfileManager.shared.activeProfile?.name ?? "Mon équipe"
     }
     
+    /// N° de téléphone du coach (1er encadrant avec rôle "Coach" et un n° renseigné)
+    private var coachPhone: String {
+        let roles = StaffManager.shared.loadRoles()
+        guard let coachRole = roles.first(where: { $0.name == "Coach" }) else { return "" }
+        let staff = StaffManager.shared.loadStaff()
+        let coach = staff.first(where: { $0.roleId == coachRole.id && !$0.phone.trimmingCharacters(in: .whitespaces).isEmpty })
+        return coach?.phone ?? ""
+    }
+    
     private var dateFormatter: DateFormatter {
         let f = DateFormatter()
         f.dateStyle = .full
@@ -60,6 +84,11 @@ struct AvailabilityPollView: View {
                 
                 // Lien de partage
                 shareSection
+                
+                // Liens individuels (anti-usurpation)
+                if pollURL != nil {
+                    individualLinksSection
+                }
                 
                 // Réponses reçues
                 if !responses.isEmpty {
@@ -91,6 +120,18 @@ struct AvailabilityPollView: View {
                     copiedToastOverlay
                 }
             }
+            .sheet(isPresented: $showIndividualShareSheet) {
+                ActivityViewController(activityItems: [individualShareMessage])
+                    .presentationDetents([.medium, .large])
+            }
+            .sheet(isPresented: $showIndividualSMS, onDismiss: {
+                sendNextQueuedSMS()
+            }) {
+                SMSComposeViewController(
+                    recipients: [individualSMSRecipient],
+                    body: individualShareMessage
+                )
+            }
         }
     }
     
@@ -101,6 +142,12 @@ struct AvailabilityPollView: View {
             VStack(spacing: 12) {
                 Text(dateFormatter.string(from: session.date))
                     .font(.headline)
+                
+                if !session.location.isEmpty {
+                    Label(session.location, systemImage: "mappin.circle.fill")
+                        .font(.subheadline)
+                        .foregroundStyle(.secondary)
+                }
                 
                 HStack(spacing: 16) {
                     SummaryBadge(count: presentCount, label: "Présents", color: .green, icon: "checkmark.circle.fill")
@@ -151,6 +198,31 @@ struct AvailabilityPollView: View {
                         .presentationDetents([.medium, .large])
                 }
                 
+                // Envoyer par SMS directement
+                if MFMessageComposeViewController.canSendText() && !playersWithPhone.isEmpty {
+                    Button {
+                        showSMSComposer = true
+                    } label: {
+                        Label {
+                            VStack(alignment: .leading, spacing: 2) {
+                                Text("Envoyer par SMS")
+                                Text("\(playersWithPhone.count) joueur\(playersWithPhone.count > 1 ? "s" : "") avec n° de téléphone")
+                                    .font(.caption)
+                                    .foregroundStyle(.secondary)
+                            }
+                        } icon: {
+                            Image(systemName: "message.fill")
+                                .foregroundStyle(.green)
+                        }
+                    }
+                    .sheet(isPresented: $showSMSComposer) {
+                        SMSComposeViewController(
+                            recipients: playersWithPhone.compactMap { $0.phoneNumber },
+                            body: shareMessage
+                        )
+                    }
+                }
+                
                 // Copier le lien
                 Button {
                     UIPasteboard.general.string = url.absoluteString
@@ -182,7 +254,97 @@ struct AvailabilityPollView: View {
         } header: {
             Text("Partager aux joueurs")
         } footer: {
-            Text("Partagez ce lien à vos joueurs. Ils pourront répondre depuis n'importe quel téléphone (iPhone ou Android).")
+            if !playersWithPhone.isEmpty {
+                let withoutPhone = players.count - playersWithPhone.count
+                if withoutPhone > 0 {
+                    Text("\(withoutPhone) joueur\(withoutPhone > 1 ? "s" : "") sans n° de téléphone — utilisez le partage classique pour les contacter.")
+                } else {
+                    Text("Tous les joueurs ont un n° de téléphone renseigné.")
+                }
+            } else {
+                Text("Partagez ce lien à vos joueurs. Ils pourront répondre depuis n'importe quel téléphone (iPhone ou Android).")
+            }
+        }
+    }
+    
+    private var individualLinksSection: some View {
+        Section {
+            // Bouton envoi groupé par SMS
+            if MFMessageComposeViewController.canSendText() && !playersWithPhone.isEmpty {
+                Button {
+                    startBulkSMS()
+                } label: {
+                    Label {
+                        VStack(alignment: .leading, spacing: 2) {
+                            Text("Envoyer à tous par SMS")
+                            Text("\(playersWithPhone.count) joueur\(playersWithPhone.count > 1 ? "s" : "") — un SMS individuel par joueur")
+                                .font(.caption)
+                                .foregroundStyle(.secondary)
+                        }
+                    } icon: {
+                        Image(systemName: "message.badge.filled.fill")
+                            .foregroundStyle(.green)
+                    }
+                }
+            }
+            
+            DisclosureGroup(isExpanded: $showIndividualLinks) {
+                ForEach(players.sorted { $0.lastName.localizedCompare($1.lastName) == .orderedAscending }) { player in
+                    HStack(spacing: 16) {
+                        Text(player.fullName)
+                            .font(.body)
+                        
+                        Spacer()
+                        
+                        // SMS si n° de téléphone disponible
+                        if MFMessageComposeViewController.canSendText(),
+                           let phone = player.phoneNumber,
+                           !phone.trimmingCharacters(in: .whitespaces).isEmpty {
+                            Button {
+                                sendIndividualSMS(for: player)
+                            } label: {
+                                Image(systemName: "message.fill")
+                                    .font(.body)
+                                    .foregroundStyle(.green)
+                            }
+                            .buttonStyle(.borderless)
+                        }
+                        
+                        // Partage classique
+                        Button {
+                            shareIndividualLink(for: player)
+                        } label: {
+                            Image(systemName: "square.and.arrow.up")
+                                .font(.body)
+                                .foregroundStyle(.orange)
+                        }
+                        .buttonStyle(.borderless)
+                    }
+                    .padding(.vertical, 2)
+                }
+            } label: {
+                Label {
+                    VStack(alignment: .leading, spacing: 2) {
+                        Text("Envoi individuel")
+                        Text("Un lien unique par joueur (anti-usurpation)")
+                            .font(.caption)
+                            .foregroundStyle(.secondary)
+                    }
+                } icon: {
+                    Image(systemName: "person.crop.circle.badge.checkmark")
+                        .foregroundStyle(.orange)
+                }
+            }
+        } header: {
+            Text("Liens individuels")
+        } footer: {
+            if smsSentCount > 0 && smsQueue.isEmpty {
+                Text("✅ \(smsSentCount) SMS individuel\(smsSentCount > 1 ? "s" : "") envoyé\(smsSentCount > 1 ? "s" : "")")
+            } else if !smsQueue.isEmpty {
+                Text("📤 Envoi en cours : \(smsSentCount)/\(smsTotalCount)…")
+            } else {
+                Text("Chaque joueur reçoit un lien personnel et ne peut répondre que pour lui-même.")
+            }
         }
     }
     
@@ -312,16 +474,97 @@ struct AvailabilityPollView: View {
             teamName: teamName,
             sessionId: session.id,
             sessionDate: session.date,
-            players: players
+            players: players,
+            coachPhone: coachPhone
         )
         
         if let url = pollURL {
             shareMessage = DeepLinkManager.shared.createAvailabilityPollMessage(
                 teamName: teamName,
                 sessionDate: session.date,
+                location: session.location,
                 playerCount: players.count,
                 pollURL: url
             )
+        }
+    }
+    
+    private func shareIndividualLink(for player: Player) {
+        guard let url = DeepLinkManager.shared.createIndividualPollURL(
+            teamName: teamName,
+            sessionId: session.id,
+            sessionDate: session.date,
+            player: player,
+            coachPhone: coachPhone
+        ) else { return }
+        
+        individualShareMessage = DeepLinkManager.shared.createIndividualPollMessage(
+            teamName: teamName,
+            sessionDate: session.date,
+            location: session.location,
+            playerFirstName: player.firstName,
+            pollURL: url
+        )
+        showIndividualShareSheet = true
+    }
+    
+    private func sendIndividualSMS(for player: Player) {
+        guard let url = DeepLinkManager.shared.createIndividualPollURL(
+            teamName: teamName,
+            sessionId: session.id,
+            sessionDate: session.date,
+            player: player,
+            coachPhone: coachPhone
+        ) else { return }
+        
+        individualShareMessage = DeepLinkManager.shared.createIndividualPollMessage(
+            teamName: teamName,
+            sessionDate: session.date,
+            location: session.location,
+            playerFirstName: player.firstName,
+            pollURL: url
+        )
+        individualSMSRecipient = player.phoneNumber ?? ""
+        showIndividualSMS = true
+    }
+    
+    private func startBulkSMS() {
+        smsQueue = playersWithPhone.sorted { $0.lastName.localizedCompare($1.lastName) == .orderedAscending }
+        smsSentCount = 0
+        smsTotalCount = smsQueue.count
+        sendNextQueuedSMS()
+    }
+    
+    private func sendNextQueuedSMS() {
+        guard !smsQueue.isEmpty else { return }
+        
+        let player = smsQueue.removeFirst()
+        
+        guard let url = DeepLinkManager.shared.createIndividualPollURL(
+            teamName: teamName,
+            sessionId: session.id,
+            sessionDate: session.date,
+            player: player,
+            coachPhone: coachPhone
+        ) else {
+            smsSentCount += 1
+            sendNextQueuedSMS()
+            return
+        }
+        
+        individualShareMessage = DeepLinkManager.shared.createIndividualPollMessage(
+            teamName: teamName,
+            sessionDate: session.date,
+            location: session.location,
+            playerFirstName: player.firstName,
+            pollURL: url
+        )
+        individualSMSRecipient = player.phoneNumber ?? ""
+        smsSentCount += 1
+        
+        // Délai pour laisser la sheet précédente se fermer
+        DispatchQueue.main.asyncAfter(deadline: .now() + 0.6) {
+            showIndividualSMS = true
         }
     }
     
@@ -404,6 +647,41 @@ private struct ActivityViewController: UIViewControllerRepresentable {
     }
 
     func updateUIViewController(_ uiViewController: UIActivityViewController, context: Context) {}
+}
+
+// MARK: - MFMessageComposeViewController wrapper
+
+/// Wrapper SwiftUI pour le composeur SMS natif iOS
+private struct SMSComposeViewController: UIViewControllerRepresentable {
+    let recipients: [String]
+    let body: String
+    @Environment(\.dismiss) private var dismiss
+    
+    func makeCoordinator() -> Coordinator {
+        Coordinator(dismiss: dismiss)
+    }
+    
+    func makeUIViewController(context: Context) -> MFMessageComposeViewController {
+        let controller = MFMessageComposeViewController()
+        controller.recipients = recipients
+        controller.body = body
+        controller.messageComposeDelegate = context.coordinator
+        return controller
+    }
+    
+    func updateUIViewController(_ uiViewController: MFMessageComposeViewController, context: Context) {}
+    
+    class Coordinator: NSObject, MFMessageComposeViewControllerDelegate {
+        let dismiss: DismissAction
+        
+        init(dismiss: DismissAction) {
+            self.dismiss = dismiss
+        }
+        
+        func messageComposeViewController(_ controller: MFMessageComposeViewController, didFinishWith result: MessageComposeResult) {
+            dismiss()
+        }
+    }
 }
 
 // MARK: - Alerte de réception de réponse

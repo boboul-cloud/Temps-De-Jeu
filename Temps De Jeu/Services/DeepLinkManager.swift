@@ -558,7 +558,8 @@ class DeepLinkManager: ObservableObject {
         teamName: String,
         sessionId: UUID,
         sessionDate: Date,
-        players: [Player]
+        players: [Player],
+        coachPhone: String = ""
     ) -> URL? {
         let formatter = ISO8601DateFormatter()
         formatter.formatOptions = [.withFullDate]
@@ -574,12 +575,17 @@ class DeepLinkManager: ObservableObject {
         // Session ID aussi raccourci
         let shortSessionId = String(sessionId.uuidString.prefix(8))
         
-        let pollData: [String: Any] = [
+        var pollData: [String: Any] = [
             "t": teamName,
             "d": dateStr,
             "s": shortSessionId,
             "p": playerList
         ]
+        
+        let trimmedPhone = coachPhone.trimmingCharacters(in: .whitespaces)
+        if !trimmedPhone.isEmpty {
+            pollData["c"] = trimmedPhone
+        }
         
         guard let jsonData = try? JSONSerialization.data(withJSONObject: pollData, options: [.withoutEscapingSlashes]) else {
             print("[DeepLink] Availability: Impossible de sérialiser le JSON")
@@ -616,10 +622,58 @@ class DeepLinkManager: ObservableObject {
         return url
     }
     
+    /// Crée un lien individuel pour un seul joueur (empêche l'usurpation d'identité)
+    func createIndividualPollURL(
+        teamName: String,
+        sessionId: UUID,
+        sessionDate: Date,
+        player: Player,
+        coachPhone: String = ""
+    ) -> URL? {
+        let formatter = ISO8601DateFormatter()
+        formatter.formatOptions = [.withFullDate]
+        let dateStr = formatter.string(from: sessionDate)
+        
+        let shortId = String(player.id.uuidString.prefix(8))
+        let shortSessionId = String(sessionId.uuidString.prefix(8))
+        
+        var pollData: [String: Any] = [
+            "t": teamName,
+            "d": dateStr,
+            "s": shortSessionId,
+            "p": [[shortId, player.fullName]]
+        ]
+        
+        let trimmedPhone = coachPhone.trimmingCharacters(in: .whitespaces)
+        if !trimmedPhone.isEmpty {
+            pollData["c"] = trimmedPhone
+        }
+        
+        guard let jsonData = try? JSONSerialization.data(withJSONObject: pollData, options: [.withoutEscapingSlashes]) else {
+            return nil
+        }
+        
+        guard let compressedData = try? (jsonData as NSData).compressed(using: .zlib) as Data else {
+            return nil
+        }
+        
+        var base64 = compressedData.base64EncodedString()
+        base64 = base64
+            .replacingOccurrences(of: "+", with: "-")
+            .replacingOccurrences(of: "/", with: "_")
+            .replacingOccurrences(of: "=", with: "")
+        
+        var components = URLComponents(string: "\(Self.webBaseURL)/dispo.html")
+        components?.queryItems = [URLQueryItem(name: "z", value: base64)]
+        
+        return components?.url
+    }
+    
     /// Crée le message de partage pour le sondage de disponibilité
     func createAvailabilityPollMessage(
         teamName: String,
         sessionDate: Date,
+        location: String = "",
         playerCount: Int,
         pollURL: URL
     ) -> String {
@@ -628,13 +682,53 @@ class DeepLinkManager: ObservableObject {
         formatter.locale = Locale(identifier: "fr_FR")
         let dateStr = formatter.string(from: sessionDate)
         
-        return """
+        var message = """
         ⚽ Sondage disponibilité — \(teamName)
         📅 \(dateStr)
-        👥 \(playerCount) joueurs convoqués
+        """
+        
+        if !location.isEmpty {
+            message += "\n📍 \(location)"
+        }
+        
+        message += """
+        \n👥 \(playerCount) joueurs convoqués
         
         Touche le lien pour répondre :
         \(pollURL.absoluteString)
         """
+        
+        return message
+    }
+    
+    /// Crée le message individuel pour un joueur spécifique
+    func createIndividualPollMessage(
+        teamName: String,
+        sessionDate: Date,
+        location: String = "",
+        playerFirstName: String,
+        pollURL: URL
+    ) -> String {
+        let formatter = DateFormatter()
+        formatter.dateStyle = .long
+        formatter.locale = Locale(identifier: "fr_FR")
+        let dateStr = formatter.string(from: sessionDate)
+        
+        var message = """
+        ⚽ Bonjour \(playerFirstName) !
+        📅 Entraînement \(teamName) — \(dateStr)
+        """
+        
+        if !location.isEmpty {
+            message += "\n📍 \(location)"
+        }
+        
+        message += """
+        
+        \nTouche le lien pour indiquer ta disponibilité :
+        \(pollURL.absoluteString)
+        """
+        
+        return message
     }
 }

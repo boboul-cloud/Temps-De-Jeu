@@ -158,6 +158,10 @@ struct Match: Identifiable, Codable {
     var awayPossessionTime: TimeInterval
     var homePasses: Int
     var awayPasses: Int
+    var refereeCentre: String
+    var refereeAssistant1: String
+    var refereeAssistant2: String
+    var selectedFormation: String?  // Formation choisie (ex: "4-4-2")
 
     init(
         id: UUID = UUID(),
@@ -184,7 +188,11 @@ struct Match: Identifiable, Codable {
         homePossessionTime: TimeInterval = 0,
         awayPossessionTime: TimeInterval = 0,
         homePasses: Int = 0,
-        awayPasses: Int = 0
+        awayPasses: Int = 0,
+        refereeCentre: String = "",
+        refereeAssistant1: String = "",
+        refereeAssistant2: String = "",
+        selectedFormation: String? = nil
     ) {
         self.id = id
         self.homeTeam = homeTeam
@@ -211,6 +219,10 @@ struct Match: Identifiable, Codable {
         self.awayPossessionTime = awayPossessionTime
         self.homePasses = homePasses
         self.awayPasses = awayPasses
+        self.refereeCentre = refereeCentre
+        self.refereeAssistant1 = refereeAssistant1
+        self.refereeAssistant2 = refereeAssistant2
+        self.selectedFormation = selectedFormation
     }
 
     // Backward compatibility: old saved matches don't have matchRoster
@@ -241,6 +253,10 @@ struct Match: Identifiable, Codable {
         awayPossessionTime = try container.decodeIfPresent(TimeInterval.self, forKey: .awayPossessionTime) ?? 0
         homePasses = try container.decodeIfPresent(Int.self, forKey: .homePasses) ?? 0
         awayPasses = try container.decodeIfPresent(Int.self, forKey: .awayPasses) ?? 0
+        refereeCentre = try container.decodeIfPresent(String.self, forKey: .refereeCentre) ?? ""
+        refereeAssistant1 = try container.decodeIfPresent(String.self, forKey: .refereeAssistant1) ?? ""
+        refereeAssistant2 = try container.decodeIfPresent(String.self, forKey: .refereeAssistant2) ?? ""
+        selectedFormation = try container.decodeIfPresent(String.self, forKey: .selectedFormation)
     }
 
     // MARK: - Mon équipe

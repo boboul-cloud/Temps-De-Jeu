@@ -878,6 +878,22 @@ class MatchViewModel: ObservableObject {
         saveDraft()
     }
 
+    /// Sauvegarder les positions de la formation sur le terrain
+    func saveFormationPositions(_ positions: [UUID: CGPoint], formation: String?) {
+        for i in matchRoster.indices {
+            if let pos = positions[matchRoster[i].id] {
+                matchRoster[i].formationX = pos.x
+                matchRoster[i].formationY = pos.y
+            } else {
+                matchRoster[i].formationX = nil
+                matchRoster[i].formationY = nil
+            }
+        }
+        match.matchRoster = matchRoster
+        match.selectedFormation = formation
+        saveDraft()
+    }
+
     /// Supprimer la composition (réinitialiser le roster)
     func clearMatchRoster() {
         matchRoster = []

@@ -143,7 +143,8 @@ struct MatchRosterView: View {
                                     isSelected: selectedPlayers[player.id] != nil,
                                     onToggle: { toggleSelection(player) },
                                     onStatusChange: { status in changeStatus(player, to: status) },
-                                    onNumberChange: { number in changeNumber(player, to: number) }
+                                    onNumberChange: { number in changeNumber(player, to: number) },
+                                    onCaptainToggle: { setCaptain(player) }
                                 )
                             }
                         } header: {
@@ -365,6 +366,22 @@ struct MatchRosterView: View {
         }
     }
 
+    private func setCaptain(_ player: Player) {
+        let wasCaptain = selectedPlayers[player.id]?.isCaptain ?? false
+        // Retirer le capitanat de tous les joueurs
+        for (key, var mp) in selectedPlayers {
+            if mp.isCaptain {
+                mp.isCaptain = false
+                selectedPlayers[key] = mp
+            }
+        }
+        // Assigner seulement s'il n'était pas déjà capitaine
+        if !wasCaptain, var mp = selectedPlayers[player.id] {
+            mp.isCaptain = true
+            selectedPlayers[player.id] = mp
+        }
+    }
+
     private func selectAll() {
         var nextNumber = 1
         // D'abord garder les existants
@@ -416,6 +433,7 @@ struct MatchPlayerSelectionRow: View {
     let onToggle: () -> Void
     let onStatusChange: (PlayerStatus) -> Void
     let onNumberChange: (Int) -> Void
+    let onCaptainToggle: () -> Void
 
     @State private var editingNumber = false
     @State private var numberText = ""
@@ -485,14 +503,27 @@ struct MatchPlayerSelectionRow: View {
                         } label: {
                             Label("Remplaçant", systemImage: mp.status == .remplacant ? "checkmark" : "")
                         }
+                        Divider()
+                        Button {
+                            onCaptainToggle()
+                        } label: {
+                            Label(mp.isCaptain ? "Retirer capitaine" : "Désigner capitaine", systemImage: mp.isCaptain ? "star.slash" : "star.fill")
+                        }
                     } label: {
-                        Text(mp.status.rawValue)
-                            .font(.caption2.bold())
-                            .padding(.horizontal, 8)
-                            .padding(.vertical, 4)
-                            .background(mp.status == .titulaire ? Color.green.opacity(0.15) : Color.orange.opacity(0.15))
-                            .foregroundStyle(mp.status == .titulaire ? .green : .orange)
-                            .cornerRadius(8)
+                        HStack(spacing: 4) {
+                            if mp.isCaptain {
+                                Image(systemName: "star.fill")
+                                    .font(.system(size: 10))
+                                    .foregroundStyle(.yellow)
+                            }
+                            Text(mp.status.rawValue)
+                                .font(.caption2.bold())
+                        }
+                        .padding(.horizontal, 8)
+                        .padding(.vertical, 4)
+                        .background(mp.status == .titulaire ? Color.green.opacity(0.15) : Color.orange.opacity(0.15))
+                        .foregroundStyle(mp.status == .titulaire ? .green : .orange)
+                        .cornerRadius(8)
                     }
                 }
             }

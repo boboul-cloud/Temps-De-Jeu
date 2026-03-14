@@ -134,23 +134,46 @@ struct MatchPlayer: Identifiable, Codable, Hashable {
     var lastName: String
     var position: PlayerPosition
     var status: PlayerStatus
+    var isCaptain: Bool
+    var formationX: Double?  // Position X normalisée (0-1) sur le terrain
+    var formationY: Double?  // Position Y normalisée (0-1) sur le terrain
 
-    init(from player: Player, status: PlayerStatus = .remplacant, shirtNumber: Int = 0) {
+    init(from player: Player, status: PlayerStatus = .remplacant, shirtNumber: Int = 0, isCaptain: Bool = false) {
         self.id = player.id
         self.shirtNumber = shirtNumber
         self.firstName = player.firstName
         self.lastName = player.lastName
         self.position = player.position
         self.status = status
+        self.isCaptain = isCaptain
+        self.formationX = nil
+        self.formationY = nil
     }
 
-    init(id: UUID = UUID(), shirtNumber: Int = 0, firstName: String = "", lastName: String = "", position: PlayerPosition = .milieu, status: PlayerStatus = .remplacant) {
+    init(id: UUID = UUID(), shirtNumber: Int = 0, firstName: String = "", lastName: String = "", position: PlayerPosition = .milieu, status: PlayerStatus = .remplacant, isCaptain: Bool = false, formationX: Double? = nil, formationY: Double? = nil) {
         self.id = id
         self.shirtNumber = shirtNumber
         self.firstName = firstName
         self.lastName = lastName
         self.position = position
         self.status = status
+        self.isCaptain = isCaptain
+        self.formationX = formationX
+        self.formationY = formationY
+    }
+
+    // Décodage rétro-compatible (isCaptain, formationX/Y absents dans les anciennes données)
+    init(from decoder: Decoder) throws {
+        let container = try decoder.container(keyedBy: CodingKeys.self)
+        id = try container.decode(UUID.self, forKey: .id)
+        shirtNumber = try container.decode(Int.self, forKey: .shirtNumber)
+        firstName = try container.decode(String.self, forKey: .firstName)
+        lastName = try container.decode(String.self, forKey: .lastName)
+        position = try container.decode(PlayerPosition.self, forKey: .position)
+        status = try container.decode(PlayerStatus.self, forKey: .status)
+        isCaptain = try container.decodeIfPresent(Bool.self, forKey: .isCaptain) ?? false
+        formationX = try container.decodeIfPresent(Double.self, forKey: .formationX)
+        formationY = try container.decodeIfPresent(Double.self, forKey: .formationY)
     }
 
     var displayName: String {

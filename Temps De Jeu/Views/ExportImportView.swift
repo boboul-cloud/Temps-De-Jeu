@@ -136,6 +136,25 @@ struct ExportImportView: View {
                     }
                 }
                 .disabled(players.isEmpty)
+
+                // Export Coquilles
+                Button {
+                    exportForCoquilles()
+                } label: {
+                    Label {
+                        VStack(alignment: .leading, spacing: 2) {
+                            Text("Exporter pour Coquilles")
+                                .font(.subheadline)
+                            Text("Liste des joueurs avec catégorie pour l'app Coquilles")
+                                .font(.caption)
+                                .foregroundStyle(.secondary)
+                        }
+                    } icon: {
+                        Image(systemName: "shell.fill")
+                            .foregroundStyle(.brown)
+                    }
+                }
+                .disabled(players.isEmpty)
             } header: {
                 Text("Joueurs (\(players.count))")
             }
@@ -452,6 +471,32 @@ struct ExportImportView: View {
         let tempURL = FileManager.default.temporaryDirectory.appendingPathComponent(fileName)
         do {
             try data.write(to: tempURL)
+            shareItemsWrapper = ExportShareItemsWrapper(items: [tempURL])
+        } catch {
+            showAlertWith(title: "Erreur", message: error.localizedDescription)
+        }
+    }
+
+    private func exportForCoquilles() {
+        let freshPlayers = TeamManager.shared.loadPlayers()
+        let profiles = ProfileManager.shared.profiles
+        var lines: [String] = []
+        for player in freshPlayers {
+            let nom = "\(player.firstName) \(player.lastName)".trimmingCharacters(in: .whitespaces)
+            guard !nom.isEmpty else { continue }
+            let tel = player.phoneNumber ?? ""
+            let catName = profiles.first(where: { $0.id == player.homeCategoryId })?.name ?? ""
+            lines.append("\(nom);\(tel);\(catName)")
+        }
+        guard !lines.isEmpty else {
+            showAlertWith(title: "Aucun joueur", message: "Aucun joueur à exporter.")
+            return
+        }
+        let contenu = lines.joined(separator: "\n")
+        let fileName = "joueurs_coquilles_\(formattedDateForFile()).txt"
+        let tempURL = FileManager.default.temporaryDirectory.appendingPathComponent(fileName)
+        do {
+            try contenu.write(to: tempURL, atomically: true, encoding: .utf8)
             shareItemsWrapper = ExportShareItemsWrapper(items: [tempURL])
         } catch {
             showAlertWith(title: "Erreur", message: error.localizedDescription)

@@ -24,6 +24,7 @@ struct MatchSetupView: View {
     @State private var showPaywall = false
     @State private var showRosterSelection = false
     @State private var showDeleteRosterConfirmation = false
+    @State private var showFormation = false
     @State private var allPlayers: [Player] = []
 
     // Export / Import roster
@@ -145,6 +146,17 @@ struct MatchSetupView: View {
                             }
                         }
                         .padding(.vertical, 4)
+
+                        // Arbitres
+                        VStack(spacing: 8) {
+                            Text("Arbitres")
+                                .font(.subheadline)
+                                .foregroundStyle(.secondary)
+                            CustomTextField(placeholder: "Arbitre central", text: $viewModel.match.refereeCentre, icon: "person.fill")
+                            CustomTextField(placeholder: "Arbitre assistant 1", text: $viewModel.match.refereeAssistant1, icon: "flag.fill")
+                            CustomTextField(placeholder: "Arbitre assistant 2", text: $viewModel.match.refereeAssistant2, icon: "flag.fill")
+                        }
+                        .padding(.vertical, 4)
                     }
                     .padding()
                     .background(Color(.systemGray6))
@@ -207,12 +219,19 @@ struct MatchSetupView: View {
                                     ScrollView(.horizontal, showsIndicators: false) {
                                         HStack(spacing: 6) {
                                             ForEach(tit.sorted(by: { $0.shirtNumber < $1.shirtNumber })) { mp in
-                                                Text("#\(mp.shirtNumber) \(mp.displayName)")
-                                                    .font(.caption2)
-                                                    .padding(.horizontal, 8)
-                                                    .padding(.vertical, 4)
-                                                    .background(Color.green.opacity(0.12))
-                                                    .cornerRadius(6)
+                                                HStack(spacing: 2) {
+                                                    if mp.isCaptain {
+                                                        Image(systemName: "star.fill")
+                                                            .font(.system(size: 8))
+                                                            .foregroundStyle(.yellow)
+                                                    }
+                                                    Text("#\(mp.shirtNumber) \(mp.displayName)")
+                                                }
+                                                .font(.caption2)
+                                                .padding(.horizontal, 8)
+                                                .padding(.vertical, 4)
+                                                .background(Color.green.opacity(0.12))
+                                                .cornerRadius(6)
                                             }
                                         }
                                     }
@@ -223,12 +242,19 @@ struct MatchSetupView: View {
                                     ScrollView(.horizontal, showsIndicators: false) {
                                         HStack(spacing: 6) {
                                             ForEach(remp.sorted(by: { $0.shirtNumber < $1.shirtNumber })) { mp in
-                                                Text("#\(mp.shirtNumber) \(mp.displayName)")
-                                                    .font(.caption2)
-                                                    .padding(.horizontal, 8)
-                                                    .padding(.vertical, 4)
-                                                    .background(Color.orange.opacity(0.12))
-                                                    .cornerRadius(6)
+                                                HStack(spacing: 2) {
+                                                    if mp.isCaptain {
+                                                        Image(systemName: "star.fill")
+                                                            .font(.system(size: 8))
+                                                            .foregroundStyle(.yellow)
+                                                    }
+                                                    Text("#\(mp.shirtNumber) \(mp.displayName)")
+                                                }
+                                                .font(.caption2)
+                                                .padding(.horizontal, 8)
+                                                .padding(.vertical, 4)
+                                                .background(Color.orange.opacity(0.12))
+                                                .cornerRadius(6)
                                             }
                                         }
                                     }
@@ -282,6 +308,18 @@ struct MatchSetupView: View {
                                                 .font(.caption.bold())
                                         }
                                         .foregroundStyle(.blue)
+                                    }
+
+                                    Button {
+                                        showFormation = true
+                                    } label: {
+                                        HStack(spacing: 4) {
+                                            Image(systemName: "sportscourt.fill")
+                                                .font(.caption2)
+                                            Text("Placement")
+                                                .font(.caption.bold())
+                                        }
+                                        .foregroundStyle(.green)
                                     }
 
                                     Button {
@@ -488,6 +526,17 @@ struct MatchSetupView: View {
                     saveDraftState()
                 }
             }
+            .sheet(isPresented: $showFormation) {
+                FormationView(
+                    roster: viewModel.matchRoster,
+                    jerseyColor: viewModel.match.isMyTeamHome ? viewModel.match.homeJerseyColor : viewModel.match.awayJerseyColor,
+                    opponentJerseyColor: viewModel.match.isMyTeamHome ? viewModel.match.awayJerseyColor : viewModel.match.homeJerseyColor,
+                    savedFormation: viewModel.match.selectedFormation
+                ) { positions, formationName in
+                    viewModel.saveFormationPositions(positions, formation: formationName)
+                    saveDraftState()
+                }
+            }
             .sheet(item: $shareItemsWrapper) { wrapper in
                 ActivityView(activityItems: wrapper.items)
             }
@@ -578,6 +627,9 @@ struct MatchSetupView: View {
             .onChange(of: viewModel.match.date) { saveDraftState() }
             .onChange(of: viewModel.match.homeJerseyColor) { saveDraftState() }
             .onChange(of: viewModel.match.awayJerseyColor) { saveDraftState() }
+            .onChange(of: viewModel.match.refereeCentre) { saveDraftState() }
+            .onChange(of: viewModel.match.refereeAssistant1) { saveDraftState() }
+            .onChange(of: viewModel.match.refereeAssistant2) { saveDraftState() }
         }
     }
 

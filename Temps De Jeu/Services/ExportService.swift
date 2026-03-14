@@ -418,9 +418,10 @@ class ExportService {
                     let numStr = "#\(player.shirtNumber)"
                     numStr.draw(at: CGPoint(x: margin, y: currentY), withAttributes: numberAttrs)
                     
-                    // Nom
+                    // Nom (avec indicateur capitaine)
                     let name = player.displayName.isEmpty ? "Joueur" : player.displayName
-                    name.draw(at: CGPoint(x: margin + 45, y: currentY), withAttributes: playerAttrs)
+                    let captainSuffix = player.isCaptain ? " \u{24B8}" : ""
+                    (name + captainSuffix).draw(at: CGPoint(x: margin + 45, y: currentY), withAttributes: playerAttrs)
                     
                     // Position
                     let pos = player.position.shortName
@@ -454,9 +455,10 @@ class ExportService {
                     let numStr = "#\(player.shirtNumber)"
                     numStr.draw(at: CGPoint(x: margin, y: currentY), withAttributes: subNumberAttrs)
                     
-                    // Nom
+                    // Nom (avec indicateur capitaine)
                     let name = player.displayName.isEmpty ? "Joueur" : player.displayName
-                    name.draw(at: CGPoint(x: margin + 45, y: currentY), withAttributes: playerAttrs)
+                    let captainSuffix = player.isCaptain ? " \u{24B8}" : ""
+                    (name + captainSuffix).draw(at: CGPoint(x: margin + 45, y: currentY), withAttributes: playerAttrs)
                     
                     // Position
                     let pos = player.position.shortName
@@ -734,6 +736,20 @@ class ExportService {
             }
             sub.draw(at: CGPoint(x: margin, y: currentY), withAttributes: subtitleAttrs)
             currentY += 25
+
+            // Arbitres (si renseignés)
+            let refereeLines = [
+                (!match.refereeCentre.isEmpty, "Arbitre central : \(match.refereeCentre)"),
+                (!match.refereeAssistant1.isEmpty, "Assistant 1 : \(match.refereeAssistant1)"),
+                (!match.refereeAssistant2.isEmpty, "Assistant 2 : \(match.refereeAssistant2)")
+            ].filter { $0.0 }
+            if !refereeLines.isEmpty {
+                for (_, line) in refereeLines {
+                    line.draw(at: CGPoint(x: margin, y: currentY), withAttributes: smallAttrs)
+                    currentY += 16
+                }
+                currentY += 5
+            }
 
             drawLine(context: context.cgContext, y: currentY, margin: margin, width: contentWidth)
             currentY += 20
@@ -1586,6 +1602,16 @@ class ExportService {
             let dateStr = dateFormatter.string(from: session.date)
             dateStr.draw(at: CGPoint(x: margin, y: currentY), withAttributes: subtitleAttrs)
             currentY += 30
+
+            // Lieu si présent
+            if !session.location.isEmpty {
+                let locationAttrs: [NSAttributedString.Key: Any] = [
+                    .font: UIFont.systemFont(ofSize: 14),
+                    .foregroundColor: UIColor.darkGray
+                ]
+                "📍 \(session.location)".draw(at: CGPoint(x: margin, y: currentY), withAttributes: locationAttrs)
+                currentY += 25
+            }
 
             // Notes si présentes
             if !session.notes.isEmpty {

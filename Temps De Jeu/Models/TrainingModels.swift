@@ -62,20 +62,22 @@ struct TrainingSession: Identifiable, Codable, Equatable {
     let id: UUID
     var date: Date
     var notes: String
+    var location: String
     var attendances: [PlayerAttendance]
     var availabilityResponses: [AvailabilityResponse]
     
-    init(id: UUID = UUID(), date: Date = Date(), notes: String = "", attendances: [PlayerAttendance] = [], availabilityResponses: [AvailabilityResponse] = []) {
+    init(id: UUID = UUID(), date: Date = Date(), notes: String = "", location: String = "", attendances: [PlayerAttendance] = [], availabilityResponses: [AvailabilityResponse] = []) {
         self.id = id
         self.date = date
         self.notes = notes
+        self.location = location
         self.attendances = attendances
         self.availabilityResponses = availabilityResponses
     }
     
-    // Backward compat: availabilityResponses optionnel
+    // Backward compat: availabilityResponses et location optionnels
     enum CodingKeys: String, CodingKey {
-        case id, date, notes, attendances, availabilityResponses
+        case id, date, notes, location, attendances, availabilityResponses
     }
     
     init(from decoder: Decoder) throws {
@@ -83,6 +85,7 @@ struct TrainingSession: Identifiable, Codable, Equatable {
         id = try container.decode(UUID.self, forKey: .id)
         date = try container.decode(Date.self, forKey: .date)
         notes = try container.decode(String.self, forKey: .notes)
+        location = try container.decodeIfPresent(String.self, forKey: .location) ?? ""
         attendances = try container.decode([PlayerAttendance].self, forKey: .attendances)
         availabilityResponses = try container.decodeIfPresent([AvailabilityResponse].self, forKey: .availabilityResponses) ?? []
     }

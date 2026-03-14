@@ -1253,6 +1253,11 @@ struct CardSheet: View {
                                 selectedPlayerId = player.id
                             } label: {
                                 HStack(spacing: 4) {
+                                    if player.isCaptain {
+                                        Image(systemName: "star.fill")
+                                            .font(.system(size: 8))
+                                            .foregroundStyle(.yellow)
+                                    }
                                     Text("#\(player.shirtNumber) \(player.displayName)")
                                         .font(.caption)
                                     // Indicateur carton jaune si le joueur en a reçu un dans ce match
