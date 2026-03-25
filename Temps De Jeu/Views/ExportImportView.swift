@@ -27,7 +27,7 @@ struct ExportImportView: View {
 
     // Import — un seul fileImporter pour éviter le bug SwiftUI double-fileImporter
     enum ActiveImportType {
-        case none, players, matches, backup
+        case none, players, matches, backup, multigroop
     }
     @State private var activeImportType: ActiveImportType = .none
     @State private var showFilePicker = false
@@ -47,6 +47,11 @@ struct ExportImportView: View {
     // Import sauvegarde complète
     @State private var showBackupImportConfirmation = false
     @State private var pendingBackupResult: ExportService.FullBackupImportResult? = nil
+
+    // Import Multigroop
+    @State private var showMultigroopImportConfirmation = false
+    @State private var multigroopImportedPlayers: [Player] = []
+    @State private var multigroopImportedCategoryName: String? = nil
 
     // Alerts
     @State private var alertTitle = ""
@@ -137,20 +142,20 @@ struct ExportImportView: View {
                 }
                 .disabled(players.isEmpty)
 
-                // Export Coquilles
+                // Export Multigroop
                 Button {
-                    exportForCoquilles()
+                    exportForMultigroop()
                 } label: {
                     Label {
                         VStack(alignment: .leading, spacing: 2) {
-                            Text("Exporter pour Coquilles")
+                            Text("Exporter pour Multigroop")
                                 .font(.subheadline)
-                            Text("Liste des joueurs avec catégorie pour l'app Coquilles")
+                            Text("Liste des joueurs avec catégorie pour l'app Multigroop")
                                 .font(.caption)
                                 .foregroundStyle(.secondary)
                         }
                     } icon: {
-                        Image(systemName: "shell.fill")
+                        Image(systemName: "person.3.fill")
                             .foregroundStyle(.brown)
                     }
                 }
@@ -176,6 +181,23 @@ struct ExportImportView: View {
                     } icon: {
                         Image(systemName: "square.and.arrow.down")
                             .foregroundStyle(.green)
+                    }
+                }
+                Button {
+                    activeImportType = .multigroop
+                    showFilePicker = true
+                } label: {
+                    Label {
+                        VStack(alignment: .leading, spacing: 2) {
+                            Text("Importer depuis Multigroop")
+                                .font(.subheadline)
+                            Text("Fichier texte exporté par l'app Multigroop")
+                                .font(.caption)
+                                .foregroundStyle(.secondary)
+                        }
+                    } icon: {
+                        Image(systemName: "person.3.fill")
+                            .foregroundStyle(.brown)
                     }
                 }
             } header: {
@@ -361,7 +383,7 @@ struct ExportImportView: View {
         }
         .fileImporter(
             isPresented: $showFilePicker,
-            allowedContentTypes: activeImportType == .matches ? [.json, .tdjMatches] : (activeImportType == .backup ? [.json, .tdjBackup] : [.json]),
+            allowedContentTypes: activeImportType == .multigroop ? [.plainText] : (activeImportType == .matches ? [.json, .tdjMatches] : (activeImportType == .backup ? [.json, .tdjBackup] : [.json])),
             allowsMultipleSelection: false
         ) { result in
             switch activeImportType {
@@ -371,6 +393,8 @@ struct ExportImportView: View {
                 handleMatchImportResult(result)
             case .backup:
                 handleBackupImportResult(result)
+            case .multigroop:
+                handleMultigroopImportResult(result)
             case .none:
                 break
             }
@@ -451,6 +475,27 @@ struct ExportImportView: View {
                 Text("")
             }
         }
+        .confirmationDialog(
+            "Importer \(multigroopImportedPlayers.count) joueurs depuis Multigroop",
+            isPresented: $showMultigroopImportConfirmation,
+            titleVisibility: .visible
+        ) {
+            Button("Fusionner (ajouter les nouveaux)") {
+                performMultigroopImport(mode: .merge)
+            }
+            Button("Remplacer tout l'effectif") {
+                performMultigroopImport(mode: .replace)
+            }
+            Button("Annuler", role: .cancel) {
+                multigroopImportedPlayers = []
+            }
+        } message: {
+            if let catName = multigroopImportedCategoryName, !catName.isEmpty {
+                Text("Les joueurs seront importés dans la catégorie « \(catName) ».")
+            } else {
+                Text("Les joueurs seront importés dans la catégorie active.")
+            }
+        }
     }
 
     // MARK: - Export Actions
@@ -477,7 +522,7 @@ struct ExportImportView: View {
         }
     }
 
-    private func exportForCoquilles() {
+    private func exportForMultigroop() {
         let freshPlayers = TeamManager.shared.loadPlayers()
         let profiles = ProfileManager.shared.profiles
         var lines: [String] = []
@@ -493,7 +538,7 @@ struct ExportImportView: View {
             return
         }
         let contenu = lines.joined(separator: "\n")
-        let fileName = "joueurs_coquilles_\(formattedDateForFile()).txt"
+        let fileName = "joueurs_multigroop_\(formattedDateForFile()).txt"
         let tempURL = FileManager.default.temporaryDirectory.appendingPathComponent(fileName)
         do {
             try contenu.write(to: tempURL, atomically: true, encoding: .utf8)
@@ -797,6 +842,188 @@ struct ExportImportView: View {
         importedPlayers = []
         importedTeamCode = nil
         importedTeamName = nil
+    }
+
+    // MARK: - Import Multigroop
+
+    /// Détecte si une chaîne ressemble à un numéro de téléphone
+    private func ressembleATelephone(_ s: String) -> Bool {
+        let chiffres = s.filter { $0.isNumber }
+        return chiffres.count >= 4
+    }
+
+    private func handleMultigroopImportResult(_ result: Result<[URL], Error>) {
+        switch result {
+        case .success(let urls):
+            guard let url = urls.first else { return }
+
+            guard url.startAccessingSecurityScopedResource() else {
+                showAlertWith(title: "Erreur", message: "Impossible d'accéder au fichier.")
+                return
+            }
+            defer { url.stopAccessingSecurityScopedResource() }
+
+            do {
+                let contenu = try String(contentsOf: url, encoding: .utf8)
+                let lignes = contenu.components(separatedBy: .newlines).filter { !$0.trimmingCharacters(in: .whitespaces).isEmpty }
+
+                var parsed: [Player] = []
+                for ligne in lignes {
+                    let sep: Character = ligne.contains(";") ? ";" : ","
+                    let champs = ligne.split(separator: sep, omittingEmptySubsequences: false).map {
+                        $0.trimmingCharacters(in: .whitespaces)
+                    }
+                    guard champs.count >= 2 else { continue }
+
+                    let firstName: String
+                    let lastName: String
+                    let phone: String
+
+                    if champs.count >= 3 && !ressembleATelephone(champs[1]) {
+                        // Format Prénom;Nom;Téléphone
+                        firstName = champs[0]
+                        lastName = champs[1]
+                        phone = champs[2]
+                    } else {
+                        // Format Nom;Téléphone;Catégorie (Multigroop natif)
+                        let composants = champs[0].split(separator: " ", maxSplits: 1).map(String.init)
+                        firstName = composants.first ?? champs[0]
+                        lastName = composants.count > 1 ? composants[1] : ""
+                        phone = champs[1]
+                    }
+
+                    let player = Player(
+                        firstName: firstName,
+                        lastName: lastName,
+                        phoneNumber: phone.isEmpty ? nil : phone
+                    )
+                    parsed.append(player)
+                }
+
+                guard !parsed.isEmpty else {
+                    showAlertWith(title: "Aucun joueur", message: "Aucun joueur trouvé dans le fichier.")
+                    return
+                }
+                multigroopImportedPlayers = parsed
+                showMultigroopImportConfirmation = true
+
+            } catch {
+                showAlertWith(title: "Erreur", message: "Impossible de lire le fichier : \(error.localizedDescription)")
+            }
+
+        case .failure(let error):
+            showAlertWith(title: "Erreur", message: error.localizedDescription)
+        }
+    }
+
+    private func performMultigroopImport(mode: ImportMode) {
+        // Résoudre le profil cible par nom de catégorie détecté, sinon profil actif
+        var targetProfile: TeamProfile
+        if let catName = multigroopImportedCategoryName, !catName.isEmpty {
+            if let matched = ProfileManager.shared.profiles.first(where: { $0.name.localizedCaseInsensitiveCompare(catName) == .orderedSame }) {
+                targetProfile = matched
+                if matched.id != ProfileManager.shared.activeProfileId {
+                    ProfileManager.shared.switchToProfile(matched.id)
+                    players = TeamManager.shared.loadPlayers()
+                }
+            } else {
+                // Créer un nouveau profil
+                let newProfile = ProfileManager.shared.createProfile(name: catName, teamCode: "")
+                targetProfile = newProfile
+                ProfileManager.shared.switchToProfile(newProfile.id)
+                players = TeamManager.shared.loadPlayers()
+            }
+        } else {
+            guard let active = ProfileManager.shared.activeProfile else {
+                showAlertWith(title: "Erreur", message: "Aucune catégorie active.")
+                return
+            }
+            targetProfile = active
+        }
+
+        let normalize: (Player) -> String = { p in
+            let first = p.firstName.trimmingCharacters(in: .whitespaces).lowercased()
+            let last = p.lastName.trimmingCharacters(in: .whitespaces).lowercased()
+            return "\(first)_\(last)"
+        }
+
+        var allGlobal = TeamManager.shared.loadAllPlayers()
+
+        switch mode {
+        case .replace:
+            var newPlayers: [Player] = []
+            for imported in multigroopImportedPlayers {
+                let name = normalize(imported)
+                if let existingLocal = players.first(where: { normalize($0) == name }) {
+                    // Mettre à jour le téléphone si fourni
+                    if let idx = allGlobal.firstIndex(where: { $0.id == existingLocal.id }) {
+                        if let phone = imported.phoneNumber, !phone.isEmpty {
+                            allGlobal[idx].phoneNumber = phone
+                        }
+                    }
+                    newPlayers.append(existingLocal)
+                } else {
+                    let fresh = Player(
+                        id: UUID(),
+                        firstName: imported.firstName,
+                        lastName: imported.lastName,
+                        homeCategoryId: targetProfile.id,
+                        phoneNumber: imported.phoneNumber
+                    )
+                    allGlobal.append(fresh)
+                    newPlayers.append(fresh)
+                }
+            }
+            TeamManager.shared.saveToGlobalStorage(allGlobal)
+            targetProfile.playerIds = Set(newPlayers.map { $0.id })
+            ProfileManager.shared.updateProfile(targetProfile)
+            players = newPlayers
+
+        case .merge:
+            var localByName: [String: Int] = [:]
+            for (idx, p) in players.enumerated() {
+                localByName[normalize(p)] = idx
+            }
+            var added = 0
+            for imported in multigroopImportedPlayers {
+                let name = normalize(imported)
+                if let idx = localByName[name] {
+                    // Mettre à jour le téléphone si fourni
+                    let localId = players[idx].id
+                    if let phone = imported.phoneNumber, !phone.isEmpty {
+                        players[idx].phoneNumber = phone
+                    }
+                    if let gIdx = allGlobal.firstIndex(where: { $0.id == localId }) {
+                        allGlobal[gIdx] = players[idx]
+                    }
+                } else {
+                    let fresh = Player(
+                        id: UUID(),
+                        firstName: imported.firstName,
+                        lastName: imported.lastName,
+                        homeCategoryId: targetProfile.id,
+                        phoneNumber: imported.phoneNumber
+                    )
+                    allGlobal.append(fresh)
+                    players.append(fresh)
+                    localByName[name] = players.count - 1
+                    added += 1
+                }
+            }
+            TeamManager.shared.saveToGlobalStorage(allGlobal)
+            targetProfile.playerIds = Set(players.map { $0.id })
+            ProfileManager.shared.updateProfile(targetProfile)
+        }
+
+        let profileInfo = " dans \(targetProfile.name)"
+        showAlertWith(
+            title: "Import réussi",
+            message: mode == .replace
+                ? "\(multigroopImportedPlayers.count) joueurs importés depuis Multigroop (remplacement)\(profileInfo)."
+                : "Effectif mis à jour depuis Multigroop\(profileInfo). \(players.count) joueurs au total."
+        )
+        multigroopImportedPlayers = []
+        multigroopImportedCategoryName = nil
     }
 
     // MARK: - Helpers
