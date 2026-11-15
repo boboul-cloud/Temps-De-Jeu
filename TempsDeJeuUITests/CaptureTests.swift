@@ -49,19 +49,24 @@ final class CaptureTests: XCTestCase {
         waitFor("Placement")
         shoot("02-placement-3d")
 
-        // 3. Une tactique animée, étape 4 : flèches de course et de passe.
+        // 3. Une séquence d'entraînement en construction : aperçu de l'étape 2.
+        launch("sequence")
+        waitFor("Conduite n°6")
+        shoot("03-sequence")
+
+        // 4. Une tactique animée, étape 4 : flèches de course et de passe.
         launch("tactique")
         waitFor("Passe dans la course du latéral")
-        shoot("03-tactique")
+        shoot("04-tactique")
 
-        // 4. La bibliothèque d'exercices.
+        // 5. La bibliothèque d'exercices.
         launch("bibliotheque")
         waitFor("Exercices animés en 3D")
-        shoot("04-bibliotheque")
+        shoot("05-bibliotheque")
 
-        // 5. L'effectif de la catégorie.
+        // 6. L'effectif de la catégorie.
         launch("joueurs")
         waitFor("Garnier")
-        shoot("05-joueurs")
+        shoot("06-joueurs")
     }
 }

@@ -34,7 +34,7 @@ Nouveau : placement en 3D et 12 exercices d'entraînement animés pas à pas. Ro
 
 ## 4. Description (4000)
 
-3304/4000 caractères.
+3529/4000 caractères.
 
 ```
 TEMPS DE JEU, l'outil des éducateurs de football amateur. Gérez vos matchs, vos entraînements et vos effectifs depuis votre iPhone ou votre iPad. Conçue par un éducateur, pour les éducateurs.
@@ -42,7 +42,8 @@ TEMPS DE JEU, l'outil des éducateurs de football amateur. Gérez vos matchs, vo
 NOUVEAU : PLACEMENT ET TACTIQUES EN 3D
 • Votre composition sur un terrain en relief : déplacez joueurs et ballon du bout du doigt
 • Quatre caméras : coach, tribune, vue de dessus, immersion
-• Créez une séquence étape par étape à partir de votre placement, puis lancez la démonstration animée
+• Construisez vos séquences au doigt : déplacez le porteur pour une conduite, glissez le ballon sur un partenaire pour une passe, dans le but pour un tir. Les flèches s'affichent avant de valider chaque étape
+• Créez vos séances d'entraînement sans composition de match, cadrées sur la zone de jeu, avec une consigne par étape
 • 12 exercices d'entraînement prêts à l'emploi : rondo, conservation, relance à 3, troisième homme, chevauchement, une-deux, remise du pivot, pressing haut, coulissement, contre-attaque, contre-pressing, corner
 • Flèches de course, de passe, de conduite et de tir, joueurs clés en surbrillance, lecture automatique et vitesse réglable
 • Partagez vos tactiques en fichier .tdjt par Messages, AirDrop ou e-mail
@@ -101,7 +102,7 @@ football,coach,entraîneur,éducateur,remplacements,chrono,stats,cartons,exercic
 
 ## 6. Notes pour l'examinateur
 
-1516/4000 caractères.
+1600/4000 caractères.
 
 ```
 Aucun compte n'est nécessaire : toutes les données restent sur l'appareil.
@@ -110,8 +111,8 @@ ESSAYER L'APP EN DEUX MINUTES
 1. Onglet Joueurs : ajoutez quelques joueurs avec le bouton +.
 2. Onglet Match : renseignez les équipes, touchez « Sélectionner les joueurs pour ce match », cochez-les et désignez les titulaires.
 3. Touchez « Placement » puis le sélecteur 2D/3D en haut à droite : la composition s'affiche sur un terrain 3D ; faites glisser un joueur pour le déplacer.
-4. Toujours dans Placement, touchez l'icône appareil photo pour capturer une étape, déplacez des joueurs, capturez une seconde étape, puis menu (icône pellicule) > « Lire la démonstration ».
-5. Onglet Présences > bouton « Tactiques 3D » en haut à gauche : bibliothèque de 12 exercices animés ; touchez-en un, puis Lecture.
+4. Onglet Présences > bouton « Tactiques 3D » en haut à gauche : bibliothèque de 12 exercices animés ; touchez-en un, puis Lecture.
+5. Dans cette bibliothèque, touchez + : une séance s'ouvre avec 4 joueurs et 2 adversaires. Touchez « Mise en place », faites glisser le n°6 (le ballon suit : conduite), touchez « Étape 2 », glissez le ballon sur le n°10 (passe), touchez « Étape 3 », puis le bouton Lecture.
 6. Onglet Match > « Démarrer le match » : chrono, arrêts de jeu, remplacements.
 
 ACHAT INTÉGRÉ
@@ -124,7 +125,7 @@ Photos : la photo d'un joueur ou d'un membre du staff se choisit avec le sélect
 
 ## Nouveautés de cette version (4000)
 
-904/4000 caractères. **Attention :** AgentDouble ne lit pas ce champ dans la feuille
+1299/4000 caractères. **Attention :** AgentDouble ne lit pas ce champ dans la feuille
 (il est prévu pour les apps neuves, sans « Nouveautés »). Pour une mise à jour, Apple
 l'exige : il faut le coller dans App Store Connect (« Nouveautés de cette version »).
 
@@ -135,7 +136,10 @@ PLACEMENT EN 3D
 Basculez la vue Placement en 3D : votre composition sur un terrain en relief, joueurs et ballon déplaçables du bout du doigt, quatre caméras (coach, tribune, dessus, immersion).
 
 SÉQUENCES PAS À PAS
-Capturez plusieurs étapes de votre placement, puis lancez la démonstration : joueurs et ballon s'animent d'une étape à l'autre, avec les flèches de course et de passe.
+Construisez vos situations au doigt : le ballon se colle au joueur, déplacer le porteur fait une conduite, glisser le ballon sur un partenaire une passe, dans le but un tir, et « En l'air » un centre. Les flèches s'affichent avant de valider chaque étape. Ajoutez une consigne par étape, revenez sur une étape pour la corriger, puis lancez la démonstration animée.
+
+SÉANCES D'ENTRAÎNEMENT
+Créez une séquence sans composition de match depuis la bibliothèque Tactiques 3D, avec un cadrage « zone de jeu » pour les petits espaces. Vos séquences restent modifiables.
 
 BIBLIOTHÈQUE D'EXERCICES 3D
 12 exercices d'entraînement animés avec objectif, consignes et déroulé : rondo, conservation, relance à 3, troisième homme, chevauchement, une-deux, remise du pivot, pressing haut, coulissement, contre-attaque, contre-pressing, corner. Accessible depuis Placement et l'onglet Présences.
@@ -168,9 +172,10 @@ fictives (catégorie U13 « FC Rivière », prénoms et noms inventés). Mêmes 
 
 1. `01-match` — match en direct : chrono 27:24, score 2-1, temps effectif, arrêts, passes.
 2. `02-placement-3d` — Placement en 3D, 4-3-3 avec les noms, trois adversaires et le ballon.
-3. `03-tactique` — exercice « Chevauchement du latéral et centre », étape 4/6 : flèches de passe et de course, halo sur le latéral.
-4. `04-bibliotheque` — bibliothèque Tactiques 3D par catégories.
-5. `05-joueurs` — effectif de la catégorie (16 joueurs par poste).
+3. `03-sequence` — séance d'entraînement en construction, cadrage « zone de jeu » : aperçu « Conduite n°6 · Course n°10 » avant validation de l'étape 2.
+4. `04-tactique` — exercice « Chevauchement du latéral et centre », étape 4/6 : flèches de passe et de course, halo sur le latéral.
+5. `05-bibliotheque` — bibliothèque Tactiques 3D par catégories.
+6. `06-joueurs` — effectif de la catégorie (16 joueurs par poste).
 
 ## 10. À vérifier avant d'envoyer
 

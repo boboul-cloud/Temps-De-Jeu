@@ -21,6 +21,7 @@ struct TacticsLibraryView: View {
     @State private var shareFile: TacticShareFile?
     @State private var alertMessage: String?
     @State private var playToDelete: TacticPlay?
+    @State private var editorRequest: SequenceEditorRequest?
 
     private func matches(_ play: TacticPlay) -> Bool {
         let query = searchText.trimmingCharacters(in: .whitespaces)
@@ -46,6 +47,12 @@ struct TacticsLibraryView: View {
                     LibraryHeader()
                         .listRowInsets(EdgeInsets())
                         .listRowBackground(Color.clear)
+                    Button {
+                        editorRequest = SequenceEditorRequest(play: nil)
+                    } label: {
+                        Label("Créer une séquence d'entraînement", systemImage: "plus.rectangle.on.rectangle")
+                            .font(.subheadline.bold())
+                    }
                 }
 
                 if !userPlays.isEmpty {
@@ -59,6 +66,12 @@ struct TacticsLibraryView: View {
                                         Label("Supprimer", systemImage: "trash")
                                     }
                                     Button {
+                                        editorRequest = SequenceEditorRequest(play: play)
+                                    } label: {
+                                        Label("Modifier", systemImage: "pencil")
+                                    }
+                                    .tint(.purple)
+                                    Button {
                                         share([play])
                                     } label: {
                                         Label("Partager", systemImage: "square.and.arrow.up")
@@ -69,7 +82,7 @@ struct TacticsLibraryView: View {
                     } header: {
                         Label("Mes séquences", systemImage: TacticCategory.perso.icon)
                     } footer: {
-                        Text("Créées depuis Placement › Séquence ou importées depuis un fichier .tdjt.")
+                        Text("Créées ici, depuis Placement › Séquence, ou importées d'un fichier .tdjt. Balayez pour modifier.")
                     }
                 }
 
@@ -102,6 +115,14 @@ struct TacticsLibraryView: View {
             .toolbar {
                 ToolbarItem(placement: .cancellationAction) {
                     Button("Fermer") { dismiss() }
+                }
+                ToolbarItem(placement: .primaryAction) {
+                    Button {
+                        editorRequest = SequenceEditorRequest(play: nil)
+                    } label: {
+                        Image(systemName: "plus")
+                    }
+                    .accessibilityLabel("Créer une séquence")
                 }
                 ToolbarItem(placement: .primaryAction) {
                     Menu {
@@ -138,6 +159,11 @@ struct TacticsLibraryView: View {
             }
             .sheet(item: $shareFile) { file in
                 ActivityView(activityItems: [file.url])
+            }
+            .sheet(item: $editorRequest) { request in
+                FormationView(roster: [], jerseyColor: palette.team, opponentJerseyColor: palette.opponent,
+                              savedFormation: nil, trainingMode: true, initialPlay: request.play)
+                    .largeSheetSizing()
             }
             .alert("Tactiques", isPresented: Binding(get: { alertMessage != nil }, set: { if !$0 { alertMessage = nil } })) {
                 Button("OK") { alertMessage = nil }
@@ -215,6 +241,11 @@ struct TacticsLibraryView: View {
                 Label("Partager (.tdjt)", systemImage: "square.and.arrow.up")
             }
             if play.isUserCreated {
+                Button {
+                    editorRequest = SequenceEditorRequest(play: play)
+                } label: {
+                    Label("Modifier la séquence", systemImage: "pencil")
+                }
                 Button(role: .destructive) {
                     playToDelete = play
                 } label: {
@@ -256,6 +287,12 @@ struct TacticsLibraryView: View {
             alertMessage = "Import impossible : \(error.localizedDescription)"
         }
     }
+}
+
+/// Ouverture de l'éditeur : nouvelle séquence (play = nil) ou modification
+struct SequenceEditorRequest: Identifiable {
+    let id = UUID()
+    let play: TacticPlay?
 }
 
 // MARK: - En-tête

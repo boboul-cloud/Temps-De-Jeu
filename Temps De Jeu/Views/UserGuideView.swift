@@ -283,8 +283,11 @@ struct UserGuideView: View {
                             "Dans **Match › Placement**, basculez sur **3D** pour voir votre composition sur un terrain en relief",
                             "Glissez un joueur ou le ballon pour le déplacer ; faites pivoter et zoomez la caméra ailleurs sur le terrain",
                             "Changez de point de vue : **Coach**, **Tribune**, **Dessus** ou **Immersion**",
-                            "Créez une **séquence pas à pas** : placez les joueurs, appuyez sur 📷 pour capturer l'étape, déplacez-les, capturez la suivante…",
-                            "Menu 🎞 › **Lire la démonstration** : les joueurs et le ballon s'animent d'une étape à l'autre avec les flèches de course et de passe",
+                            "Créez une **séquence pas à pas** : placez joueurs et ballon, validez la **Mise en place**, puis une action par étape",
+                            "**Course** : déplacez un joueur sans ballon · **Conduite** : déplacez le porteur, le ballon suit · **Passe** : glissez le ballon sur un partenaire · **Tir** : glissez-le dans le but · **En l'air** pour un centre",
+                            "Les flèches s'affichent **avant** de valider : vous voyez ce qui sera enregistré. Touchez un numéro d'étape pour la corriger",
+                            "**Créer une séquence d'entraînement** sans composition de match : Tactiques 3D › **+**, avec le cadrage *Zone de jeu* pour les petits espaces",
+                            "▶︎ **Lire la démonstration** : joueurs et ballon s'animent d'une étape à l'autre, avec vos consignes",
                             "**Bibliothèque d'exercices 3D** (Placement ou onglet Présences) : rondos, relance, pressing, contre-attaque, corners… avec objectif et consignes",
                             "Partagez ou importez des tactiques au format **.tdjt** (fichier JSON lisible) par Messages, AirDrop ou e-mail"
                         ]

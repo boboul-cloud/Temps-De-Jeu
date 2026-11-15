@@ -89,6 +89,16 @@ final class TacticStore: ObservableObject {
         persist()
     }
 
+    /// Remplace toutes les séquences perso (restauration d'une sauvegarde complète)
+    func replaceUserTactics(_ tactics: [TacticPlay]) {
+        userTactics = tactics.map { play in
+            var copy = play
+            copy.isUserCreated = true
+            return copy
+        }
+        persist()
+    }
+
     func delete(_ play: TacticPlay) {
         userTactics.removeAll { $0.id == play.id }
         persist()

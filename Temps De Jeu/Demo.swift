@@ -6,7 +6,7 @@
 //  (TempsDeJeuUITests/CaptureTests.swift, lancé par tools/captures.sh).
 //  Tout ce qui les lit est compilé en Debug seulement : l'archive n'en voit rien.
 //
-//      -demo match | placement3d | tactique | bibliotheque | joueurs
+//      -demo match | placement3d | placement8 | sequence | tactique | bibliotheque | joueurs | seance
 //
 //  Les données de démonstration (catégorie U13 fictive, effectif aux noms
 //  inventés) sont écrites dans le simulateur créé pour les captures, puis
@@ -61,6 +61,16 @@ enum Demo {
                                 lastName: entry.last, position: entry.position)
             return MatchPlayer(from: player, status: entry.starter ? .titulaire : .remplacant,
                                shirtNumber: entry.number, isCaptain: entry.number == 10)
+        }
+    }
+
+    /// Football à 8 (U11) : 8 titulaires, le reste sur le banc
+    static var smallRoster: [MatchPlayer] {
+        let starters: Set<Int> = [1, 2, 4, 5, 6, 8, 10, 9]
+        return matchRoster.map { player in
+            var copy = player
+            copy.status = starters.contains(player.shirtNumber) ? .titulaire : .remplacant
+            return copy
         }
     }
 

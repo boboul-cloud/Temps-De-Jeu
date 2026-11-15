@@ -26,9 +26,12 @@ struct ContentView: View {
     // Réponse de disponibilité reçue via deep link
     @State private var showAvailabilityAlert = false
     @State private var showTacticsLibrary = false
+    /// Change après une restauration complète : reconstruit les onglets avec les nouvelles données
+    @State private var dataRefreshID = UUID()
     #if DEBUG
     @State private var demoPlacement = false
     @State private var demoTactic: TacticPlay?
+    @State private var demoSession = false
     #endif
     @State private var availabilityAlertTitle = ""
     @State private var availabilityAlertMessage = ""
@@ -131,7 +134,9 @@ struct ContentView: View {
                     .tag(8)
             }
             .tint(profileManager.activeProfileColor)
+            .id(dataRefreshID)
         }
+        .modifier(OpenedBackupHandler { dataRefreshID = UUID() })
         .onAppear {
             updateGlobalTint()
             WidgetDataBridge.shared.updateWidgetData()
@@ -141,8 +146,13 @@ struct ContentView: View {
         }
         #if DEBUG
         .sheet(isPresented: $demoPlacement) {
-            FormationView(roster: Demo.matchRoster, jerseyColor: .blue, opponentJerseyColor: .red,
-                          savedFormation: nil)
+            FormationView(roster: Demo.screen == "placement8" ? Demo.smallRoster : Demo.matchRoster,
+                          jerseyColor: .blue, opponentJerseyColor: .red, savedFormation: nil)
+                .largeSheetSizing()
+        }
+        .sheet(isPresented: $demoSession) {
+            FormationView(roster: [], jerseyColor: .blue, opponentJerseyColor: .red, savedFormation: nil,
+                          trainingMode: true)
                 .largeSheetSizing()
         }
         .fullScreenCover(item: $demoTactic) { play in
@@ -423,12 +433,15 @@ struct ContentView: View {
             selectedTab = 0
             Demo.prepareLiveMatch(matchViewModel)
             showMatch = true
-        case "placement3d":
+        case "placement3d", "placement8":
             selectedTab = 0
             matchViewModel.setMatchRoster(Demo.matchRoster)
             demoPlacement = true
         case "tactique":
             demoTactic = TacticStore.shared.libraryTactics.first { $0.id == UUID.stable(from: Demo.tacticId) }
+        case "seance", "sequence":
+            selectedTab = 2
+            demoSession = true
         case "bibliotheque":
             selectedTab = 2
             showTacticsLibrary = true

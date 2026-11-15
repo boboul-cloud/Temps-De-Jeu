@@ -109,6 +109,8 @@ final class Pitch3DController: NSObject, ObservableObject, UIGestureRecognizerDe
     var isEditable = false
     var onActorMoved: ((String, TacticPoint) -> Void)?
     var onBallMoved: ((TacticPoint) -> Void)?
+    /// Ballon lâché (fin du geste) : pour le coller à un joueur ou au but
+    var onBallDropped: ((TacticPoint) -> Void)?
 
     private let scene = SCNScene()
     private let cameraNode = SCNNode()
@@ -138,6 +140,8 @@ final class Pitch3DController: NSObject, ObservableObject, UIGestureRecognizerDe
         case ball
     }
     private var dragTarget: DragTarget?
+    /// Point où le doigt (ou la souris) s'est posé : on sélectionne là, pas après le glissement
+    private var touchStart: CGPoint?
     private lazy var dragRecognizer: UIPanGestureRecognizer = {
         let gr = UIPanGestureRecognizer(target: self, action: #selector(handleDrag(_:)))
         gr.delegate = self
@@ -184,6 +188,53 @@ final class Pitch3DController: NSObject, ObservableObject, UIGestureRecognizerDe
         actors = newActors
         applyScale()
         setHighlights(highlighted)
+        refreshAccessibility()
+    }
+
+    // MARK: Accessibilité (VoiceOver, tests d'interface)
+
+    /// Un élément accessible qui suit un nœud 3D à l'écran
+    private final class NodeElement: UIAccessibilityElement {
+        weak var node: SCNNode?
+        weak var view: SCNView?
+        var height: Float = 0
+
+        override var accessibilityFrame: CGRect {
+            get {
+                guard let node, let view, !node.isHidden else { return .zero }
+                let base = node.presentation.simdWorldPosition
+                let a = view.projectPoint(SCNVector3(base))
+                let b = view.projectPoint(SCNVector3(base + SIMD3(0, height, 0)))
+                let top = CGFloat(min(a.y, b.y)), bottom = CGFloat(max(a.y, b.y))
+                let center = CGPoint(x: CGFloat(a.x), y: (top + bottom) / 2)
+                let side = max(44, bottom - top)
+                let rect = CGRect(x: center.x - side / 2, y: center.y - side / 2, width: side, height: side)
+                return UIAccessibility.convertToScreenCoordinates(rect, in: view)
+            }
+            set {}
+        }
+    }
+
+    private func refreshAccessibility() {
+        var elements: [Any] = []
+        let ball = NodeElement(accessibilityContainer: scnView)
+        ball.node = ballNode
+        ball.view = scnView
+        ball.accessibilityLabel = "Ballon"
+        ball.accessibilityIdentifier = "ballon-3d"
+        elements.append(ball)
+        for actor in actors {
+            guard let node = actorNodes[actor.id] else { continue }
+            let element = NodeElement(accessibilityContainer: scnView)
+            element.node = node.root
+            element.view = scnView
+            element.height = 2.2 * playerScale
+            element.accessibilityLabel = actor.team == .adversaire ? "Adversaire \(actor.label)" : "Joueur \(actor.label)"
+            element.accessibilityIdentifier = actor.team == .adversaire ? "adversaire3d-\(actor.label)" : "joueur3d-\(actor.label)"
+            elements.append(element)
+        }
+        scnView.isAccessibilityElement = false
+        scnView.accessibilityElements = elements
     }
 
     /// Zone à cadrer par la caméra (coordonnées normalisées)
@@ -349,8 +400,10 @@ final class Pitch3DController: NSObject, ObservableObject, UIGestureRecognizerDe
         switch preset {
         case .coach:
             let elevation: Float = 40 * .pi / 180
-            let d = distance(horizontal: spanX, vertical: spanZ * sin(elevation) + figure)
-            position = center + SIMD3(0, d * sin(elevation), d * cos(elevation))
+            let d = distance(horizontal: spanX, vertical: spanZ * sin(elevation) + figure) * 1.12
+            // Visée légèrement vers la caméra : les joueurs les plus proches restent dans le champ
+            target = center + SIMD3(0, 0, spanZ * 0.07)
+            position = target + SIMD3(0, d * sin(elevation), d * cos(elevation))
         case .tribune:
             let elevation: Float = 28 * .pi / 180
             let d = distance(horizontal: spanZ, vertical: spanX * sin(elevation) + figure)
@@ -506,7 +559,7 @@ final class Pitch3DController: NSObject, ObservableObject, UIGestureRecognizerDe
         applyScale()
     }
 
-    private var ballScale: Float { Swift.max(2.4, playerScale * 2.0) }
+    private var ballScale: Float { Swift.max(3.0, playerScale * 2.4) * (isEditable ? 1.25 : 1) }
 
     private func ballWorld(_ p: TacticPoint) -> SIMD3<Float> {
         PitchGeometry.world(p, y: Self.ballRadius * ballScale)
@@ -908,29 +961,52 @@ final class Pitch3DController: NSObject, ObservableObject, UIGestureRecognizerDe
 
     // MARK: - Déplacement au doigt / à la souris
 
+    func gestureRecognizer(_ gestureRecognizer: UIGestureRecognizer, shouldReceive touch: UITouch) -> Bool {
+        if gestureRecognizer === dragRecognizer {
+            touchStart = touch.location(in: scnView)
+        }
+        return true
+    }
+
     func gestureRecognizerShouldBegin(_ gestureRecognizer: UIGestureRecognizer) -> Bool {
         guard gestureRecognizer === dragRecognizer else { return true }
         guard isEditable, !isAnimating else { return false }
-        dragTarget = hitTarget(at: gestureRecognizer.location(in: scnView))
+        dragTarget = hitTarget(at: touchStart ?? gestureRecognizer.location(in: scnView))
         return dragTarget != nil
     }
 
+    /// Sélection tolérante : l'élément le plus proche du doigt à l'écran (ballon prioritaire)
     private func hitTarget(at point: CGPoint) -> DragTarget? {
-        let results = scnView.hitTest(point, options: [
-            .searchMode: SCNHitTestSearchMode.all.rawValue,
-            .ignoreHiddenNodes: true
-        ])
-        for result in results {
-            var node: SCNNode? = result.node
-            while let current = node {
-                if current === ballNode { return ballVisible ? .ball : nil }
-                if let name = current.name, name.hasPrefix("actor:") {
-                    return .actor(String(name.dropFirst("actor:".count)))
-                }
-                node = current.parent
+        func screenDistance(_ world: SIMD3<Float>) -> CGFloat {
+            let p = scnView.projectPoint(SCNVector3(world))
+            guard p.z > 0, p.z < 1 else { return .infinity }
+            return hypot(CGFloat(p.x) - point.x, CGFloat(p.y) - point.y)
+        }
+        var best: (target: DragTarget, distance: CGFloat)?
+
+        for (id, node) in actorNodes where !node.root.isHidden {
+            let base = node.root.simdPosition
+            let h = 1.0 * playerScale
+            let d = Swift.min(screenDistance(base + SIMD3(0, h * 0.5, 0)),
+                              screenDistance(base + SIMD3(0, h * 1.3, 0)),
+                              screenDistance(base + SIMD3(0, h * 2.4, 0)))
+            if d < 44, d < (best?.distance ?? .infinity) {
+                best = (.actor(id), d)
             }
         }
-        return nil
+
+        if ballVisible && !ballNode.isHidden {
+            let d = screenDistance(ballNode.simdPosition)
+            if currentFrame?.ballHolder != nil {
+                // Ballon aux pieds d'un joueur : le joueur est prioritaire (conduite),
+                // il faut toucher franchement le ballon pour faire une passe
+                if d < 20, d < (best?.distance ?? .infinity) { best = (.ball, d) }
+            } else {
+                // Ballon libre : sélection très tolérante
+                if d - 10 < 42, d - 10 < (best?.distance ?? .infinity) { best = (.ball, d - 10) }
+            }
+        }
+        return best?.target
     }
 
     private func groundPoint(at point: CGPoint) -> SIMD3<Float>? {
@@ -969,6 +1045,9 @@ final class Pitch3DController: NSObject, ObservableObject, UIGestureRecognizerDe
                 node.root.scale = SCNVector3(playerScale, playerScale, playerScale)
             }
             dragTarget = nil
+            if target == .ball, let ball = currentFrame?.ball {
+                onBallDropped?(ball)
+            }
         }
     }
 }
@@ -1119,6 +1198,7 @@ enum ArrowBuilder {
     }
 
     static func point(on points: [SIMD2<Float>], at distance: Float) -> SIMD2<Float> {
+        guard points.count > 1 else { return points.first ?? .zero }
         var remaining = distance
         for i in 1..<points.count {
             let segment = simd_distance(points[i - 1], points[i])

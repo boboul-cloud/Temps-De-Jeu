@@ -470,7 +470,7 @@ struct ExportImportView: View {
                     f.locale = Locale(identifier: "fr_FR")
                     return f.string(from: result.backup.exportDate)
                 }()
-                Text("Sauvegarde du \(dateStr)\n\(result.profileCount) catégorie\(result.profileCount > 1 ? "s" : ""), \(result.playerCount) joueur\(result.playerCount > 1 ? "s" : ""), \(result.totalMatches) match\(result.totalMatches > 1 ? "s" : ""), \(result.totalTrainingSessions) entraînement\(result.totalTrainingSessions > 1 ? "s" : ""), \(result.staffCount) encadrant\(result.staffCount > 1 ? "s" : "").\n\n⚠️ Cette action remplacera toutes les données actuelles de l'application.")
+                Text("Sauvegarde du \(dateStr)\n\(ExportService.summary(of: result)).\n\n⚠️ Cette action remplacera toutes les données actuelles de l'application.")
             } else {
                 Text("")
             }
@@ -620,11 +620,10 @@ struct ExportImportView: View {
         case .success(let urls):
             guard let url = urls.first else { return }
 
-            guard url.startAccessingSecurityScopedResource() else {
-                showAlertWith(title: "Erreur", message: "Impossible d'accéder au fichier.")
-                return
-            }
-            defer { url.stopAccessingSecurityScopedResource() }
+            // Accès « sécurisé » demandé si le système le propose (iPhone, iPad) ;
+            // sur Mac hors App Store il n'existe pas et le fichier est lisible directement.
+            let accessing = url.startAccessingSecurityScopedResource()
+            defer { if accessing { url.stopAccessingSecurityScopedResource() } }
 
             do {
                 let data = try Data(contentsOf: url)
@@ -651,7 +650,7 @@ struct ExportImportView: View {
 
         showAlertWith(
             title: "Restauration réussie",
-            message: "\(result.profileCount) catégorie\(result.profileCount > 1 ? "s" : ""), \(result.playerCount) joueur\(result.playerCount > 1 ? "s" : ""), \(result.totalMatches) match\(result.totalMatches > 1 ? "s" : ""), \(result.totalTrainingSessions) entraînement\(result.totalTrainingSessions > 1 ? "s" : ""), \(result.staffCount) encadrant\(result.staffCount > 1 ? "s" : "") restaurés."
+            message: "\(ExportService.summary(of: result)) restaurés."
         )
         pendingBackupResult = nil
     }
@@ -663,11 +662,10 @@ struct ExportImportView: View {
         case .success(let urls):
             guard let url = urls.first else { return }
 
-            guard url.startAccessingSecurityScopedResource() else {
-                showAlertWith(title: "Erreur", message: "Impossible d'accéder au fichier.")
-                return
-            }
-            defer { url.stopAccessingSecurityScopedResource() }
+            // Accès « sécurisé » demandé si le système le propose (iPhone, iPad) ;
+            // sur Mac hors App Store il n'existe pas et le fichier est lisible directement.
+            let accessing = url.startAccessingSecurityScopedResource()
+            defer { if accessing { url.stopAccessingSecurityScopedResource() } }
 
             do {
                 let data = try Data(contentsOf: url)
@@ -857,11 +855,10 @@ struct ExportImportView: View {
         case .success(let urls):
             guard let url = urls.first else { return }
 
-            guard url.startAccessingSecurityScopedResource() else {
-                showAlertWith(title: "Erreur", message: "Impossible d'accéder au fichier.")
-                return
-            }
-            defer { url.stopAccessingSecurityScopedResource() }
+            // Accès « sécurisé » demandé si le système le propose (iPhone, iPad) ;
+            // sur Mac hors App Store il n'existe pas et le fichier est lisible directement.
+            let accessing = url.startAccessingSecurityScopedResource()
+            defer { if accessing { url.stopAccessingSecurityScopedResource() } }
 
             do {
                 let contenu = try String(contentsOf: url, encoding: .utf8)
@@ -1076,11 +1073,10 @@ struct ExportImportView: View {
         case .success(let urls):
             guard let url = urls.first else { return }
 
-            guard url.startAccessingSecurityScopedResource() else {
-                showAlertWith(title: "Erreur", message: "Impossible d'accéder au fichier.")
-                return
-            }
-            defer { url.stopAccessingSecurityScopedResource() }
+            // Accès « sécurisé » demandé si le système le propose (iPhone, iPad) ;
+            // sur Mac hors App Store il n'existe pas et le fichier est lisible directement.
+            let accessing = url.startAccessingSecurityScopedResource()
+            defer { if accessing { url.stopAccessingSecurityScopedResource() } }
 
             do {
                 let data = try Data(contentsOf: url)

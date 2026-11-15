@@ -830,11 +830,10 @@ struct MatchSetupView: View {
         case .success(let urls):
             guard let url = urls.first else { return }
 
-            guard url.startAccessingSecurityScopedResource() else {
-                showAlertWith(title: "Erreur", message: "Impossible d'accéder au fichier.")
-                return
-            }
-            defer { url.stopAccessingSecurityScopedResource() }
+            // Accès « sécurisé » demandé si le système le propose (iPhone, iPad) ;
+            // sur Mac hors App Store il n'existe pas et le fichier est lisible directement.
+            let accessing = url.startAccessingSecurityScopedResource()
+            defer { if accessing { url.stopAccessingSecurityScopedResource() } }
 
             do {
                 let data = try Data(contentsOf: url)

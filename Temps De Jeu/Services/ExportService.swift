@@ -1988,6 +1988,7 @@ class ExportService {
         let staffMembers: [StaffMember]     // Encadrants
         let staffRoles: [StaffRole]         // Rôles d'encadrement
         let profilesData: [ProfileBackupData]  // Données par profil
+        var tactics: [TacticPlay]? = nil    // Séquences tactiques perso (absent des anciennes sauvegardes)
     }
 
     /// Résultat de l'import d'une sauvegarde complète
@@ -1998,6 +1999,7 @@ class ExportService {
         let totalMatches: Int
         let totalTrainingSessions: Int
         let staffCount: Int
+        var tacticCount: Int = 0
     }
 
     /// Exporte toutes les données de l'application en un seul fichier JSON
@@ -2050,7 +2052,8 @@ class ExportService {
             players: allPlayers,
             staffMembers: staffMembers,
             staffRoles: staffRoles,
-            profilesData: profilesData
+            profilesData: profilesData,
+            tactics: TacticStore.shared.userTactics
         )
 
         return try? encoder.encode(backup)
@@ -2074,7 +2077,8 @@ class ExportService {
             playerCount: backup.players.count,
             totalMatches: totalMatches,
             totalTrainingSessions: totalSessions,
-            staffCount: backup.staffMembers.count
+            staffCount: backup.staffMembers.count,
+            tacticCount: backup.tactics?.count ?? 0
         )
     }
 
@@ -2145,6 +2149,27 @@ class ExportService {
         ProfileManager.shared.profiles = restoredProfiles
         ProfileManager.shared.activeProfileId = restoredProfiles.first?.id
         SeasonManager.shared.reloadForCurrentProfile()
+
+        // 7. Séquences tactiques (les anciennes sauvegardes n'en ont pas : on garde celles de l'appareil)
+        if let tactics = backup.tactics {
+            TacticStore.shared.replaceUserTactics(tactics)
+        }
+    }
+
+    /// Résumé lisible d'une sauvegarde (confirmation et message de réussite)
+    static func summary(of result: FullBackupImportResult) -> String {
+        func plural(_ n: Int, _ one: String, _ many: String) -> String { "\(n) \(n > 1 ? many : one)" }
+        var parts = [
+            plural(result.profileCount, "catégorie", "catégories"),
+            plural(result.playerCount, "joueur", "joueurs"),
+            plural(result.totalMatches, "match", "matchs"),
+            plural(result.totalTrainingSessions, "entraînement", "entraînements"),
+            plural(result.staffCount, "encadrant", "encadrants"),
+        ]
+        if result.tacticCount > 0 {
+            parts.append(plural(result.tacticCount, "séquence tactique", "séquences tactiques"))
+        }
+        return parts.joined(separator: ", ")
     }
 
     // MARK: - Helpers
