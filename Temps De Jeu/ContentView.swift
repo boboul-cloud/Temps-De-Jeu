@@ -25,6 +25,7 @@ struct ContentView: View {
     
     // Réponse de disponibilité reçue via deep link
     @State private var showAvailabilityAlert = false
+    @State private var showTacticsLibrary = false
     @State private var availabilityAlertTitle = ""
     @State private var availabilityAlertMessage = ""
 
@@ -164,6 +165,16 @@ struct ContentView: View {
                     selectedTab = 0
                 }
             }
+        }
+        .onChange(of: deepLinkManager.shouldOpenTactics) {
+            if deepLinkManager.shouldOpenTactics {
+                deepLinkManager.shouldOpenTactics = false
+                showTacticsLibrary = true
+            }
+        }
+        .sheet(isPresented: $showTacticsLibrary) {
+            TacticsLibraryView()
+                .largeSheetSizing()
         }
         .onChange(of: deepLinkManager.shouldNavigateToTraining) {
             if deepLinkManager.shouldNavigateToTraining {

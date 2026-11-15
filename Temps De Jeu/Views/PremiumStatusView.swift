@@ -73,7 +73,9 @@ struct PremiumStatusView: View {
                     VStack(spacing: 8) {
                         Text("Merci pour votre soutien ! 💚")
                             .font(.headline)
-                        Text("Votre achat nous permet de continuer à améliorer Temps De Jeu.")
+                        Text(StoreManager.isUnlockedWithoutPurchase
+                             ? "Version Mac (DMG) : toutes les fonctionnalités sont débloquées, sans limite."
+                             : "Votre achat nous permet de continuer à améliorer Temps De Jeu.")
                             .font(.caption)
                             .foregroundStyle(.secondary)
                             .multilineTextAlignment(.center)

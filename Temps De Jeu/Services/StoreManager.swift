@@ -37,7 +37,24 @@ class StoreManager: ObservableObject {
         max(0, StoreManager.freeMatchLimit - matchesUsed)
     }
 
+    /// Version Mac distribuée en DMG : tout est débloqué, sans achat.
+    /// Le drapeau DMG_SANS_LIMITE n'est ajouté que par tools/creer-dmg-mac.sh :
+    /// les versions App Store (iPhone, iPad, Mac) gardent l'achat Premium.
+    static let isUnlockedWithoutPurchase: Bool = {
+        #if DMG_SANS_LIMITE
+        return true
+        #else
+        return false
+        #endif
+    }()
+
     private init() {
+        // Version DMG : aucune limite, pas d'appel à l'App Store
+        if StoreManager.isUnlockedWithoutPurchase {
+            isPremium = true
+            return
+        }
+
         // Charger l'état sauvegardé
         matchesUsed = UserDefaults.standard.integer(forKey: matchesUsedKey)
         isPremium = UserDefaults.standard.bool(forKey: isPremiumKey)

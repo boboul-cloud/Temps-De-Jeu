@@ -77,8 +77,22 @@ Système unique pour les clubs avec plusieurs équipes (A, B, C, D…) :
 - Archivage en fin de saison
 - Réinitialisation pour repartir de zéro
 
+### 🧊 Placement 3D & Tactiques animées
+- Vue **Placement en 3D** (bascule 2D / 3D) : terrain en relief, joueurs déplaçables au doigt ou à la souris
+- 4 caméras : **Coach**, **Tribune**, **Dessus**, **Immersion** (rotation et zoom libres)
+- **Séquences pas à pas** : capturez plusieurs étapes du placement puis lancez la démonstration animée
+- **Bibliothèque de 12 exercices** (rondos, relance, troisième homme, chevauchement, pressing, coulissement, contre-attaque, contre-pressing, corner…) avec objectif, consignes et déroulé
+- Flèches calculées automatiquement : course, passe, conduite, tir ; joueurs clés en surbrillance
+- Lecture automatique, vitesse réglable, option « Afficher mes joueurs » (noms des titulaires)
+- Fichiers **`.tdjt`** (JSON lisible) : import / export / partage de tactiques
+
+### 💻 Version Mac
+- Application **Mac Catalyst** (Apple Silicon + Intel), disposition deux colonnes pour la 3D
+- `./tools/creer-dmg-mac.sh` génère le DMG dans `../Version Mac/` (signature locale)
+- Version DMG **sans limite** : Premium débloqué d'office (drapeau `DMG_SANS_LIMITE`, ajouté uniquement par ce script)
+
 ### 📖 Guide d'Utilisation Intégré
-- Mode d'emploi complet avec 12 sections illustrées
+- Mode d'emploi complet avec 16 sections illustrées
 - Accessible depuis les réglages de l'app
 - Couvre toutes les fonctionnalités : effectif, match, cascade, statistiques, catégories, présences…
 
@@ -110,8 +124,12 @@ Temps De Jeu/
 ├── Models/          # Modèles de données (Player, Match, Staff, Training, etc.)
 ├── ViewModels/      # Logique métier (MatchViewModel)
 ├── Views/           # Interfaces SwiftUI (Match, Roster, Cartons, Staff, Stats…)
-├── Services/        # Services (DataManager, ProfileManager, StoreManager, etc.)
+├── Services/        # Services (DataManager, ProfileManager, StoreManager, TacticStore, etc.)
+├── Resources/       # TactiquesEntrainement.json (bibliothèque d'exercices)
 └── Helpers/         # Utilitaires (TimeFormatters, ColorExtensions)
+tools/
+├── generer_tactiques.py   # Génère et valide la bibliothèque d'exercices
+└── creer-dmg-mac.sh       # Construit la version Mac et le DMG
 ```
 
 ## Site Web & Support

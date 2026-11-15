@@ -14,7 +14,7 @@ private enum PitchTool {
 }
 
 /// Un joueur adverse placé sur le terrain (éphémère, non persisté)
-private struct OpponentToken: Identifiable {
+private struct OpponentToken: Identifiable, Equatable {
     let id: UUID
     var position: CGPoint  // Coordonnées normalisées 0-1
     var number: Int
@@ -55,6 +55,25 @@ struct FormationView: View {
     @State private var ballPosition: CGPoint? = nil
     @State private var isDraggingBall = false
 
+    // Vue 3D
+    @State private var is3D = false
+    @State private var did3DSetup = false
+    @StateObject private var pitch3D = Pitch3DController()
+
+    // Séquence pas à pas (capturée depuis le placement)
+    @State private var sequenceSteps: [TacticStep] = []
+    @State private var sequenceActors: [TacticActor] = []
+    @State private var sequenceId = UUID()
+    @State private var showSequencePlayer = false
+    @State private var showSaveSequence = false
+    @State private var sequenceTitle = ""
+    @State private var sequenceToast: String?
+    @State private var showLibrary = false
+
+    private var palette3D: Pitch3DPalette {
+        Pitch3DPalette(team: jerseyColor, opponent: opponentJerseyColor)
+    }
+
     private var titulaires: [MatchPlayer] {
         roster.filter { $0.status == .titulaire }.sorted { $0.shirtNumber < $1.shirtNumber }
     }
@@ -66,15 +85,46 @@ struct FormationView: View {
     var body: some View {
         NavigationStack {
             VStack(spacing: 0) {
-                // Indicateur de formation actuelle
-                if let name = currentFormationName {
-                    Text(name)
-                        .font(.caption.bold())
-                        .foregroundStyle(.secondary)
-                        .padding(.top, 4)
+                // Formation actuelle + bascule 2D / 3D
+                HStack {
+                    if let name = currentFormationName {
+                        Text(name)
+                            .font(.caption.bold())
+                            .foregroundStyle(.secondary)
+                    }
+                    Spacer()
+                    Picker("Vue", selection: $is3D) {
+                        Text("2D").tag(false)
+                        Text("3D").tag(true)
+                    }
+                    .pickerStyle(.segmented)
+                    .frame(width: 120)
                 }
+                .padding(.horizontal, 16)
+                .padding(.top, 6)
 
                 // Terrain
+                if is3D {
+                    ZStack(alignment: .topTrailing) {
+                        Pitch3DView(controller: pitch3D)
+                            .clipShape(RoundedRectangle(cornerRadius: 12))
+                        CameraPresetPicker(selected: pitch3D.cameraPreset) { preset in
+                            pitch3D.applyCamera(preset, animated: true)
+                        }
+                        .padding(8)
+                    }
+                    .overlay(alignment: .bottomLeading) {
+                        Text("Glissez un joueur pour le déplacer · faites pivoter la caméra ailleurs")
+                            .font(.system(size: 10, weight: .semibold))
+                            .foregroundStyle(.white)
+                            .padding(.horizontal, 8)
+                            .padding(.vertical, 4)
+                            .background(Color.black.opacity(0.45), in: Capsule())
+                            .padding(8)
+                    }
+                    .padding(.horizontal, 12)
+                    .padding(.top, 8)
+                } else {
                 GeometryReader { pitchGeo in
                     let pw = pitchGeo.size.width
                     let ph = pitchGeo.size.height
@@ -212,6 +262,12 @@ struct FormationView: View {
                 }
                 .padding(.horizontal, 12)
                 .padding(.top, 8)
+                }
+
+                // Séquence en cours de capture
+                if !sequenceSteps.isEmpty || sequenceToast != nil {
+                    sequenceStrip
+                }
 
                 // Banc des remplaçants
                 VStack(spacing: 6) {
@@ -275,6 +331,9 @@ struct FormationView: View {
                             Image(systemName: isMirrored ? "person.fill" : "person.2.fill")
                                 .font(.subheadline)
                         }
+                        .disabled(is3D)
+
+                        sequenceMenu
                     }
                 }
                 ToolbarItem(placement: .bottomBar) {
@@ -288,7 +347,7 @@ struct FormationView: View {
                                 .foregroundStyle(activeTool == .move ? .blue : .secondary)
                         }
 
-                        // Bouton outil crayon
+                        // Bouton outil crayon (2D uniquement, les tracés restent visibles en 3D)
                         Button {
                             activeTool = .draw
                         } label: {
@@ -296,6 +355,17 @@ struct FormationView: View {
                                 .font(.title3)
                                 .foregroundStyle(activeTool == .draw ? .blue : .secondary)
                         }
+                        .disabled(is3D)
+
+                        // Capturer une étape de séquence
+                        Button {
+                            captureStep()
+                        } label: {
+                            Image(systemName: "camera.viewfinder")
+                                .font(.title3)
+                                .foregroundStyle(.purple)
+                        }
+                        .accessibilityLabel("Capturer une étape")
 
                         Divider()
                             .frame(height: 24)
@@ -352,7 +422,242 @@ struct FormationView: View {
             .onAppear {
                 initializePositions()
             }
+            .onChange(of: is3D) {
+                if is3D {
+                    activeTool = .move
+                    setup3D()
+                }
+            }
+            .onChange(of: positions) { if is3D { sync3D() } }
+            .onChange(of: opponents) { if is3D { sync3D() } }
+            .onChange(of: ballPosition) { if is3D { sync3D() } }
+            .onChange(of: drawingLines.count) { if is3D { sync3D() } }
+            .fullScreenCover(isPresented: $showSequencePlayer) {
+                TacticPlayerView(play: makeSequencePlay(), palette: palette3D) { play in
+                    TacticStore.shared.save(play)
+                }
+            }
+            .sheet(isPresented: $showLibrary) {
+                TacticsLibraryView(palette: palette3D, roster: roster)
+                    .largeSheetSizing()
+            }
+            .alert("Enregistrer la séquence", isPresented: $showSaveSequence) {
+                TextField("Titre", text: $sequenceTitle)
+                Button("Annuler", role: .cancel) {}
+                Button("Enregistrer") {
+                    TacticStore.shared.save(makeSequencePlay(title: sequenceTitle))
+                    showToast("Séquence enregistrée dans Tactiques 3D › Mes séquences")
+                }
+            } message: {
+                Text("\(sequenceSteps.count) étapes · retrouvez-la dans la bibliothèque Tactiques 3D.")
+            }
         }
+    }
+
+    // MARK: - Séquence pas à pas
+
+    private var sequenceMenu: some View {
+        Menu {
+            Section("Séquence pas à pas") {
+                Button {
+                    captureStep()
+                } label: {
+                    Label("Capturer l'étape \(sequenceSteps.count + 1)", systemImage: "camera.viewfinder")
+                }
+                Button {
+                    showSequencePlayer = true
+                } label: {
+                    Label("Lire la démonstration", systemImage: "play.circle")
+                }
+                .disabled(sequenceSteps.count < 2)
+                Button {
+                    sequenceTitle = defaultSequenceTitle
+                    showSaveSequence = true
+                } label: {
+                    Label("Enregistrer dans mes tactiques", systemImage: "square.and.arrow.down")
+                }
+                .disabled(sequenceSteps.count < 2)
+                Button(role: .destructive) {
+                    clearSequence()
+                } label: {
+                    Label("Effacer la séquence", systemImage: "trash")
+                }
+                .disabled(sequenceSteps.isEmpty)
+            }
+            Button {
+                showLibrary = true
+            } label: {
+                Label("Bibliothèque d'exercices 3D", systemImage: "books.vertical")
+            }
+        } label: {
+            Image(systemName: "film.stack")
+                .font(.subheadline)
+        }
+        .accessibilityLabel("Séquence et tactiques")
+    }
+
+    private var sequenceStrip: some View {
+        HStack(spacing: 10) {
+            Image(systemName: "film.stack")
+                .foregroundStyle(.purple)
+            if let toast = sequenceToast {
+                Text(toast)
+                    .font(.caption.bold())
+                    .lineLimit(2)
+            } else {
+                Text("Séquence : \(sequenceSteps.count) étape\(sequenceSteps.count > 1 ? "s" : "")")
+                    .font(.caption.bold())
+            }
+            Spacer()
+            if !sequenceSteps.isEmpty {
+                Button {
+                    captureStep()
+                } label: {
+                    Label("Étape", systemImage: "plus.circle.fill")
+                        .font(.caption.bold())
+                }
+                Button {
+                    showSequencePlayer = true
+                } label: {
+                    Label("Lire", systemImage: "play.circle.fill")
+                        .font(.caption.bold())
+                }
+                .disabled(sequenceSteps.count < 2)
+            }
+        }
+        .padding(.horizontal, 16)
+        .padding(.vertical, 8)
+        .background(Color.purple.opacity(0.1))
+        .animation(.easeInOut(duration: 0.2), value: sequenceToast)
+    }
+
+    private var defaultSequenceTitle: String {
+        let date = Date().formatted(date: .abbreviated, time: .shortened)
+        if let name = currentFormationName {
+            return "Séquence \(name) – \(date)"
+        }
+        return "Séquence – \(date)"
+    }
+
+    /// État actuel du terrain dans le format tactique
+    private var placementFrame: TacticFrame {
+        var points: [String: TacticPoint] = [:]
+        for player in titulaires {
+            if let p = positions[player.id] {
+                points[player.id.uuidString] = TacticPoint(x: p.x, y: p.y)
+            }
+        }
+        for opp in opponents {
+            points["adv-\(opp.id.uuidString)"] = TacticPoint(x: opp.position.x, y: opp.position.y)
+        }
+        let ball = ballPosition.map { TacticPoint(x: $0.x, y: $0.y) } ?? TacticPoint(x: 0.5, y: 0.5)
+        return TacticFrame(positions: points, ballHolder: nil, ball: ball)
+    }
+
+    private var placementActors: [TacticActor] {
+        titulaires.map {
+            TacticActor(id: $0.id.uuidString, team: .equipe, label: "\($0.shirtNumber)",
+                        name: $0.displayName, position: $0.position)
+        } + opponents.map {
+            TacticActor(id: "adv-\($0.id.uuidString)", team: .adversaire, label: "\($0.number)")
+        }
+    }
+
+    /// Photographie le placement actuel comme nouvelle étape
+    private func captureStep() {
+        let frame = placementFrame
+        let index = sequenceSteps.count
+        var step = TacticStep(
+            title: index == 0 ? "Mise en place" : "Étape \(index + 1)",
+            text: "",
+            duration: 2.0,
+            positions: frame.positions
+        )
+        if let ball = ballPosition {
+            let bp = TacticPoint(x: ball.x, y: ball.y)
+            // Le joueur le plus proche du ballon (≈ 3 m) devient le porteur
+            if let nearest = frame.positions.min(by: { $0.value.distance(to: bp) < $1.value.distance(to: bp) }),
+               nearest.value.distance(to: bp) < 0.035 {
+                step.ballHolder = nearest.key
+            } else {
+                step.ball = bp
+            }
+        }
+        for actor in placementActors where frame.positions[actor.id] != nil {
+            if !sequenceActors.contains(where: { $0.id == actor.id }) {
+                sequenceActors.append(actor)
+            }
+        }
+        sequenceSteps.append(step)
+        showToast(index == 0
+                  ? "Étape 1 capturée · déplacez les joueurs puis capturez la suivante"
+                  : "Étape \(index + 1) capturée")
+    }
+
+    private func clearSequence() {
+        sequenceSteps.removeAll()
+        sequenceActors.removeAll()
+        sequenceId = UUID()
+    }
+
+    private func showToast(_ message: String) {
+        sequenceToast = message
+        DispatchQueue.main.asyncAfter(deadline: .now() + 2.5) {
+            if sequenceToast == message { sequenceToast = nil }
+        }
+    }
+
+    private func makeSequencePlay(title: String? = nil) -> TacticPlay {
+        let trimmed = title?.trimmingCharacters(in: .whitespaces) ?? ""
+        let teamCount = sequenceActors.filter { $0.team == .equipe }.count
+        let oppCount = sequenceActors.filter { $0.team == .adversaire }.count
+        return TacticPlay(
+            id: sequenceId,
+            title: trimmed.isEmpty ? defaultSequenceTitle : trimmed,
+            category: .perso,
+            headcount: oppCount > 0 ? "\(teamCount) c \(oppCount)" : "\(teamCount) joueurs",
+            objective: "Séquence créée depuis le placement\(currentFormationName.map { " (\($0))" } ?? "").",
+            source: "Placement Temps De Jeu",
+            actors: sequenceActors,
+            steps: sequenceSteps,
+            isUserCreated: true,
+            createdAt: Date()
+        )
+    }
+
+    // MARK: - Vue 3D
+
+    private func setup3D() {
+        pitch3D.isEditable = true
+        pitch3D.onActorMoved = { id, point in
+            let clamped = CGPoint(x: min(max(point.x, 0.05), 0.95), y: min(max(point.y, 0.04), 0.96))
+            if id.hasPrefix("adv-"), let uuid = UUID(uuidString: String(id.dropFirst(4))),
+               let index = opponents.firstIndex(where: { $0.id == uuid }) {
+                opponents[index].position = clamped
+            } else if let uuid = UUID(uuidString: id) {
+                positions[uuid] = clamped
+                hasChanges = true
+            }
+        }
+        pitch3D.onBallMoved = { point in
+            ballPosition = CGPoint(x: point.x, y: point.y)
+        }
+        sync3D()
+        if !did3DSetup {
+            did3DSetup = true
+            pitch3D.setFocus(min: TacticPoint(x: 0, y: 0), max: TacticPoint(x: 1, y: 1))
+            pitch3D.applyCamera(.coach, animated: false)
+        }
+    }
+
+    private func sync3D() {
+        let actors = placementActors.map {
+            Pitch3DActor(id: $0.id, team: $0.team, label: $0.label, name: $0.name, isGoalkeeper: $0.isGoalkeeper)
+        }
+        pitch3D.configure(actors: actors, props: [], palette: palette3D)
+        pitch3D.setBallVisible(ballPosition != nil)
+        pitch3D.setFrame(placementFrame)
+        pitch3D.showDrawings(drawingLines.map { line in line.points.map { TacticPoint(x: $0.x, y: $0.y) } })
     }
 
     // MARK: - Initialisation

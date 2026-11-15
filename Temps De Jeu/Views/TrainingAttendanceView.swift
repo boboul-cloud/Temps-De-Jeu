@@ -16,6 +16,7 @@ struct TrainingAttendanceView: View {
     @State private var selectedSession: TrainingSession?
     @State private var showStats = false
     @State private var showExport = false
+    @State private var showTacticsLibrary = false
     @ObservedObject private var profileManager = ProfileManager.shared
     @ObservedObject private var trainingManager = TrainingManager.shared
     
@@ -34,6 +35,15 @@ struct TrainingAttendanceView: View {
             }
             .navigationTitle("Entraînements")
             .toolbar {
+                ToolbarItem(placement: .topBarLeading) {
+                    Button {
+                        showTacticsLibrary = true
+                    } label: {
+                        Label("Tactiques 3D", systemImage: "cube.transparent")
+                            .labelStyle(.titleAndIcon)
+                            .font(.subheadline.bold())
+                    }
+                }
                 ToolbarItem(placement: .topBarTrailing) {
                     Menu {
                         Button {
@@ -78,6 +88,10 @@ struct TrainingAttendanceView: View {
             }
             .sheet(isPresented: $showStats) {
                 TrainingStatsView(sessions: sessions)
+            }
+            .sheet(isPresented: $showTacticsLibrary) {
+                TacticsLibraryView()
+                    .largeSheetSizing()
             }
             .sheet(isPresented: $showExport) {
                 TrainingExportView(sessions: sessions) { importedSessions in

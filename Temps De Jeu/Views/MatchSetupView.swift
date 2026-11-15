@@ -536,6 +536,7 @@ struct MatchSetupView: View {
                     viewModel.saveFormationPositions(positions, formation: formationName)
                     saveDraftState()
                 }
+                .largeSheetSizing()
             }
             .sheet(item: $shareItemsWrapper) { wrapper in
                 ActivityView(activityItems: wrapper.items)

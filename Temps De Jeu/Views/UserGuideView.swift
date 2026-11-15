@@ -273,6 +273,25 @@ struct UserGuideView: View {
                     
                     Divider()
                     
+                    // 16. Placement 3D et tactiques animées
+                    guideSection(
+                        number: "16",
+                        title: "Placement 3D et tactiques",
+                        icon: "cube.transparent.fill",
+                        color: .teal,
+                        steps: [
+                            "Dans **Match › Placement**, basculez sur **3D** pour voir votre composition sur un terrain en relief",
+                            "Glissez un joueur ou le ballon pour le déplacer ; faites pivoter et zoomez la caméra ailleurs sur le terrain",
+                            "Changez de point de vue : **Coach**, **Tribune**, **Dessus** ou **Immersion**",
+                            "Créez une **séquence pas à pas** : placez les joueurs, appuyez sur 📷 pour capturer l'étape, déplacez-les, capturez la suivante…",
+                            "Menu 🎞 › **Lire la démonstration** : les joueurs et le ballon s'animent d'une étape à l'autre avec les flèches de course et de passe",
+                            "**Bibliothèque d'exercices 3D** (Placement ou onglet Présences) : rondos, relance, pressing, contre-attaque, corners… avec objectif et consignes",
+                            "Partagez ou importez des tactiques au format **.tdjt** (fichier JSON lisible) par Messages, AirDrop ou e-mail"
+                        ]
+                    )
+                    
+                    Divider()
+                    
                     // Tips
                     tipsSection
                     

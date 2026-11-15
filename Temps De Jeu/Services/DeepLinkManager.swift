@@ -58,6 +58,9 @@ class DeepLinkManager: ObservableObject {
     
     /// Indique qu'une réponse de disponibilité vient d'arriver
     @Published var shouldNavigateToAvailability: Bool = false
+
+    /// Indique que des tactiques (.tdjt) viennent d'être importées → ouvrir la bibliothèque 3D
+    @Published var shouldOpenTactics: Bool = false
     
     /// Message d'erreur à afficher si l'import échoue
     @Published var importError: String?
@@ -279,9 +282,9 @@ class DeepLinkManager: ObservableObject {
         print("[DeepLink] handleFileURL: \(url)")
         print("[DeepLink] Scheme: \(url.scheme ?? "nil"), Extension: \(url.pathExtension)")
         
-        // Accepter les fichiers .tdj, .tdjm, .tdjb OU .json (compat)
+        // Accepter les fichiers .tdj, .tdjm, .tdjb, .tdjt (tactiques) OU .json (compat)
         let ext = url.pathExtension.lowercased()
-        guard ext == "tdj" || ext == "tdjm" || ext == "tdjb" || ext == "json" else {
+        guard ext == "tdj" || ext == "tdjm" || ext == "tdjb" || ext == "tdjt" || ext == "json" else {
             print("[DeepLink] Extension non supportée: \(ext)")
             return
         }
@@ -314,8 +317,12 @@ class DeepLinkManager: ObservableObject {
                 print("[DeepLink] Aperçu: \(preview)")
             }
             
+            // Fichier tactique (.tdjt) → bibliothèque Tactiques 3D
+            if ext == "tdjt" {
+                handleTacticData(data)
+            }
             // Essayer de décoder comme sauvegarde complète (.tdjb)
-            if let backupResult = ExportService.shared.importFullBackup(from: data) {
+            else if let backupResult = ExportService.shared.importFullBackup(from: data) {
                 pendingBackupImport = backupResult
                 shouldNavigateToBackupImport = true
                 importError = nil
@@ -359,6 +366,10 @@ class DeepLinkManager: ObservableObject {
                 shouldNavigateToMatch = true
                 importError = nil
                 print("[DeepLink] Import joueurs réussi: \(players.count) joueurs")
+            }
+            // Fichier JSON contenant des tactiques
+            else if (try? TacticFile.decode(from: data))?.isEmpty == false {
+                handleTacticData(data)
             } else {
                 importError = "Format de fichier non reconnu."
                 print("[DeepLink] Fichier non reconnu")
@@ -386,6 +397,18 @@ class DeepLinkManager: ObservableObject {
                 importError = "Impossible de lire le fichier. Erreur: \(error.localizedDescription)"
                 print("[DeepLink] Impossible de lire le fichier directement")
             }
+        }
+    }
+
+    /// Importe des tactiques dans la bibliothèque et demande son ouverture
+    private func handleTacticData(_ data: Data) {
+        do {
+            let count = try TacticStore.shared.importData(data)
+            importError = nil
+            shouldOpenTactics = true
+            print("[DeepLink] Import tactiques réussi: \(count) tactique(s)")
+        } catch {
+            importError = "Fichier tactique illisible : \(error.localizedDescription)"
         }
     }
 
