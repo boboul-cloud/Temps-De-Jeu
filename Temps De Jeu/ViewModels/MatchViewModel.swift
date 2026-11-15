@@ -1063,3 +1063,13 @@ class MatchViewModel: ObservableObject {
         return max - min
     }
 }
+
+#if DEBUG
+extension MatchViewModel {
+    /// Captures App Store (Demo.swift) : le chrono repart comme si `seconds` s'étaient écoulées
+    func demoAdvance(by seconds: TimeInterval) {
+        periodStartDate = (periodStartDate ?? Date()).addingTimeInterval(-seconds)
+        elapsedTime += seconds
+    }
+}
+#endif

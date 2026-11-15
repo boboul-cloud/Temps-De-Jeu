@@ -280,6 +280,9 @@ struct TacticPlayerView: View {
         scene3D.setFrame(frames[0])
         refreshOverlays(animated: false)
         scene3D.applyCamera(.coach, animated: false)
+        #if DEBUG
+        if Demo.screen == "tactique" { jump(to: Demo.tacticStep) }
+        #endif
     }
 
     private func configureActors() {

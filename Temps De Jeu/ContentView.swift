@@ -26,6 +26,10 @@ struct ContentView: View {
     // Réponse de disponibilité reçue via deep link
     @State private var showAvailabilityAlert = false
     @State private var showTacticsLibrary = false
+    #if DEBUG
+    @State private var demoPlacement = false
+    @State private var demoTactic: TacticPlay?
+    #endif
     @State private var availabilityAlertTitle = ""
     @State private var availabilityAlertMessage = ""
 
@@ -131,7 +135,20 @@ struct ContentView: View {
         .onAppear {
             updateGlobalTint()
             WidgetDataBridge.shared.updateWidgetData()
+            #if DEBUG
+            openDemoScreen()
+            #endif
         }
+        #if DEBUG
+        .sheet(isPresented: $demoPlacement) {
+            FormationView(roster: Demo.matchRoster, jerseyColor: .blue, opponentJerseyColor: .red,
+                          savedFormation: nil)
+                .largeSheetSizing()
+        }
+        .fullScreenCover(item: $demoTactic) { play in
+            TacticPlayerView(play: play, palette: Pitch3DPalette(team: .blue, opponent: .red))
+        }
+        #endif
         .onChange(of: scenePhase) {
             if scenePhase == .active {
                 WidgetDataBridge.shared.updateWidgetData()
@@ -397,6 +414,31 @@ struct ContentView: View {
             }
         }
     }
+
+    #if DEBUG
+    /// Captures App Store : ouvre l'écran demandé par `-demo`
+    private func openDemoScreen() {
+        switch Demo.screen {
+        case "match":
+            selectedTab = 0
+            Demo.prepareLiveMatch(matchViewModel)
+            showMatch = true
+        case "placement3d":
+            selectedTab = 0
+            matchViewModel.setMatchRoster(Demo.matchRoster)
+            demoPlacement = true
+        case "tactique":
+            demoTactic = TacticStore.shared.libraryTactics.first { $0.id == UUID.stable(from: Demo.tacticId) }
+        case "bibliotheque":
+            selectedTab = 2
+            showTacticsLibrary = true
+        case "joueurs":
+            selectedTab = 1
+        default:
+            break
+        }
+    }
+    #endif
 }
 
 // MARK: - Vue Réglages

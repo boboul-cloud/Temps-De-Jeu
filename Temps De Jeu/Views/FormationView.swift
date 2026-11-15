@@ -421,6 +421,19 @@ struct FormationView: View {
             }
             .onAppear {
                 initializePositions()
+                #if DEBUG
+                if Demo.screen == "placement3d" {
+                    applyFormation(.auto)              // chaque joueur sur la ligne de son poste
+                    currentFormationName = "4-3-3"
+                    opponents = [
+                        OpponentToken(id: UUID(), position: CGPoint(x: 0.40, y: 0.30), number: 9),
+                        OpponentToken(id: UUID(), position: CGPoint(x: 0.62, y: 0.33), number: 10),
+                        OpponentToken(id: UUID(), position: CGPoint(x: 0.22, y: 0.40), number: 7),
+                    ]
+                    ballPosition = CGPoint(x: 0.53, y: 0.47)
+                    is3D = true
+                }
+                #endif
             }
             .onChange(of: is3D) {
                 if is3D {

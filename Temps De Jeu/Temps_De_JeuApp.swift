@@ -13,6 +13,12 @@ struct Temps_De_JeuApp: App {
     @StateObject private var deepLinkManager = DeepLinkManager.shared
     @UIApplicationDelegateAdaptor(AppDelegate.self) var appDelegate
 
+    #if DEBUG
+    init() {
+        Demo.seedIfNeeded()   // Captures App Store uniquement
+    }
+    #endif
+
     var body: some Scene {
         WindowGroup {
             ContentView()
@@ -21,6 +27,9 @@ struct Temps_De_JeuApp: App {
                     deepLinkManager.handleURL(url)
                 }
                 .task {
+                    #if DEBUG
+                    if Demo.isActive { return }   // pas de demande d'autorisation à l'image
+                    #endif
                     await NotificationManager.shared.requestAuthorization()
                 }
         }

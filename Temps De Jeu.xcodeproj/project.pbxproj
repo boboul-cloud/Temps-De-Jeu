@@ -18,6 +18,13 @@
 			remoteGlobalIDString = AA00060026A000000052F6D8;
 			remoteInfo = TempsDeJeuWidgetExtension;
 		};
+		CC00000A26A000000052F6D8 /* PBXContainerItemProxy */ = {
+			isa = PBXContainerItemProxy;
+			containerPortal = BF82E3C42F368BC60052F6D8 /* Project object */;
+			proxyType = 1;
+			remoteGlobalIDString = BF82E3CB2F368BC60052F6D8;
+			remoteInfo = "Temps De Jeu";
+		};
 /* End PBXContainerItemProxy section */
 
 /* Begin PBXCopyFilesBuildPhase section */
@@ -37,6 +44,7 @@
 /* Begin PBXFileReference section */
 		AA00010026A000000052F6D8 /* TempsDeJeuWidgetExtension.appex */ = {isa = PBXFileReference; explicitFileType = "wrapper.app-extension"; includeInIndex = 0; path = TempsDeJeuWidgetExtension.appex; sourceTree = BUILT_PRODUCTS_DIR; };
 		BF82E3CC2F368BC60052F6D8 /* Temps De Jeu.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = "Temps De Jeu.app"; sourceTree = BUILT_PRODUCTS_DIR; };
+		CC00000126A000000052F6D8 /* TempsDeJeuUITests.xctest */ = {isa = PBXFileReference; explicitFileType = wrapper.cfbundle; includeInIndex = 0; path = TempsDeJeuUITests.xctest; sourceTree = BUILT_PRODUCTS_DIR; };
 /* End PBXFileReference section */
 
 /* Begin PBXFileSystemSynchronizedRootGroup section */
@@ -48,6 +56,11 @@
 		BF82E3CE2F368BC60052F6D8 /* Temps De Jeu */ = {
 			isa = PBXFileSystemSynchronizedRootGroup;
 			path = "Temps De Jeu";
+			sourceTree = "<group>";
+		};
+		CC00000226A000000052F6D8 /* TempsDeJeuUITests */ = {
+			isa = PBXFileSystemSynchronizedRootGroup;
+			path = TempsDeJeuUITests;
 			sourceTree = "<group>";
 		};
 /* End PBXFileSystemSynchronizedRootGroup section */
@@ -67,6 +80,13 @@
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
+		CC00000326A000000052F6D8 /* Frameworks */ = {
+			isa = PBXFrameworksBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
 /* End PBXFrameworksBuildPhase section */
 
 /* Begin PBXGroup section */
@@ -75,6 +95,7 @@
 			children = (
 				BF82E3CE2F368BC60052F6D8 /* Temps De Jeu */,
 				AA00020026A000000052F6D8 /* TempsDeJeuWidget */,
+				CC00000226A000000052F6D8 /* TempsDeJeuUITests */,
 				BF82E3CD2F368BC60052F6D8 /* Products */,
 			);
 			sourceTree = "<group>";
@@ -84,6 +105,7 @@
 			children = (
 				BF82E3CC2F368BC60052F6D8 /* Temps De Jeu.app */,
 				AA00010026A000000052F6D8 /* TempsDeJeuWidgetExtension.appex */,
+				CC00000126A000000052F6D8 /* TempsDeJeuUITests.xctest */,
 			);
 			name = Products;
 			sourceTree = "<group>";
@@ -137,6 +159,29 @@
 			productReference = BF82E3CC2F368BC60052F6D8 /* Temps De Jeu.app */;
 			productType = "com.apple.product-type.application";
 		};
+		CC00000626A000000052F6D8 /* TempsDeJeuUITests */ = {
+			isa = PBXNativeTarget;
+			buildConfigurationList = CC00000926A000000052F6D8 /* Build configuration list for PBXNativeTarget "TempsDeJeuUITests" */;
+			buildPhases = (
+				CC00000526A000000052F6D8 /* Sources */,
+				CC00000326A000000052F6D8 /* Frameworks */,
+				CC00000426A000000052F6D8 /* Resources */,
+			);
+			buildRules = (
+			);
+			dependencies = (
+				CC00000B26A000000052F6D8 /* PBXTargetDependency */,
+			);
+			fileSystemSynchronizedGroups = (
+				CC00000226A000000052F6D8 /* TempsDeJeuUITests */,
+			);
+			name = TempsDeJeuUITests;
+			packageProductDependencies = (
+			);
+			productName = TempsDeJeuUITests;
+			productReference = CC00000126A000000052F6D8 /* TempsDeJeuUITests.xctest */;
+			productType = "com.apple.product-type.bundle.ui-testing";
+		};
 /* End PBXNativeTarget section */
 
 /* Begin PBXProject section */
@@ -152,6 +197,10 @@
 					};
 					BF82E3CB2F368BC60052F6D8 = {
 						CreatedOnToolsVersion = 26.1.1;
+					};
+					CC00000626A000000052F6D8 = {
+						CreatedOnToolsVersion = 27.2;
+						TestTargetID = BF82E3CB2F368BC60052F6D8;
 					};
 				};
 			};
@@ -171,6 +220,7 @@
 			targets = (
 				BF82E3CB2F368BC60052F6D8 /* Temps De Jeu */,
 				AA00060026A000000052F6D8 /* TempsDeJeuWidgetExtension */,
+				CC00000626A000000052F6D8 /* TempsDeJeuUITests */,
 			);
 		};
 /* End PBXProject section */
@@ -184,6 +234,13 @@
 			runOnlyForDeploymentPostprocessing = 0;
 		};
 		BF82E3CA2F368BC60052F6D8 /* Resources */ = {
+			isa = PBXResourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+		CC00000426A000000052F6D8 /* Resources */ = {
 			isa = PBXResourcesBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
@@ -207,6 +264,13 @@
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
+		CC00000526A000000052F6D8 /* Sources */ = {
+			isa = PBXSourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
 /* End PBXSourcesBuildPhase section */
 
 /* Begin PBXTargetDependency section */
@@ -215,6 +279,11 @@
 			platformFilter = ios;
 			target = AA00060026A000000052F6D8 /* TempsDeJeuWidgetExtension */;
 			targetProxy = AA000A0026A000000052F6D8 /* PBXContainerItemProxy */;
+		};
+		CC00000B26A000000052F6D8 /* PBXTargetDependency */ = {
+			isa = PBXTargetDependency;
+			target = BF82E3CB2F368BC60052F6D8 /* Temps De Jeu */;
+			targetProxy = CC00000A26A000000052F6D8 /* PBXContainerItemProxy */;
 		};
 /* End PBXTargetDependency section */
 
@@ -226,7 +295,7 @@
 				ASSETCATALOG_COMPILER_WIDGET_BACKGROUND_COLOR_NAME = WidgetBackground;
 				CODE_SIGN_ENTITLEMENTS = TempsDeJeuWidget/TempsDeJeuWidget.entitlements;
 				CODE_SIGN_STYLE = Automatic;
-				CURRENT_PROJECT_VERSION = 29;
+				CURRENT_PROJECT_VERSION = 30;
 				DEVELOPMENT_TEAM = 38DQ8FW23J;
 				GENERATE_INFOPLIST_FILE = YES;
 				INFOPLIST_FILE = TempsDeJeuWidgetInfo.plist;
@@ -237,7 +306,7 @@
 					"@executable_path/Frameworks",
 					"@executable_path/../../Frameworks",
 				);
-				MARKETING_VERSION = 1.6.1;
+				MARKETING_VERSION = 1.7;
 				PRODUCT_BUNDLE_IDENTIFIER = "bob.oulhen-gmail.com.Temps-De-Jeu.Widget";
 				PRODUCT_NAME = "$(TARGET_NAME)";
 				SKIP_INSTALL = YES;
@@ -254,7 +323,7 @@
 				ASSETCATALOG_COMPILER_WIDGET_BACKGROUND_COLOR_NAME = WidgetBackground;
 				CODE_SIGN_ENTITLEMENTS = TempsDeJeuWidget/TempsDeJeuWidget.entitlements;
 				CODE_SIGN_STYLE = Automatic;
-				CURRENT_PROJECT_VERSION = 29;
+				CURRENT_PROJECT_VERSION = 30;
 				DEVELOPMENT_TEAM = 38DQ8FW23J;
 				GENERATE_INFOPLIST_FILE = YES;
 				INFOPLIST_FILE = TempsDeJeuWidgetInfo.plist;
@@ -265,7 +334,7 @@
 					"@executable_path/Frameworks",
 					"@executable_path/../../Frameworks",
 				);
-				MARKETING_VERSION = 1.6.1;
+				MARKETING_VERSION = 1.7;
 				PRODUCT_BUNDLE_IDENTIFIER = "bob.oulhen-gmail.com.Temps-De-Jeu.Widget";
 				PRODUCT_NAME = "$(TARGET_NAME)";
 				SKIP_INSTALL = YES;
@@ -403,7 +472,8 @@
 				ASSETCATALOG_COMPILER_GLOBAL_ACCENT_COLOR_NAME = AccentColor;
 				CODE_SIGN_ENTITLEMENTS = "Temps De Jeu/Temps De Jeu.entitlements";
 				CODE_SIGN_STYLE = Automatic;
-				CURRENT_PROJECT_VERSION = 29;
+				CURRENT_PROJECT_VERSION = 30;
+				DERIVE_MACCATALYST_PRODUCT_BUNDLE_IDENTIFIER = NO;
 				DEVELOPMENT_TEAM = 38DQ8FW23J;
 				ENABLE_PREVIEWS = YES;
 				GENERATE_INFOPLIST_FILE = YES;
@@ -417,14 +487,13 @@
 					"$(inherited)",
 					"@executable_path/Frameworks",
 				);
-				MARKETING_VERSION = 1.6.1;
+				MARKETING_VERSION = 1.7;
 				PRODUCT_BUNDLE_IDENTIFIER = "bob.oulhen-gmail.com.Temps-De-Jeu";
 				PRODUCT_NAME = "$(TARGET_NAME)";
 				STRING_CATALOG_GENERATE_SYMBOLS = YES;
+				SUPPORTS_MACCATALYST = YES;
 				SWIFT_EMIT_LOC_STRINGS = YES;
 				SWIFT_VERSION = 5.0;
-				SUPPORTS_MACCATALYST = YES;
-				DERIVE_MACCATALYST_PRODUCT_BUNDLE_IDENTIFIER = NO;
 				TARGETED_DEVICE_FAMILY = "1,2";
 			};
 			name = Debug;
@@ -436,7 +505,8 @@
 				ASSETCATALOG_COMPILER_GLOBAL_ACCENT_COLOR_NAME = AccentColor;
 				CODE_SIGN_ENTITLEMENTS = "Temps De Jeu/Temps De Jeu.entitlements";
 				CODE_SIGN_STYLE = Automatic;
-				CURRENT_PROJECT_VERSION = 29;
+				CURRENT_PROJECT_VERSION = 30;
+				DERIVE_MACCATALYST_PRODUCT_BUNDLE_IDENTIFIER = NO;
 				DEVELOPMENT_TEAM = 38DQ8FW23J;
 				ENABLE_PREVIEWS = YES;
 				GENERATE_INFOPLIST_FILE = YES;
@@ -450,15 +520,50 @@
 					"$(inherited)",
 					"@executable_path/Frameworks",
 				);
-				MARKETING_VERSION = 1.6.1;
+				MARKETING_VERSION = 1.7;
 				PRODUCT_BUNDLE_IDENTIFIER = "bob.oulhen-gmail.com.Temps-De-Jeu";
 				PRODUCT_NAME = "$(TARGET_NAME)";
 				STRING_CATALOG_GENERATE_SYMBOLS = YES;
+				SUPPORTS_MACCATALYST = YES;
 				SWIFT_EMIT_LOC_STRINGS = YES;
 				SWIFT_VERSION = 5.0;
-				SUPPORTS_MACCATALYST = YES;
-				DERIVE_MACCATALYST_PRODUCT_BUNDLE_IDENTIFIER = NO;
 				TARGETED_DEVICE_FAMILY = "1,2";
+			};
+			name = Release;
+		};
+		CC00000726A000000052F6D8 /* Debug */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				CODE_SIGN_STYLE = Automatic;
+				CURRENT_PROJECT_VERSION = 30;
+				DEVELOPMENT_TEAM = 38DQ8FW23J;
+				GENERATE_INFOPLIST_FILE = YES;
+				IPHONEOS_DEPLOYMENT_TARGET = 17.0;
+				MARKETING_VERSION = 1.7;
+				PRODUCT_BUNDLE_IDENTIFIER = "bob.oulhen-gmail.com.Temps-De-Jeu.UITests";
+				PRODUCT_NAME = "$(TARGET_NAME)";
+				SWIFT_EMIT_LOC_STRINGS = NO;
+				SWIFT_VERSION = 5.0;
+				TARGETED_DEVICE_FAMILY = "1,2";
+				TEST_TARGET_NAME = "Temps De Jeu";
+			};
+			name = Debug;
+		};
+		CC00000826A000000052F6D8 /* Release */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				CODE_SIGN_STYLE = Automatic;
+				CURRENT_PROJECT_VERSION = 30;
+				DEVELOPMENT_TEAM = 38DQ8FW23J;
+				GENERATE_INFOPLIST_FILE = YES;
+				IPHONEOS_DEPLOYMENT_TARGET = 17.0;
+				MARKETING_VERSION = 1.7;
+				PRODUCT_BUNDLE_IDENTIFIER = "bob.oulhen-gmail.com.Temps-De-Jeu.UITests";
+				PRODUCT_NAME = "$(TARGET_NAME)";
+				SWIFT_EMIT_LOC_STRINGS = NO;
+				SWIFT_VERSION = 5.0;
+				TARGETED_DEVICE_FAMILY = "1,2";
+				TEST_TARGET_NAME = "Temps De Jeu";
 			};
 			name = Release;
 		};
@@ -488,6 +593,15 @@
 			buildConfigurations = (
 				BF82E3D82F368BC70052F6D8 /* Debug */,
 				BF82E3D92F368BC70052F6D8 /* Release */,
+			);
+			defaultConfigurationIsVisible = 0;
+			defaultConfigurationName = Release;
+		};
+		CC00000926A000000052F6D8 /* Build configuration list for PBXNativeTarget "TempsDeJeuUITests" */ = {
+			isa = XCConfigurationList;
+			buildConfigurations = (
+				CC00000726A000000052F6D8 /* Debug */,
+				CC00000826A000000052F6D8 /* Release */,
 			);
 			defaultConfigurationIsVisible = 0;
 			defaultConfigurationName = Release;
