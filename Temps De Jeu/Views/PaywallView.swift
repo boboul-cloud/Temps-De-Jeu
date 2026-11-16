@@ -165,10 +165,10 @@ struct PaywallView: View {
                     }
                 }
             }
-            .sheet(isPresented: $showTerms) {
+            .readingPage(isPresented: $showTerms) {
                 TermsOfUseView()
             }
-            .sheet(isPresented: $showPrivacy) {
+            .readingPage(isPresented: $showPrivacy) {
                 PrivacyPolicyView()
             }
         }

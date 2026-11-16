@@ -602,16 +602,16 @@ struct SettingsView: View {
             .sheet(isPresented: $showPaywall) {
                 PaywallView(storeManager: storeManager)
             }
-            .sheet(isPresented: $showTerms) {
+            .readingPage(isPresented: $showTerms) {
                 TermsOfUseView()
             }
-            .sheet(isPresented: $showPrivacy) {
+            .readingPage(isPresented: $showPrivacy) {
                 PrivacyPolicyView()
             }
             .sheet(isPresented: $showPremiumStatus) {
                 PremiumStatusView()
             }
-            .sheet(isPresented: $showUserGuide) {
+            .readingPage(isPresented: $showUserGuide) {
                 UserGuideView()
             }
         }

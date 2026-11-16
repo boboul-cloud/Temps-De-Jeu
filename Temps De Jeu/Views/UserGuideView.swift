@@ -8,306 +8,296 @@
 import SwiftUI
 
 struct UserGuideView: View {
-    @Environment(\.dismiss) private var dismiss
     
     var body: some View {
-        NavigationStack {
-            ScrollView {
-                VStack(alignment: .leading, spacing: 24) {
-                    
-                    // Introduction
-                    introSection
-                    
-                    Divider()
-                    
-                    // 1. Créer son effectif
-                    guideSection(
-                        number: "1",
-                        title: "Créer son effectif",
-                        icon: "person.3.fill",
-                        color: .blue,
-                        steps: [
-                            "Allez dans l'onglet **Joueurs**",
-                            "Appuyez sur **+** pour ajouter un joueur",
-                            "Renseignez le nom, prénom, numéro et position",
-                            "Vous pouvez importer un effectif existant via **Import JSON**"
-                        ]
-                    )
-                    
-                    Divider()
-                    
-                    // 2. Préparer un match
-                    guideSection(
-                        number: "2",
-                        title: "Préparer un match",
-                        icon: "sportscourt.fill",
-                        color: .green,
-                        steps: [
-                            "Allez dans l'onglet **Match**",
-                            "Renseignez les équipes, la compétition et la date",
-                            "Appuyez sur **Sélectionner les joueurs**",
-                            "Cochez les joueurs convoqués pour ce match",
-                            "Le nombre de joueurs sélectionnés s'affiche en haut"
-                        ]
-                    )
-                    
-                    Divider()
-                    
-                    // 3. Système Cascade
-                    cascadeSection
-                    
-                    Divider()
-                    
-                    // 4. Pendant le match
-                    guideSection(
-                        number: "4",
-                        title: "Pendant le match",
-                        icon: "timer",
-                        color: .orange,
-                        steps: [
-                            "Appuyez sur **Démarrer le match**",
-                            "Le chrono démarre automatiquement",
-                            "Les joueurs **sur le terrain** sont en haut",
-                            "Les joueurs **remplaçants** sont en bas",
-                            "Le temps de jeu de chaque joueur est affiché"
-                        ]
-                    )
-                    
-                    Divider()
-                    
-                    // 5. Remplacements
-                    guideSection(
-                        number: "5",
-                        title: "Faire un remplacement",
-                        icon: "arrow.left.arrow.right",
-                        color: .purple,
-                        steps: [
-                            "Appuyez sur le bouton **Rempl.** en haut de l'écran de match",
-                            "Sélectionnez le **titulaire sortant** parmi la liste des titulaires",
-                            "Sélectionnez le **remplaçant entrant** parmi la liste des remplaçants",
-                            "Appuyez sur **Confirmer le remplacement**",
-                            "Le remplacement est enregistré avec le temps exact",
-                            "Consultez la **Timeline** pour voir l'historique"
-                        ]
-                    )
-                    
-                    Divider()
-                    
-                    // 6. Événements
-                    guideSection(
-                        number: "6",
-                        title: "Enregistrer des événements",
-                        icon: "flag.fill",
-                        color: .red,
-                        steps: [
-                            "**But** : Appuyez sur le score pour ajouter/retirer un but",
-                            "**Carton** : Appuyez sur un joueur → Carton jaune/rouge",
-                            "**Arrêt de jeu** : Appuyez sur ⏸️ pour mettre en pause",
-                            "Tous les événements apparaissent dans la **Timeline**"
-                        ]
-                    )
-                    
-                    Divider()
-                    
-                    // 7. Mi-temps et fin
-                    guideSection(
-                        number: "7",
-                        title: "Mi-temps et fin de match",
-                        icon: "clock.badge.checkmark.fill",
-                        color: .teal,
-                        steps: [
-                            "À la mi-temps, appuyez sur **Mi-temps**",
-                            "Le chrono se met en pause",
-                            "Appuyez sur **Reprendre** pour la 2ème mi-temps",
-                            "En fin de match, appuyez sur **Terminer**",
-                            "Le match est sauvegardé dans l'**Historique des matchs**"
-                        ]
-                    )
-                    
-                    Divider()
-                    
-                    // 8. Statistiques
-                    guideSection(
-                        number: "8",
-                        title: "Consulter les statistiques",
-                        icon: "chart.bar.fill",
-                        color: .indigo,
-                        steps: [
-                            "Allez dans l'onglet **Stats**",
-                            "Visualisez le temps de jeu par joueur",
-                            "Filtrez par période (saison, mois...)",
-                            "Exportez en **PDF** pour partager"
-                        ]
-                    )
-                    
-                    Divider()
-                    
-                    // 9. Historique
-                    guideSection(
-                        number: "9",
-                        title: "Historique des matchs",
-                        icon: "clock.arrow.circlepath",
-                        color: .brown,
-                        steps: [
-                            "Allez dans l'onglet **Historique des matchs**",
-                            "Retrouvez tous vos matchs passés",
-                            "Appuyez sur un match pour voir les détails",
-                            "Exportez le rapport PDF du match"
-                        ]
-                    )
-                    
-                    Divider()
-                    
-                    // 10. Catégories
-                    guideSection(
-                        number: "10",
-                        title: "Gérer les catégories",
-                        icon: "rectangle.stack.fill",
-                        color: .cyan,
-                        steps: [
-                            "Allez dans l'onglet **Catégories**",
-                            "Créez vos catégories d'âge (U13, U15, Seniors…)",
-                            "Les joueurs sont créés dans **Joueurs** dans leur catégorie d'origine",
-                            "Dans **Catégories**, assignez des joueurs à d'autres catégories si nécessaire",
-                            "Chaque catégorie a ses propres **matchs**, **entraînements** et **statistiques**",
-                            "Un badge coloré signale les joueurs venant d'une autre catégorie"
-                        ]
-                    )
-                    
-                    Divider()
-                    
-                    // 11. Joueurs inter-catégories
-                    guideSection(
-                        number: "11",
-                        title: "Joueurs inter-catégories",
-                        icon: "person.2.badge.plus",
-                        color: .orange,
-                        steps: [
-                            "Un joueur a **une catégorie d'origine** (là où il est créé)",
-                            "Il peut être **assigné à d'autres catégories** pour les matchs",
-                            "Lors d'un entraînement, dépliez **Joueurs d'autres catégories** pour inviter des joueurs",
-                            "Les entraînements avec d'autres catégories sont comptés dans ses **statistiques de présence**",
-                            "Un joueur sélectionné dans un match d'une catégorie est **verrouillé** dans les autres"
-                        ]
-                    )
-                    
-                    Divider()
-                    
-                    // 12. Présences aux entraînements
-                    guideSection(
-                        number: "12",
-                        title: "Présences aux entraînements",
-                        icon: "figure.run.circle.fill",
-                        color: .mint,
-                        steps: [
-                            "Allez dans l'onglet **Présences**",
-                            "Appuyez sur **⋯** puis **Nouvel entraînement**",
-                            "Choisissez la **date** de l'entraînement",
-                            "Cochez les **joueurs présents** dans la liste",
-                            "Utilisez **Tout sélectionner** pour pointer rapidement",
-                            "Ajoutez une note optionnelle (thème de l'entraînement)",
-                            "Appuyez sur un entraînement pour le modifier ou **exporter en PDF**",
-                            "Consultez les **Statistiques** pour voir le taux de présence par joueur",
-                            "**Exportez** les présences en PDF ou JSON sur une période"
-                        ]
-                    )
-                    
-                    Divider()
-                    
-                    // 13. Encadrement
-                    guideSection(
-                        number: "13",
-                        title: "Gérer l'encadrement",
-                        icon: "person.badge.shield.checkmark.fill",
-                        color: .brown,
-                        steps: [
-                            "Allez dans l'onglet **Encadrement** (dans « Autres »)",
-                            "Appuyez sur **+** puis **Ajouter un encadrant**",
-                            "Renseignez le **nom**, **prénom**, **rôle**, **téléphone** et **email**",
-                            "Ajoutez une **photo** pour identifier facilement chaque encadrant",
-                            "**8 rôles prédéfinis** : Coach, Adjoint, Arbitre, Délégué, Préparateur physique, Entraîneur des gardiens, Intendant, Responsable médical",
-                            "Créez vos propres rôles via **Gérer les rôles** dans le menu **+**",
-                            "Assignez un encadrant à **plusieurs catégories** depuis sa fiche",
-                            "**Appelez directement** un encadrant en appuyant sur l'icône téléphone ou par swipe",
-                            "Supprimez un encadrant par **swipe vers la gauche**"
-                        ]
-                    )
-                    
-                    Divider()
-                    
-                    // 14. Sondage de disponibilité
-                    guideSection(
-                        number: "14",
-                        title: "Sondage de disponibilité",
-                        icon: "paperplane.fill",
-                        color: .orange,
-                        steps: [
-                            "Ouvrez un entraînement existant et appuyez sur **Sondage disponibilité**",
-                            "**Partagez le lien** à vos joueurs via WhatsApp, SMS, iMessage…",
-                            "Les joueurs répondent depuis **n'importe quel téléphone** (iPhone ou Android)",
-                            "Les réponses apparaissent en temps réel : **Présent**, **Absent** ou **Incertain**",
-                            "Appuyez sur **Appliquer aux présences** pour reporter automatiquement les réponses",
-                            "Les joueurs ajoutés après la création de l'entraînement sont **intégrés automatiquement**",
-                            "Programmez un **rappel** pour relancer les joueurs n'ayant pas répondu"
-                        ]
-                    )
-                    
-                    Divider()
-                    
-                    // 15. Widget Prochain événement
-                    guideSection(
-                        number: "15",
-                        title: "Widget écran d'accueil",
-                        icon: "square.grid.2x2.fill",
-                        color: .blue,
-                        steps: [
-                            "Ajoutez le widget **Prochain événement** sur votre écran d'accueil ou écran de verrouillage",
-                            "Maintenez appuyé sur l'écran d'accueil → **+** → cherchez **Temps De Jeu**",
-                            "**3 tailles disponibles** : petit, moyen et rectangle écran de verrouillage",
-                            "Le widget affiche le **prochain match** (adversaire, date, domicile/extérieur)",
-                            "Il affiche aussi le **prochain entraînement** avec le nombre de réponses au sondage",
-                            "Choisissez la **catégorie** à afficher en maintenant appuyé sur le widget → **Modifier le widget**",
-                            "Les données se mettent à jour **automatiquement** toutes les 30 minutes"
-                        ]
-                    )
-                    
-                    Divider()
-                    
-                    // 16. Placement 3D et tactiques animées
-                    guideSection(
-                        number: "16",
-                        title: "Placement 3D et tactiques",
-                        icon: "cube.transparent.fill",
-                        color: .teal,
-                        steps: [
-                            "Dans **Match › Placement**, basculez sur **3D** pour voir votre composition sur un terrain en relief",
-                            "Glissez un joueur ou le ballon pour le déplacer ; faites pivoter et zoomez la caméra ailleurs sur le terrain",
-                            "Changez de point de vue : **Coach**, **Tribune**, **Dessus** ou **Immersion**",
-                            "Créez une **séquence pas à pas** : placez joueurs et ballon, validez la **Mise en place**, puis une action par étape",
-                            "**Course** : déplacez un joueur sans ballon · **Conduite** : déplacez le porteur, le ballon suit · **Passe** : glissez le ballon sur un partenaire · **Tir** : glissez-le dans le but · **En l'air** pour un centre",
-                            "Les flèches s'affichent **avant** de valider : vous voyez ce qui sera enregistré. Touchez un numéro d'étape pour la corriger",
-                            "**Créer une séquence d'entraînement** sans composition de match : Tactiques 3D › **+**, avec le cadrage *Zone de jeu* pour les petits espaces",
-                            "▶︎ **Lire la démonstration** : joueurs et ballon s'animent d'une étape à l'autre, avec vos consignes",
-                            "**Bibliothèque d'exercices 3D** (Placement ou onglet Présences) : rondos, relance, pressing, contre-attaque, corners… avec objectif et consignes",
-                            "Partagez ou importez des tactiques au format **.tdjt** (fichier JSON lisible) par Messages, AirDrop ou e-mail"
-                        ]
-                    )
-                    
-                    Divider()
-                    
-                    // Tips
-                    tipsSection
-                    
-                }
-                .padding()
+        ReadingPage(title: "Mode d'emploi") {
+            VStack(alignment: .leading, spacing: 24) {
+                
+                // Introduction
+                introSection
+                
+                Divider()
+                
+                // 1. Créer son effectif
+                guideSection(
+                    number: "1",
+                    title: "Créer son effectif",
+                    icon: "person.3.fill",
+                    color: .blue,
+                    steps: [
+                        "Allez dans l'onglet **Joueurs**",
+                        "Appuyez sur **+** pour ajouter un joueur",
+                        "Renseignez le nom, prénom, numéro et position",
+                        "Vous pouvez importer un effectif existant via **Import JSON**"
+                    ]
+                )
+                
+                Divider()
+                
+                // 2. Préparer un match
+                guideSection(
+                    number: "2",
+                    title: "Préparer un match",
+                    icon: "sportscourt.fill",
+                    color: .green,
+                    steps: [
+                        "Allez dans l'onglet **Match**",
+                        "Renseignez les équipes, la compétition et la date",
+                        "Appuyez sur **Sélectionner les joueurs**",
+                        "Cochez les joueurs convoqués pour ce match",
+                        "Le nombre de joueurs sélectionnés s'affiche en haut"
+                    ]
+                )
+                
+                Divider()
+                
+                // 3. Système Cascade
+                cascadeSection
+                
+                Divider()
+                
+                // 4. Pendant le match
+                guideSection(
+                    number: "4",
+                    title: "Pendant le match",
+                    icon: "timer",
+                    color: .orange,
+                    steps: [
+                        "Appuyez sur **Démarrer le match**",
+                        "Le chrono démarre automatiquement",
+                        "Les joueurs **sur le terrain** sont en haut",
+                        "Les joueurs **remplaçants** sont en bas",
+                        "Le temps de jeu de chaque joueur est affiché"
+                    ]
+                )
+                
+                Divider()
+                
+                // 5. Remplacements
+                guideSection(
+                    number: "5",
+                    title: "Faire un remplacement",
+                    icon: "arrow.left.arrow.right",
+                    color: .purple,
+                    steps: [
+                        "Appuyez sur le bouton **Rempl.** en haut de l'écran de match",
+                        "Sélectionnez le **titulaire sortant** parmi la liste des titulaires",
+                        "Sélectionnez le **remplaçant entrant** parmi la liste des remplaçants",
+                        "Appuyez sur **Confirmer le remplacement**",
+                        "Le remplacement est enregistré avec le temps exact",
+                        "Consultez la **Timeline** pour voir l'historique"
+                    ]
+                )
+                
+                Divider()
+                
+                // 6. Événements
+                guideSection(
+                    number: "6",
+                    title: "Enregistrer des événements",
+                    icon: "flag.fill",
+                    color: .red,
+                    steps: [
+                        "**But** : Appuyez sur le score pour ajouter/retirer un but",
+                        "**Carton** : Appuyez sur un joueur → Carton jaune/rouge",
+                        "**Arrêt de jeu** : Appuyez sur ⏸️ pour mettre en pause",
+                        "Tous les événements apparaissent dans la **Timeline**"
+                    ]
+                )
+                
+                Divider()
+                
+                // 7. Mi-temps et fin
+                guideSection(
+                    number: "7",
+                    title: "Mi-temps et fin de match",
+                    icon: "clock.badge.checkmark.fill",
+                    color: .teal,
+                    steps: [
+                        "À la mi-temps, appuyez sur **Mi-temps**",
+                        "Le chrono se met en pause",
+                        "Appuyez sur **Reprendre** pour la 2ème mi-temps",
+                        "En fin de match, appuyez sur **Terminer**",
+                        "Le match est sauvegardé dans l'**Historique des matchs**"
+                    ]
+                )
+                
+                Divider()
+                
+                // 8. Statistiques
+                guideSection(
+                    number: "8",
+                    title: "Consulter les statistiques",
+                    icon: "chart.bar.fill",
+                    color: .indigo,
+                    steps: [
+                        "Allez dans l'onglet **Stats**",
+                        "Visualisez le temps de jeu par joueur",
+                        "Filtrez par période (saison, mois...)",
+                        "Exportez en **PDF** pour partager"
+                    ]
+                )
+                
+                Divider()
+                
+                // 9. Historique
+                guideSection(
+                    number: "9",
+                    title: "Historique des matchs",
+                    icon: "clock.arrow.circlepath",
+                    color: .brown,
+                    steps: [
+                        "Allez dans l'onglet **Historique des matchs**",
+                        "Retrouvez tous vos matchs passés",
+                        "Appuyez sur un match pour voir les détails",
+                        "Exportez le rapport PDF du match"
+                    ]
+                )
+                
+                Divider()
+                
+                // 10. Catégories
+                guideSection(
+                    number: "10",
+                    title: "Gérer les catégories",
+                    icon: "rectangle.stack.fill",
+                    color: .cyan,
+                    steps: [
+                        "Allez dans l'onglet **Catégories**",
+                        "Créez vos catégories d'âge (U13, U15, Seniors…)",
+                        "Les joueurs sont créés dans **Joueurs** dans leur catégorie d'origine",
+                        "Dans **Catégories**, assignez des joueurs à d'autres catégories si nécessaire",
+                        "Chaque catégorie a ses propres **matchs**, **entraînements** et **statistiques**",
+                        "Un badge coloré signale les joueurs venant d'une autre catégorie"
+                    ]
+                )
+                
+                Divider()
+                
+                // 11. Joueurs inter-catégories
+                guideSection(
+                    number: "11",
+                    title: "Joueurs inter-catégories",
+                    icon: "person.2.badge.plus",
+                    color: .orange,
+                    steps: [
+                        "Un joueur a **une catégorie d'origine** (là où il est créé)",
+                        "Il peut être **assigné à d'autres catégories** pour les matchs",
+                        "Lors d'un entraînement, dépliez **Joueurs d'autres catégories** pour inviter des joueurs",
+                        "Les entraînements avec d'autres catégories sont comptés dans ses **statistiques de présence**",
+                        "Un joueur sélectionné dans un match d'une catégorie est **verrouillé** dans les autres"
+                    ]
+                )
+                
+                Divider()
+                
+                // 12. Présences aux entraînements
+                guideSection(
+                    number: "12",
+                    title: "Présences aux entraînements",
+                    icon: "figure.run.circle.fill",
+                    color: .mint,
+                    steps: [
+                        "Allez dans l'onglet **Présences**",
+                        "Appuyez sur **⋯** puis **Nouvel entraînement**",
+                        "Choisissez la **date** de l'entraînement",
+                        "Cochez les **joueurs présents** dans la liste",
+                        "Utilisez **Tout sélectionner** pour pointer rapidement",
+                        "Ajoutez une note optionnelle (thème de l'entraînement)",
+                        "Appuyez sur un entraînement pour le modifier ou **exporter en PDF**",
+                        "Consultez les **Statistiques** pour voir le taux de présence par joueur",
+                        "**Exportez** les présences en PDF ou JSON sur une période"
+                    ]
+                )
+                
+                Divider()
+                
+                // 13. Encadrement
+                guideSection(
+                    number: "13",
+                    title: "Gérer l'encadrement",
+                    icon: "person.badge.shield.checkmark.fill",
+                    color: .brown,
+                    steps: [
+                        "Allez dans l'onglet **Encadrement** (dans « Autres »)",
+                        "Appuyez sur **+** puis **Ajouter un encadrant**",
+                        "Renseignez le **nom**, **prénom**, **rôle**, **téléphone** et **email**",
+                        "Ajoutez une **photo** pour identifier facilement chaque encadrant",
+                        "**8 rôles prédéfinis** : Coach, Adjoint, Arbitre, Délégué, Préparateur physique, Entraîneur des gardiens, Intendant, Responsable médical",
+                        "Créez vos propres rôles via **Gérer les rôles** dans le menu **+**",
+                        "Assignez un encadrant à **plusieurs catégories** depuis sa fiche",
+                        "**Appelez directement** un encadrant en appuyant sur l'icône téléphone ou par swipe",
+                        "Supprimez un encadrant par **swipe vers la gauche**"
+                    ]
+                )
+                
+                Divider()
+                
+                // 14. Sondage de disponibilité
+                guideSection(
+                    number: "14",
+                    title: "Sondage de disponibilité",
+                    icon: "paperplane.fill",
+                    color: .orange,
+                    steps: [
+                        "Ouvrez un entraînement existant et appuyez sur **Sondage disponibilité**",
+                        "**Partagez le lien** à vos joueurs via WhatsApp, SMS, iMessage…",
+                        "Les joueurs répondent depuis **n'importe quel téléphone** (iPhone ou Android)",
+                        "Les réponses apparaissent en temps réel : **Présent**, **Absent** ou **Incertain**",
+                        "Appuyez sur **Appliquer aux présences** pour reporter automatiquement les réponses",
+                        "Les joueurs ajoutés après la création de l'entraînement sont **intégrés automatiquement**",
+                        "Programmez un **rappel** pour relancer les joueurs n'ayant pas répondu"
+                    ]
+                )
+                
+                Divider()
+                
+                // 15. Widget Prochain événement
+                guideSection(
+                    number: "15",
+                    title: "Widget écran d'accueil",
+                    icon: "square.grid.2x2.fill",
+                    color: .blue,
+                    steps: [
+                        "Ajoutez le widget **Prochain événement** sur votre écran d'accueil ou écran de verrouillage",
+                        "Maintenez appuyé sur l'écran d'accueil → **+** → cherchez **Temps De Jeu**",
+                        "**3 tailles disponibles** : petit, moyen et rectangle écran de verrouillage",
+                        "Le widget affiche le **prochain match** (adversaire, date, domicile/extérieur)",
+                        "Il affiche aussi le **prochain entraînement** avec le nombre de réponses au sondage",
+                        "Choisissez la **catégorie** à afficher en maintenant appuyé sur le widget → **Modifier le widget**",
+                        "Les données se mettent à jour **automatiquement** toutes les 30 minutes"
+                    ]
+                )
+                
+                Divider()
+                
+                // 16. Placement 3D et tactiques animées
+                guideSection(
+                    number: "16",
+                    title: "Placement 3D et tactiques",
+                    icon: "cube.transparent.fill",
+                    color: .teal,
+                    steps: [
+                        "Dans **Match › Placement**, basculez sur **3D** pour voir votre composition sur un terrain en relief",
+                        "Glissez un joueur ou le ballon pour le déplacer ; faites pivoter et zoomez la caméra ailleurs sur le terrain",
+                        "Changez de point de vue : **Coach**, **Tribune**, **Dessus** ou **Immersion**",
+                        "Créez une **séquence pas à pas** : placez joueurs et ballon, validez la **Mise en place**, puis une action par étape",
+                        "**Course** : déplacez un joueur sans ballon · **Conduite** : déplacez le porteur, le ballon suit · **Passe** : glissez le ballon sur un partenaire · **Tir** : glissez-le dans le but · **En l'air** pour un centre",
+                        "Les flèches s'affichent **avant** de valider : vous voyez ce qui sera enregistré. Touchez un numéro d'étape pour la corriger",
+                        "**Créer une séquence d'entraînement** sans composition de match : Tactiques 3D › **+**, avec le cadrage *Zone de jeu* pour les petits espaces",
+                        "▶︎ **Lire la démonstration** : joueurs et ballon s'animent d'une étape à l'autre, avec vos consignes",
+                        "**Bibliothèque d'exercices 3D** (Placement ou onglet Présences) : rondos, relance, pressing, contre-attaque, corners… avec objectif et consignes",
+                        "Partagez ou importez des tactiques au format **.tdjt** (fichier JSON lisible) par Messages, AirDrop ou e-mail"
+                    ]
+                )
+                
+                Divider()
+                
+                // Tips
+                tipsSection
+                
             }
-            .navigationTitle("Mode d'emploi")
-            .navigationBarTitleDisplayMode(.inline)
-            .toolbar {
-                ToolbarItem(placement: .topBarTrailing) {
-                    Button("Fermer") { dismiss() }
-                }
-            }
+            .padding()
         }
     }
     
