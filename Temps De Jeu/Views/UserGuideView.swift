@@ -304,6 +304,7 @@ struct UserGuideView: View {
                         "✨ **Raccourcis** : carré de plots, rondo, jeu 4 contre 4 avec mini-buts, slalom… posés en un geste",
                         "Touchez un objet pour le régler : **8 couleurs** de chasubles et de matériel, numéro, gardien, tourner, copier, enlever. Glissez-le pour le déplacer",
                         "**Étapes** : « + Étape » copie la précédente ; déplacez les joueurs, **glissez le ballon sur un partenaire** pour une passe (Passe, Centre ou Tir). Les flèches se tracent toutes seules, la position d'avant reste en transparence",
+                        "**Plusieurs ballons** : l'outil **Ballon** reste actif, chaque touche pose un ballon de plus (un par binôme, un par joueur…) ; chacun se passe et se conduit séparément. **Ballon posé** sert aux ballons qui attendent au sol",
                         "▶︎ **Aperçu** sur le terrain, ou **Cinéma** : la 3D en plein écran, avec la consigne en sous-titre",
                         "**Évolutions** : « + Évolution » repart du même terrain pour une variante (2 touches maximum, un défenseur en plus…)",
                         "**Fiche** : objectif, consignes et **matériel à prévoir calculé tout seul** (« 12 plots jaunes, 6 chasubles rouges… »), fiche PDF à imprimer",

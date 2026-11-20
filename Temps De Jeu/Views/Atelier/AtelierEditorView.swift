@@ -300,13 +300,14 @@ struct AtelierEditorView: View {
                             .accessibilityIdentifier("atelier-joueur-\(actor.bibColor.rawValue)-\(actor.label)")
                     }
                 }
-                if model.hasBall {
+                ForEach(model.ballIds, id: \.self) { ball in
+                    let number = TacticPlay.ballNumber(ball)
                     Color.clear
                         .frame(width: 22, height: 22)
-                        .position(AtelierRenderer.ballScreenPoint(frame, vp))
+                        .position(AtelierRenderer.ballScreenPoint(frame, vp, ball: ball))
                         .accessibilityElement()
-                        .accessibilityLabel("Ballon")
-                        .accessibilityIdentifier("atelier-ballon")
+                        .accessibilityLabel(number == 1 ? "Ballon" : "Ballon \(number)")
+                        .accessibilityIdentifier("atelier-\(ball)")
                 }
             }
             .allowsHitTesting(false)
@@ -440,19 +441,20 @@ struct AtelierEditorView: View {
                 AtelierRenderer.drawActor(ctx, vp, actor, at: positions[actor.id]!,
                                           highlighted: play.steps[step].highlight?.contains(actor.id) ?? false)
             }
-            if play.hasBall {
-                var frameNow = after
-                frameNow.positions = positions
-                let carried = before.ballHolder != nil && before.ballHolder == after.ballHolder
+            var frameNow = after
+            frameNow.positions = positions
+            for id in play.ballIds {
+                let held0 = before.ball(id)?.holder, held1 = after.ball(id)?.holder
+                let carried = held0 != nil && held0 == held1
                 let ball: CGPoint
-                if carried || step == 0 {
-                    ball = AtelierRenderer.ballScreenPoint(frameNow, vp)
+                if carried || step == 0 || before.ball(id) == nil {
+                    ball = AtelierRenderer.ballScreenPoint(frameNow, vp, ball: id)
                 } else {
-                    let a = AtelierRenderer.ballScreenPoint(before, vp)
-                    let b = AtelierRenderer.ballScreenPoint(after, vp)
+                    let a = AtelierRenderer.ballScreenPoint(before, vp, ball: id)
+                    let b = AtelierRenderer.ballScreenPoint(after, vp, ball: id)
                     ball = CGPoint(x: a.x + (b.x - a.x) * e, y: a.y + (b.y - a.y) * e)
                 }
-                let lift = play.isAerial(step: step) ? 1 + 0.6 * sin(.pi * e) : 1
+                let lift = play.isAerial(step: step, ball: id) ? 1 + 0.6 * sin(.pi * e) : 1
                 AtelierRenderer.drawBallGlyph(ctx, at: ball, diameter: 17 * lift)
             }
             return
@@ -503,18 +505,21 @@ struct AtelierEditorView: View {
         }
 
         // Joueurs
-        let draggingBall = drag?.moved == true && drag?.target == .ball
-        let receiver = draggingBall ? drag.flatMap { actorNear($0.current, vp: vp) } : nil
+        let draggedBall: String? = {
+            guard let drag, drag.moved, case .ball(let id)? = drag.target else { return nil }
+            return id
+        }()
+        let receiver = draggedBall != nil ? drag.flatMap { actorNear($0.current, vp: vp) } : nil
         for actor in content.actors {
             guard let p = frame.positions[actor.id] else { continue }
             AtelierRenderer.drawActor(ctx, vp, actor, at: p, selected: selection == .actor(actor.id),
                                       highlighted: receiver == actor.id)
         }
 
-        // Ballon (suit le doigt pendant qu'on le glisse)
-        if model.hasBall {
-            let point = draggingBall ? drag!.current : AtelierRenderer.ballScreenPoint(frame, vp)
-            AtelierRenderer.drawBall(ctx, at: point, selected: selection == .ball)
+        // Ballons (celui qu'on glisse suit le doigt)
+        for id in play.ballIds {
+            let point = draggedBall == id ? drag!.current : AtelierRenderer.ballScreenPoint(frame, vp, ball: id)
+            AtelierRenderer.drawBall(ctx, at: point, selected: selection == .ball(id))
         }
     }
 
@@ -523,8 +528,8 @@ struct AtelierEditorView: View {
             guard let p = frame.positions[actor.id] else { continue }
             AtelierRenderer.drawActor(ctx, vp, actor, at: p)
         }
-        if play.hasBall {
-            AtelierRenderer.drawBall(ctx, at: AtelierRenderer.ballScreenPoint(frame, vp), selected: false)
+        for id in play.ballIds {
+            AtelierRenderer.drawBall(ctx, at: AtelierRenderer.ballScreenPoint(frame, vp, ball: id), selected: false)
         }
     }
 
@@ -552,7 +557,7 @@ struct AtelierEditorView: View {
                         switch target {
                         case .actor(let id): model.selection = .actor(id)
                         case .prop(let i), .zoneHandle(let i): model.selection = .prop(i)
-                        case .ball: model.selection = .ball
+                        case .ball(let id): model.selection = .ball(id)
                         }
                     }
                 }
@@ -575,8 +580,8 @@ struct AtelierEditorView: View {
                     return
                 }
                 switch current.target {
-                case .ball:
-                    model.dropBall(at: vp.pitch(value.location), onto: actorNear(value.location, vp: vp))
+                case .ball(let id)?:
+                    model.dropBall(id, at: vp.pitch(value.location), onto: actorNear(value.location, vp: vp))
                 case nil:
                     if model.tool == .line {
                         model.addLine(from: vp.pitch(current.start), to: vp.pitch(value.location))
@@ -620,12 +625,12 @@ struct AtelierEditorView: View {
                 select(target)
             }
         case .ball?:
-            if case .actor(let id)? = target {
-                model.placeBall(at: location, holder: id)
-            } else {
-                model.placeBall(at: location, holder: nil)
+            // L'outil reste actif : chaque touche ajoute un ballon
+            switch target {
+            case .actor(let id)?: model.addBall(at: location, holder: id)
+            case .ball(let id)?: model.selection = .ball(id)
+            default: model.addBall(at: location, holder: nil)
             }
-            model.tool = nil
         case .line?:
             if onEmpty {
                 let half = 6 / AtelierViewport.pitchWidth
@@ -643,7 +648,7 @@ struct AtelierEditorView: View {
         switch target {
         case .actor(let id)?: model.selection = .actor(id)
         case .prop(let i)?, .zoneHandle(let i)?: model.selection = .prop(i)
-        case .ball?: model.selection = .ball
+        case .ball(let id)?: model.selection = .ball(id)
         case nil: model.selection = nil
         }
     }
@@ -662,8 +667,8 @@ struct AtelierEditorView: View {
             guard d <= radius else { return }
             if best == nil || d < best!.1 { best = (hit, d) }
         }
-        if model.hasBall {
-            consider(.ball, dist(AtelierRenderer.ballScreenPoint(frame, vp)) - 5, radius: 15)
+        for id in model.ballIds {
+            consider(.ball(id), dist(AtelierRenderer.ballScreenPoint(frame, vp, ball: id)) - 5, radius: 15)
         }
         let r = vp.playerDiameter / 2 + 6
         for actor in content.actors {
@@ -825,8 +830,8 @@ struct AtelierEditorView: View {
                 } else {
                     hintBar
                 }
-            case .ball:
-                ballContext
+            case .ball(let id):
+                ballContext(id)
             case nil:
                 if let tool = model.tool { toolContext(tool) } else { hintBar }
             }
@@ -854,7 +859,7 @@ struct AtelierEditorView: View {
                 ? "Choisissez un élément en bas (ou un raccourci ✨), puis touchez le terrain pour le poser."
                 : "Mise en place : touchez un objet pour le régler, glissez-le pour le déplacer. « + » ajoute une étape."
         }
-        return "Étape \(model.vignette) : déplacez joueurs et ballon. Glissez le ballon sur un joueur pour une passe. Les flèches se tracent seules."
+        return "Étape \(model.vignette) : déplacez joueurs et ballons. Glissez un ballon sur un joueur pour une passe. Les flèches se tracent seules."
     }
 
     private func toolContext(_ tool: AtelierTool) -> some View {
@@ -894,9 +899,10 @@ struct AtelierEditorView: View {
         switch tool {
         case .player: return "Touchez le terrain pour poser des joueurs"
         case .goalkeeper: return "Touchez le terrain pour poser un gardien"
-        case .ball: return "Touchez un joueur (ou le terrain) pour poser le ballon"
+        case .ball: return "Touchez un joueur (ou le terrain) pour poser un ballon ; touchez encore pour en ajouter"
         case .line: return "Glissez sur le terrain : un plot tous les 3 m"
         case .prop(.zone): return "Glissez pour tracer une zone, ou touchez pour 20 × 15 m"
+        case .prop(.ballon): return "Ballons posés au sol, immobiles. Pour des passes : outil « Ballon »"
         case .prop(let kind): return "Touchez le terrain pour poser : \(kind.displayName.lowercased())"
         }
     }
@@ -945,16 +951,18 @@ struct AtelierEditorView: View {
         }
     }
 
-    private var ballContext: some View {
-        ScrollView(.horizontal, showsIndicators: false) {
+    private func ballContext(_ id: String) -> some View {
+        let number = TacticPlay.ballNumber(id)
+        let name = model.ballIds.count > 1 ? "Ballon \(number)" : "Le ballon"
+        return ScrollView(.horizontal, showsIndicators: false) {
             HStack(spacing: 8) {
-                if model.ballMovedInVignette {
-                    Text("Le ballon :")
+                if model.ballMovedInVignette(id) {
+                    Text("\(name) :")
                         .font(.footnote.bold())
                     ForEach(AtelierEditorModel.BallKind.allCases) { kind in
-                        let selected = model.ballKind == kind
+                        let selected = model.ballKind(id) == kind
                         Button {
-                            model.setBallKind(kind)
+                            model.setBallKind(id, kind)
                         } label: {
                             Label(kind.rawValue, systemImage: kind.icon)
                                 .font(.footnote.bold())
@@ -1203,7 +1211,7 @@ enum AtelierHit: Equatable {
     case actor(String)
     case prop(Int)
     case zoneHandle(Int)
-    case ball
+    case ball(String)
 }
 
 struct AtelierDrag {
@@ -1267,7 +1275,7 @@ struct AtelierToolItem: Identifiable {
         AtelierToolItem(id: "cerceau", title: "Cerceau", tool: .prop(.cerceau)),
         AtelierToolItem(id: "echelle", title: "Échelle", tool: .prop(.echelle)),
         AtelierToolItem(id: "haie", title: "Haie", tool: .prop(.haie)),
-        AtelierToolItem(id: "ballons", title: "Ballons", tool: .prop(.ballon))
+        AtelierToolItem(id: "ballons", title: "Ballon posé", tool: .prop(.ballon))
     ]
 }
 

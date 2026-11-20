@@ -325,7 +325,7 @@ struct EquipmentLine: Hashable, Identifiable {
 
 extension TacticContent {
     /// Matériel nécessaire pour monter ce contenu
-    func equipment(hasBall: Bool) -> [EquipmentLine] {
+    func equipment() -> [EquipmentLine] {
         var counts: [EquipmentLine.Item: [AtelierColor?: Int]] = [:]
         for prop in props where prop.kind != .zone {
             let color: AtelierColor? = prop.kind.hasColor ? prop.atelierColor : nil
@@ -335,8 +335,11 @@ extension TacticContent {
         for actor in actors where !actor.isGoalkeeper {
             counts[.bib, default: [:]][actor.bibColor, default: 0] += 1
         }
-        if hasBall && counts[.prop(.ballon)] == nil {
-            counts[.prop(.ballon), default: [:]][nil, default: 0] += 1
+        // Ballons : un par ballon de jeu, ou le nombre de ballons posés s'il est plus grand
+        let inPlay = TacticPlay.ballIds(in: steps).count
+        let laid = counts[.prop(.ballon)]?[nil] ?? 0
+        if inPlay > laid {
+            counts[.prop(.ballon), default: [:]][nil] = inPlay
         }
         return EquipmentLine.sorted(counts)
     }
@@ -374,13 +377,7 @@ extension EquipmentLine {
 extension TacticPlay {
     /// Matériel de l'exercice, évolutions comprises (le plus gourmand l'emporte)
     var equipmentLines: [EquipmentLine] {
-        let lists = [content.equipment(hasBall: hasBall)]
-            + evolutionList.map { variantEquipment($0) }
+        let lists = [content.equipment()] + evolutionList.map { $0.content.equipment() }
         return EquipmentLine.combine(lists, simultaneous: false)
-    }
-
-    private func variantEquipment(_ evolution: TacticEvolution) -> [EquipmentLine] {
-        let ball = evolution.steps.contains { $0.ballHolder != nil || $0.ball != nil }
-        return evolution.content.equipment(hasBall: ball)
     }
 }

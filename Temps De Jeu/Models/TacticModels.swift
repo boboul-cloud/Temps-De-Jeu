@@ -233,6 +233,9 @@ struct TacticStep: Codable, Hashable {
     var arrows: [TacticArrow]?
     /// Acteurs mis en évidence pendant l'étape
     var highlight: [String]?
+    /// Ballons en plus du premier (Atelier), par identifiant : « ballon-2 », « ballon-3 »…
+    /// Même principe que le premier : seul ce qui change dans l'étape est noté.
+    var otherBalls: [String: TacticBallState]?
 
     private enum CodingKeys: String, CodingKey {
         case title = "titre"
@@ -245,6 +248,7 @@ struct TacticStep: Codable, Hashable {
         case aerial = "aerien"
         case arrows = "fleches"
         case highlight = "focus"
+        case otherBalls = "autresBallons"
     }
 
     init(title: String, text: String, duration: Double? = nil, positions: [String: TacticPoint],
@@ -274,9 +278,64 @@ struct TacticStep: Codable, Hashable {
         aerial = try c.decodeIfPresent(Bool.self, forKey: .aerial)
         arrows = try c.decodeIfPresent([TacticArrow].self, forKey: .arrows)
         highlight = try c.decodeIfPresent([String].self, forKey: .highlight)
+        otherBalls = try? c.decodeIfPresent([String: TacticBallState].self, forKey: .otherBalls)
     }
 
     static let defaultDuration: Double = 2.0
+
+    /// Ce que fait le ballon `id` dans cette étape (nil : il ne change pas de place)
+    func ballState(_ id: String) -> TacticBallState? {
+        guard id == TacticPlay.mainBall else { return otherBalls?[id] }
+        guard ballHolder != nil || ball != nil else { return nil }
+        return TacticBallState(holder: ballHolder, position: ball, action: ballAction, aerial: aerial)
+    }
+
+    mutating func setBallState(_ id: String, _ state: TacticBallState?) {
+        let state = state?.isEmpty == true ? nil : state
+        if id == TacticPlay.mainBall {
+            ballHolder = state?.holder
+            ball = state?.holder == nil ? state?.position : nil
+            ballAction = state?.action
+            aerial = state?.aerial
+        } else {
+            var balls = otherBalls ?? [:]
+            balls[id] = state
+            otherBalls = balls.isEmpty ? nil : balls
+        }
+    }
+}
+
+/// Un ballon dans une étape : au pied d'un joueur, ou libre à une position
+struct TacticBallState: Codable, Hashable {
+    var holder: String?
+    var position: TacticPoint?
+    var action: TacticBallAction?
+    var aerial: Bool?
+
+    private enum CodingKeys: String, CodingKey {
+        case holder = "porteur"
+        case position
+        case action
+        case aerial = "aerien"
+    }
+
+    init(holder: String? = nil, position: TacticPoint? = nil, action: TacticBallAction? = nil, aerial: Bool? = nil) {
+        self.holder = holder
+        self.position = position
+        self.action = action
+        self.aerial = aerial
+    }
+
+    init(from decoder: Decoder) throws {
+        let c = try decoder.container(keyedBy: CodingKeys.self)
+        holder = try? c.decodeIfPresent(String.self, forKey: .holder)
+        position = try? c.decodeIfPresent(TacticPoint.self, forKey: .position)
+        action = try? c.decodeIfPresent(TacticBallAction.self, forKey: .action)
+        aerial = try? c.decodeIfPresent(Bool.self, forKey: .aerial)
+    }
+
+    var isEmpty: Bool { holder == nil && position == nil }
+    var isAerial: Bool { aerial ?? (action == .centre) }
 }
 
 // MARK: - Catégorie
@@ -435,9 +494,29 @@ struct TacticPlay: Codable, Identifiable, Hashable {
         actors.first { $0.id == id }
     }
 
-    /// La tactique utilise-t-elle un ballon ?
+    /// La tactique utilise-t-elle un ballon ? (le premier ; les autres : `ballIds`)
     var hasBall: Bool {
         steps.contains { $0.ballHolder != nil || $0.ball != nil }
+    }
+
+    /// Identifiant du premier ballon (champs `porteur` / `ballon` des étapes)
+    static let mainBall = "ballon"
+
+    /// Numéro d'un ballon : 1 pour le premier, 2 pour « ballon-2 »…
+    static func ballNumber(_ id: String) -> Int {
+        id == mainBall ? 1 : Int(id.split(separator: "-").last ?? "") ?? 99
+    }
+
+    /// Tous les ballons de l'exercice, le premier d'abord
+    var ballIds: [String] { Self.ballIds(in: steps) }
+
+    static func ballIds(in steps: [TacticStep]) -> [String] {
+        var others = Set<String>()
+        for step in steps {
+            if let keys = step.otherBalls?.keys { others.formUnion(keys) }
+        }
+        let main = steps.contains { $0.ballHolder != nil || $0.ball != nil }
+        return (main ? [mainBall] : []) + others.sorted { ballNumber($0) < ballNumber($1) }
     }
 
     /// Résumé du matériel (« 8 plots · 2 mini-buts »)
@@ -458,6 +537,23 @@ struct TacticFrame: Equatable {
     var positions: [String: TacticPoint]
     var ballHolder: String?
     var ball: TacticPoint
+    /// Autres ballons (Atelier), par identifiant
+    var otherBalls: [String: TacticFrameBall] = [:]
+
+    /// Le ballon `id` : le premier existe toujours, les autres une fois posés
+    func ball(_ id: String) -> TacticFrameBall? {
+        id == TacticPlay.mainBall ? TacticFrameBall(holder: ballHolder, point: ball) : otherBalls[id]
+    }
+
+    /// Ce joueur a-t-il un des ballons `ids` au pied ?
+    func holdsBall(_ actorId: String, among ids: [String]) -> Bool {
+        ids.contains { ball($0)?.holder == actorId }
+    }
+}
+
+struct TacticFrameBall: Equatable {
+    var holder: String?
+    var point: TacticPoint
 }
 
 extension TacticPlay {
@@ -474,38 +570,56 @@ extension TacticPlay {
     /// Calcule l'état complet de chaque étape (positions héritées des étapes précédentes)
     func resolvedFrames() -> [TacticFrame] {
         var positions: [String: TacticPoint] = [:]
-        var holder: String? = nil
-        var ball = TacticPoint(x: 0.5, y: 0.5)
+        var main = TacticFrameBall(holder: nil, point: TacticPoint(x: 0.5, y: 0.5))
+        var others: [String: TacticFrameBall] = [:]
         var frames: [TacticFrame] = []
+
+        /// Applique ce que l'étape dit d'un ballon, puis le recolle au pied de son porteur
+        func advance(_ ball: inout TacticFrameBall, _ state: TacticBallState?) {
+            if let state {
+                if let h = state.holder, positions[h] != nil {
+                    ball.holder = h
+                } else if var b = state.position {
+                    ball.holder = nil
+                    // Un tir cadré finit au fond des filets (≈ 1,2 m derrière la ligne)
+                    if state.action == .tir, abs(b.x - 0.5) < 0.05 {
+                        if b.y <= 0.012 { b.y = -0.011 } else if b.y >= 0.988 { b.y = 1.011 }
+                    }
+                    ball.point = b
+                }
+            }
+            if let h = ball.holder, let p = positions[h] {
+                let offset = Self.ballOffset(for: actor(h)?.team)
+                ball.point = TacticPoint(x: p.x + offset.dx, y: p.y + offset.dy)
+            }
+        }
 
         for step in steps {
             for (key, value) in step.positions { positions[key] = value }
-
-            if let h = step.ballHolder, positions[h] != nil {
-                holder = h
-            } else if var b = step.ball {
-                holder = nil
-                // Un tir cadré finit au fond des filets (≈ 1,2 m derrière la ligne)
-                if step.ballAction == .tir, abs(b.x - 0.5) < 0.05 {
-                    if b.y <= 0.012 { b.y = -0.011 } else if b.y >= 0.988 { b.y = 1.011 }
-                }
-                ball = b
+            advance(&main, step.ballState(Self.mainBall))
+            var ids = Set(others.keys)
+            if let keys = step.otherBalls?.keys { ids.formUnion(keys) }
+            for id in ids {
+                var ball = others[id] ?? TacticFrameBall(holder: nil, point: TacticPoint(x: 0.5, y: 0.5))
+                advance(&ball, step.otherBalls?[id])
+                others[id] = ball
             }
-
-            if let h = holder, let p = positions[h] {
-                let offset = Self.ballOffset(for: actor(h)?.team)
-                ball = TacticPoint(x: p.x + offset.dx, y: p.y + offset.dy)
-            }
-            frames.append(TacticFrame(positions: positions, ballHolder: holder, ball: ball))
+            frames.append(TacticFrame(positions: positions, ballHolder: main.holder, ball: main.point, otherBalls: others))
         }
         return frames
     }
 
     /// Le ballon passe-t-il en l'air pendant cette étape ?
-    func isAerial(step index: Int) -> Bool {
+    func isAerial(step index: Int, ball id: String = TacticPlay.mainBall) -> Bool {
         guard steps.indices.contains(index) else { return false }
         let step = steps[index]
-        return step.aerial ?? (step.ballAction == .centre)
+        if id == Self.mainBall { return step.aerial ?? (step.ballAction == .centre) }
+        return step.otherBalls?[id]?.isAerial ?? false
+    }
+
+    /// Ballons qui passent en l'air pendant cette étape
+    func aerialBalls(step index: Int) -> Set<String> {
+        Set(ballIds.filter { isAerial(step: index, ball: $0) })
     }
 
     /// Flèches décrivant le mouvement qui mène à l'étape `index`
@@ -519,22 +633,28 @@ extension TacticPlay {
         var result: [TacticArrow] = []
         let threshold = 0.012   // ≈ 1 m
 
+        let balls = ballIds
         for actor in actors {
             guard let p0 = before.positions[actor.id], let p1 = after.positions[actor.id],
                   p0.distance(to: p1) > threshold else { continue }
-            let dribbling = before.ballHolder == actor.id && after.ballHolder == actor.id
+            let dribbling = balls.contains { id in
+                before.ball(id)?.holder == actor.id && after.ball(id)?.holder == actor.id
+            }
             result.append(TacticArrow(kind: dribbling ? .conduite : .course, from: p0, to: p1, team: actor.team))
         }
 
-        let carried = before.ballHolder != nil && before.ballHolder == after.ballHolder
-        if !carried, before.ball.distance(to: after.ball) > threshold {
+        for id in balls {
+            guard let b0 = before.ball(id), let b1 = after.ball(id) else { continue }
+            let carried = b0.holder != nil && b0.holder == b1.holder
+            guard !carried, b0.point.distance(to: b1.point) > threshold else { continue }
+            let action = id == Self.mainBall ? steps[index].ballAction : steps[index].otherBalls?[id]?.action
             let kind: TacticArrowKind
-            switch steps[index].ballAction {
+            switch action {
             case .tir: kind = .tir
             case .conduite: kind = .conduite
             default: kind = .passe
             }
-            result.append(TacticArrow(kind: kind, from: before.ball, to: after.ball, aerial: isAerial(step: index)))
+            result.append(TacticArrow(kind: kind, from: b0.point, to: b1.point, aerial: isAerial(step: index, ball: id)))
         }
         return result + extra
     }
@@ -545,6 +665,7 @@ extension TacticPlay {
         for step in steps {
             points.append(contentsOf: step.positions.values)
             if let b = step.ball { points.append(b) }
+            points.append(contentsOf: (step.otherBalls ?? [:]).values.compactMap(\.position))
         }
         for prop in props {
             let w = (prop.size?.x ?? 0) / 2

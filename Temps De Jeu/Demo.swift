@@ -52,7 +52,7 @@ enum Demo {
         model.updateStep(1, title: "Passe et appel", text: "Le 1 joue sur le 2 pendant que le 3 attaque l'espace.")
         model.moveActor(ids[2], to: at(-5, 4))
         model.moveActor(ids[4], to: at(6, -6))
-        model.dropBall(at: pos(ids[1]), onto: ids[1])
+        model.dropBall(TacticPlay.mainBall, at: pos(ids[1]), onto: ids[1])
         // 2 : conduite du 2, le 3 continue sa course
         model.addVignette()
         model.updateStep(2, title: "Conduite", text: "Le 2 fixe le défenseur en conduisant, puis sert le 3.")
@@ -63,12 +63,12 @@ enum Demo {
         model.addVignette()
         model.updateStep(3, title: "Passe décisive", text: "Le 3 reçoit dans la course.")
         model.moveActor(ids[2], to: at(-1, -12))
-        model.dropBall(at: pos(ids[2]), onto: ids[2])
+        model.dropBall(TacticPlay.mainBall, at: pos(ids[2]), onto: ids[2])
         model.addVignette()
         model.updateStep(4, title: "Finition", text: "Le 3 frappe dans le mini-but.")
         let goal = model.content.props.first { $0.kind == .miniBut }?.position ?? TacticPoint(x: 0.5, y: 0.3)
-        model.dropBall(at: goal, onto: nil)
-        model.setBallKind(.tir)
+        model.dropBall(TacticPlay.mainBall, at: goal, onto: nil)
+        model.setBallKind(TacticPlay.mainBall, .tir)
         model.updateInfo {
             $0.title = "Jeu 4 contre 4 + 2 jokers"
             $0.objective = "Conserver puis attaquer vite le mini-but adverse."

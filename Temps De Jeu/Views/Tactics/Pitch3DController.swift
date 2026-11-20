@@ -123,6 +123,8 @@ final class Pitch3DController: NSObject, ObservableObject, UIGestureRecognizerDe
     private let drawingsRoot = SCNNode()
     private let animatorNode = SCNNode()
     private let ballNode = SCNNode()
+    /// Autres ballons (Atelier), créés à la demande sur le modèle du premier
+    private var otherBallNodes: [String: SCNNode] = [:]
 
     private var actorNodes: [String: ActorNode] = [:]
     private var actors: [Pitch3DActor] = []
@@ -275,10 +277,30 @@ final class Pitch3DController: NSObject, ObservableObject, UIGestureRecognizerDe
         if dragTarget != .ball {
             ballNode.simdPosition = ballWorld(frame.ball)
         }
+        for (id, node) in otherBallNodes where frame.otherBalls[id] == nil {
+            node.isHidden = true
+        }
+        for (id, ball) in frame.otherBalls {
+            let node = otherBallNode(id)
+            node.isHidden = false
+            node.simdPosition = ballWorld(ball.point)
+        }
+    }
+
+    private func otherBallNode(_ id: String) -> SCNNode {
+        if let node = otherBallNodes[id] { return node }
+        let node = ballNode.clone()
+        node.name = "ball-\(id)"
+        node.isHidden = false
+        node.scale = SCNVector3(ballScale, ballScale, ballScale)
+        ballNode.parent?.addChildNode(node)
+        otherBallNodes[id] = node
+        return node
     }
 
     /// Anime le passage à un nouvel état (ballon synchronisé avec les joueurs)
-    func animate(to frame: TacticFrame, aerial: Bool, duration: TimeInterval, completion: (() -> Void)? = nil) {
+    func animate(to frame: TacticFrame, aerial: Bool, otherAerial: Set<String> = [], duration: TimeInterval,
+                 completion: (() -> Void)? = nil) {
         guard let from = currentFrame, duration > 0.05 else {
             setFrame(frame)
             completion?()
@@ -306,17 +328,28 @@ final class Pitch3DController: NSObject, ObservableObject, UIGestureRecognizerDe
                                   strides: distance > 1 ? Swift.max(2, Float(distance / 2.2)) : 0))
         }
 
-        var ballStart = ballNode.simdPosition
-        ballStart.y = Self.ballRadius * ballScale
-        let ballEnd = ballWorld(frame.ball)
-        let ballDistance = simd_distance(ballStart, ballEnd)
-        let height: Float = aerial ? Swift.min(10, Swift.max(2.5, ballDistance * 0.2)) : 0
-        let ball = BallMove(node: ballNode, start: ballStart, end: ballEnd, height: height,
-                            radius: Self.ballRadius * ballScale)
+        func ballMove(_ node: SCNNode, to point: TacticPoint, aerial: Bool, appearing: Bool) -> BallMove {
+            let end = ballWorld(point)
+            var start = appearing ? end : node.simdPosition
+            start.y = Self.ballRadius * ballScale
+            let distance = simd_distance(start, end)
+            let height: Float = aerial ? Swift.min(10, Swift.max(2.5, distance * 0.2)) : 0
+            return BallMove(node: node, start: start, end: end, height: height, radius: Self.ballRadius * ballScale)
+        }
+        var balls = [ballMove(ballNode, to: frame.ball, aerial: aerial, appearing: false)]
+        for (id, node) in otherBallNodes where frame.otherBalls[id] == nil {
+            node.isHidden = true
+        }
+        for (id, ball) in frame.otherBalls {
+            let node = otherBallNode(id)
+            let appearing = node.isHidden || from.otherBalls[id] == nil
+            node.isHidden = false
+            balls.append(ballMove(node, to: ball.point, aerial: otherAerial.contains(id), appearing: appearing))
+        }
 
         currentFrame = frame
         isAnimating = true
-        let action = Self.makeStepAction(moves: moves, ball: ball, duration: duration)
+        let action = Self.makeStepAction(moves: moves, balls: balls, duration: duration)
         Self.run(action, on: animatorNode) { [weak self] in
             guard let self else { return }
             self.isAnimating = false
@@ -573,8 +606,14 @@ final class Pitch3DController: NSObject, ObservableObject, UIGestureRecognizerDe
             node.root.scale = SCNVector3(s, s, s)
         }
         ballNode.scale = SCNVector3(ballScale, ballScale, ballScale)
+        for node in otherBallNodes.values {
+            node.scale = SCNVector3(ballScale, ballScale, ballScale)
+        }
         if let frame = currentFrame, !isAnimating {
             ballNode.simdPosition = ballWorld(frame.ball)
+            for (id, ball) in frame.otherBalls {
+                otherBallNodes[id]?.simdPosition = ballWorld(ball.point)
+            }
         }
         let propScale = Swift.max(1.0, s * 0.85)
         for child in propsRoot.childNodes where child.name == "small-prop" {
@@ -1014,12 +1053,25 @@ final class Pitch3DController: NSObject, ObservableObject, UIGestureRecognizerDe
         t * t * (3 - 2 * t)
     }
 
-    private static func makeStepAction(moves: [StepMove], ball: BallMove, duration: TimeInterval) -> SCNAction {
-        let initialOrientation = ball.node.simdOrientation
-        let direction = ball.end - ball.start
-        let horizontal = SIMD3<Float>(direction.x, 0, direction.z)
-        let horizontalLength = simd_length(horizontal)
-        let axis = horizontalLength > 0.001 ? simd_normalize(simd_cross(SIMD3<Float>(0, 1, 0), horizontal)) : SIMD3<Float>(1, 0, 0)
+    /// Un ballon qui roule : orientation de départ et axe de rotation
+    private struct BallRoll {
+        let move: BallMove
+        let orientation: simd_quatf
+        let axis: SIMD3<Float>
+        let length: Float
+
+        init(_ move: BallMove) {
+            self.move = move
+            orientation = move.node.simdOrientation
+            let direction = move.end - move.start
+            let horizontal = SIMD3<Float>(direction.x, 0, direction.z)
+            length = simd_length(horizontal)
+            axis = length > 0.001 ? simd_normalize(simd_cross(SIMD3<Float>(0, 1, 0), horizontal)) : SIMD3<Float>(1, 0, 0)
+        }
+    }
+
+    private static func makeStepAction(moves: [StepMove], balls: [BallMove], duration: TimeInterval) -> SCNAction {
+        let rolls = balls.map(BallRoll.init)
 
         return SCNAction.customAction(duration: duration) { _, elapsed in
             let t = Swift.min(1, Swift.max(0, Float(elapsed) / Float(duration)))
@@ -1034,12 +1086,15 @@ final class Pitch3DController: NSObject, ObservableObject, UIGestureRecognizerDe
                     move.body.simdPosition = .zero
                 }
             }
-            var p = simd_mix(ball.start, ball.end, SIMD3(repeating: e))
-            p.y = ball.radius + ball.height * 4 * e * (1 - e)
-            ball.node.simdPosition = p
-            if horizontalLength > 0.001 {
-                let angle = horizontalLength * e / ball.radius
-                ball.node.simdOrientation = simd_quatf(angle: angle, axis: axis) * initialOrientation
+            for roll in rolls {
+                let ball = roll.move
+                var p = simd_mix(ball.start, ball.end, SIMD3(repeating: e))
+                p.y = ball.radius + ball.height * 4 * e * (1 - e)
+                ball.node.simdPosition = p
+                if roll.length > 0.001 {
+                    let angle = roll.length * e / ball.radius
+                    ball.node.simdOrientation = simd_quatf(angle: angle, axis: roll.axis) * roll.orientation
+                }
             }
         }
     }

@@ -500,7 +500,8 @@ struct TacticPlayerView: View {
         // Les flèches apparaissent d'abord, puis les joueurs se déplacent
         DispatchQueue.main.asyncAfter(deadline: .now() + 0.45 / speed) {
             guard token == runToken else { return }
-            scene3D.animate(to: frames[target], aerial: play.isAerial(step: target), duration: duration) {
+            scene3D.animate(to: frames[target], aerial: play.isAerial(step: target),
+                            otherAerial: play.aerialBalls(step: target), duration: duration) {
                 guard token == runToken, isPlaying else { return }
                 scheduleNext(token: token)
             }
@@ -559,7 +560,8 @@ struct TacticPlayerView: View {
         let duration = (play.steps[target].duration ?? TacticStep.defaultDuration) / speed
         DispatchQueue.main.asyncAfter(deadline: .now() + 0.45 / speed) {
             guard token == runToken else { return }
-            scene3D.animate(to: frames[target], aerial: play.isAerial(step: target), duration: duration)
+            scene3D.animate(to: frames[target], aerial: play.isAerial(step: target),
+                            otherAerial: play.aerialBalls(step: target), duration: duration)
         }
     }
 

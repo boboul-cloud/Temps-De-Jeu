@@ -164,6 +164,69 @@ final class AtelierTests: XCTestCase {
         XCTAssertFalse(reste.waitForExistence(timeout: 2), "L'exercice de test doit être supprimé.")
     }
 
+    /// Plusieurs ballons : l'outil Ballon en pose un de plus à chaque touche,
+    /// chacun se passe séparément, et le matériel les compte tous.
+    func testPlusieursBallons() throws {
+        let nouveau = element("atelier-nouvel-exercice")
+        XCTAssertTrue(nouveau.waitForExistence(timeout: 20))
+        nouveau.tap()
+        element("atelier-raccourcis").tap()
+        app.buttons["Rondo 4 contre 2"].firstMatch.tap()
+        XCTAssertTrue(element("atelier-ballon").waitForExistence(timeout: 5))
+
+        // Deux ballons de plus : au pied du rouge 3, puis libre sur le terrain
+        element("outil-ballon").tap()
+        center(element("atelier-joueur-rouge-3")).tap()
+        XCTAssertTrue(element("atelier-ballon-2").waitForExistence(timeout: 5))
+        element("atelier-terrain").coordinate(withNormalizedOffset: CGVector(dx: 0.15, dy: 0.88)).tap()
+        XCTAssertTrue(element("atelier-ballon-3").waitForExistence(timeout: 5))
+        element("outil-ballon").tap()   // range l'outil
+        shoot("ballons-1-trois")
+
+        // Étape 1 : le ballon 2 passe du rouge 3 au rouge 4, le premier reste au rouge 1
+        element("atelier-ajout-etape").tap()
+        expectText("Étape 1")
+        drag(element("atelier-ballon-2"), to: center(element("atelier-joueur-rouge-4")))
+        func gap(_ a: String, _ b: String) -> CGFloat {
+            let fa = element(a).frame, fb = element(b).frame
+            return hypot(fa.midX - fb.midX, fa.midY - fb.midY)
+        }
+        XCTAssertLessThan(gap("atelier-ballon-2", "atelier-joueur-rouge-4"), 40, "Le ballon 2 est passé au rouge 4.")
+        XCTAssertLessThan(gap("atelier-ballon", "atelier-joueur-rouge-1"), 40, "Le premier ballon reste au rouge 1.")
+        shoot("ballons-2-passe")
+
+        // Fiche : les trois ballons sont dans le matériel
+        app.buttons["Fiche"].firstMatch.tap()
+        expectText("Matériel à prévoir")
+        let ballons = app.descendants(matching: .any).matching(NSPredicate(format: "label CONTAINS %@", "3 ballons")).firstMatch
+        var tries = 0
+        while !ballons.exists && tries < 4 {
+            app.swipeUp()
+            tries += 1
+        }
+        XCTAssertTrue(ballons.exists, "Le matériel compte les 3 ballons.")
+        shoot("ballons-3-fiche")
+        app.navigationBars["Fiche"].buttons.firstMatch.tap()
+
+        // Cinéma 3D : trois ballons, sans plantage
+        element("atelier-cinema").tap()
+        let fermer = element("cinema-fermer")
+        XCTAssertTrue(fermer.waitForExistence(timeout: 8))
+        Thread.sleep(forTimeInterval: 4)
+        shoot("ballons-4-cinema")
+        fermer.tap()
+
+        // Enregistrer, puis rangement : l'exercice de test est supprimé
+        XCTAssertTrue(element("atelier-termine").waitForExistence(timeout: 5))
+        element("atelier-termine").tap()
+        XCTAssertTrue(element("atelier-nouvel-exercice").waitForExistence(timeout: 5))
+        app.buttons["Plus d'actions"].firstMatch.tap()
+        app.buttons["Supprimer"].firstMatch.tap()
+        let confirmer = app.sheets.buttons["Supprimer"].firstMatch
+        XCTAssertTrue(confirmer.waitForExistence(timeout: 5))
+        confirmer.tap()
+    }
+
     /// Paysage : terrain à l'horizontale, panneau sur le côté ; puis cinéma
     func testPaysage() throws {
         // Même en cas d'échec, les tests suivants repartent en portrait

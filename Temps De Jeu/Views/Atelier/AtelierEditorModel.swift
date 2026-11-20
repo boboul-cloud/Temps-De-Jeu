@@ -26,7 +26,8 @@ enum AtelierTool: Equatable {
 enum AtelierSelection: Equatable {
     case actor(String)
     case prop(Int)
-    case ball
+    /// Un ballon de jeu (`TacticPlay.mainBall`, « ballon-2 »…)
+    case ball(String)
 }
 
 @MainActor
@@ -94,6 +95,9 @@ final class AtelierEditorModel: ObservableObject {
     }
 
     var hasBall: Bool { current.hasBall }
+
+    /// Ballons de jeu de la version affichée, le premier d'abord
+    var ballIds: [String] { TacticPlay.ballIds(in: content.steps) }
 
     // MARK: - Annuler / rétablir
 
@@ -223,19 +227,28 @@ final class AtelierEditorModel: ObservableObject {
         }
     }
 
-    /// Pose le ballon : au pied d'un joueur ou libre (toujours sur la mise en place)
-    func placeBall(at point: TacticPoint, holder: String?) {
-        checkpoint()
-        mutate { c in
-            if let holder {
-                c.steps[0].ballHolder = holder
-                c.steps[0].ball = nil
-            } else {
-                c.steps[0].ballHolder = nil
-                c.steps[0].ball = point.clamped
-            }
+    /// Ajoute un ballon de jeu sur la mise en place, au pied d'un joueur ou libre.
+    /// Le premier posé est le ballon principal, les suivants « ballon-2 », « ballon-3 »…
+    /// Un joueur qui a déjà un ballon au pied n'en reçoit pas un second : son ballon est choisi.
+    @discardableResult
+    func addBall(at point: TacticPoint, holder: String?) -> String {
+        if let holder, let start = frames.first,
+           let existing = ballIds.first(where: { start.ball($0)?.holder == holder }) {
+            selection = .ball(existing)
+            return existing
         }
-        selection = .ball
+        checkpoint()
+        let id = nextBallId()
+        let state = holder.map { TacticBallState(holder: $0) } ?? TacticBallState(position: point.clamped)
+        mutate { c in c.steps[0].setBallState(id, state) }
+        selection = .ball(id)
+        return id
+    }
+
+    private func nextBallId() -> String {
+        let ids = ballIds
+        guard ids.contains(TacticPlay.mainBall) else { return TacticPlay.mainBall }
+        return "ballon-\((ids.map(TacticPlay.ballNumber).max() ?? 1) + 1)"
     }
 
     /// Ballon au pied d'un joueur sur la mise en place, sans point d'annulation (raccourcis)
@@ -246,14 +259,19 @@ final class AtelierEditorModel: ObservableObject {
         }
     }
 
-    func removeBall() {
+    /// Enlève un ballon de toutes les étapes. Si c'est le premier et qu'il en reste
+    /// d'autres, le suivant prend sa place (le premier ballon reste le ballon principal).
+    func removeBall(_ id: String) {
         checkpoint()
+        let promoted = id == TacticPlay.mainBall ? ballIds.dropFirst().first : nil
         mutate { c in
             for i in c.steps.indices {
-                c.steps[i].ballHolder = nil
-                c.steps[i].ball = nil
-                c.steps[i].ballAction = nil
-                c.steps[i].aerial = nil
+                if let promoted {
+                    c.steps[i].setBallState(TacticPlay.mainBall, c.steps[i].ballState(promoted))
+                    c.steps[i].setBallState(promoted, nil)
+                } else {
+                    c.steps[i].setBallState(id, nil)
+                }
             }
         }
         selection = nil
@@ -308,36 +326,35 @@ final class AtelierEditorModel: ObservableObject {
     }
 
     /// Ballon lâché dans la vignette affichée : sur un joueur (passe) ou libre (tir près d'un but)
-    func dropBall(at point: TacticPoint, onto holder: String?) {
+    func dropBall(_ id: String, at point: TacticPoint, onto holder: String?) {
         let k = vignette
-        let previous = k > 0 ? frames[safe: k - 1] : nil
+        let previous = k > 0 ? frames[safe: k - 1]?.ball(id) : nil
         mutate { c in
             guard c.steps.indices.contains(k) else { return }
+            var state = c.steps[k].ballState(id) ?? TacticBallState()
             if let holder {
-                if k > 0, previous?.ballHolder == holder {
+                if k > 0, previous?.holder == holder {
                     // Rendu au même joueur : pas d'action de ballon dans cette vignette
-                    c.steps[k].ballHolder = nil
-                    c.steps[k].ball = nil
-                    c.steps[k].ballAction = nil
-                    c.steps[k].aerial = nil
-                } else {
-                    c.steps[k].ballHolder = holder
-                    c.steps[k].ball = nil
-                    if c.steps[k].ballAction == .tir { c.steps[k].ballAction = nil }
+                    c.steps[k].setBallState(id, nil)
+                    return
                 }
+                state.holder = holder
+                state.position = nil
+                if state.action == .tir { state.action = nil }
             } else {
-                c.steps[k].ballHolder = nil
-                c.steps[k].ball = point.clamped
+                state.holder = nil
+                state.position = point.clamped
                 let inGoalMouth = abs(point.x - 0.5) < 0.07 && (point.y < 0.02 || point.y > 0.98)
-                if inGoalMouth { c.steps[k].ballAction = .tir; c.steps[k].aerial = nil }
+                if inGoalMouth { state.action = .tir; state.aerial = nil }
             }
+            c.steps[k].setBallState(id, state)
         }
     }
 
-    /// Le ballon a-t-il changé de place dans cette vignette (hors conduite) ?
-    var ballMovedInVignette: Bool {
+    /// Ce ballon a-t-il changé de place dans cette vignette (hors conduite) ?
+    func ballMovedInVignette(_ id: String) -> Bool {
         guard vignette > 0, let step = content.steps[safe: vignette] else { return false }
-        return step.ballHolder != nil || step.ball != nil
+        return step.ballState(id) != nil
     }
 
     enum BallKind: String, CaseIterable, Identifiable {
@@ -352,36 +369,45 @@ final class AtelierEditorModel: ObservableObject {
         }
     }
 
-    var ballKind: BallKind {
-        guard let step = content.steps[safe: vignette] else { return .passe }
-        if step.ballAction == .tir { return .tir }
-        if step.aerial == true || step.ballAction == .centre { return .centre }
+    func ballKind(_ id: String) -> BallKind {
+        guard let state = content.steps[safe: vignette]?.ballState(id) else { return .passe }
+        if state.action == .tir { return .tir }
+        if state.aerial == true || state.action == .centre { return .centre }
         return .passe
     }
 
-    func setBallKind(_ kind: BallKind) {
+    func setBallKind(_ id: String, _ kind: BallKind) {
         checkpoint()
         let k = vignette
         mutate { c in
-            guard c.steps.indices.contains(k) else { return }
+            guard c.steps.indices.contains(k), var state = c.steps[k].ballState(id) else { return }
             switch kind {
-            case .passe: c.steps[k].ballAction = nil; c.steps[k].aerial = nil
-            case .centre: c.steps[k].ballAction = .centre; c.steps[k].aerial = true
-            case .tir: c.steps[k].ballAction = .tir; c.steps[k].aerial = nil
+            case .passe: state.action = nil; state.aerial = nil
+            case .centre: state.action = .centre; state.aerial = true
+            case .tir: state.action = .tir; state.aerial = nil
             }
+            c.steps[k].setBallState(id, state)
         }
     }
 
+    /// Bouton « Ballon » d'un joueur. Mise en place : il reçoit un ballon (s'il n'en a pas).
+    /// Étape suivante : le ballon le plus proche lui est passé.
     func giveBall(to id: String) {
-        checkpoint()
         if vignette == 0 {
-            mutate { c in
-                c.steps[0].ballHolder = id
-                c.steps[0].ball = nil
-            }
-        } else {
-            dropBall(at: frames[safe: vignette]?.positions[id] ?? TacticPoint(x: 0.5, y: 0.5), onto: id)
+            addBall(at: frames.first?.positions[id] ?? TacticPoint(x: 0.5, y: 0.5), holder: id)
+            return
         }
+        guard let frame = currentFrame, let target = frame.positions[id] else { return }
+        let nearest = ballIds
+            .compactMap { ballId -> (String, Double)? in
+                guard let ball = frame.ball(ballId), ball.holder != id else { return nil }
+                return (ballId, ball.point.distance(to: target))
+            }
+            .min { $0.1 < $1.1 }?.0
+        guard let nearest else { return }
+        checkpoint()
+        dropBall(nearest, at: target, onto: id)
+        selection = .ball(nearest)
     }
 
     // MARK: - Réglages de l'objet sélectionné
@@ -465,7 +491,7 @@ final class AtelierEditorModel: ObservableObject {
                 guard c.props.indices.contains(index) else { return }
                 c.props.remove(at: index)
             }
-        case .ball: removeBall()
+        case .ball(let id): removeBall(id)
         case nil: break
         }
         selection = nil
@@ -474,14 +500,18 @@ final class AtelierEditorModel: ObservableObject {
     private func deleteActor(_ id: String) {
         checkpoint()
         let resolved = frames
+        let balls = ballIds
         mutate { c in
             c.actors.removeAll { $0.id == id }
             for i in c.steps.indices {
                 c.steps[i].positions[id] = nil
                 c.steps[i].highlight?.removeAll { $0 == id }
-                if c.steps[i].ballHolder == id {
-                    c.steps[i].ballHolder = nil
-                    c.steps[i].ball = resolved[safe: i]?.ball
+                // Ses ballons restent là où il les avait
+                for ball in balls {
+                    guard var state = c.steps[i].ballState(ball), state.holder == id else { continue }
+                    state.holder = nil
+                    state.position = resolved[safe: i]?.ball(ball)?.point
+                    c.steps[i].setBallState(ball, state)
                 }
             }
         }

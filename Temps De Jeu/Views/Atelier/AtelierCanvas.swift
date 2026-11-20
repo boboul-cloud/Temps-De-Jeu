@@ -345,14 +345,16 @@ enum AtelierRenderer {
         }
     }
 
-    /// Position écran du ballon : au pied du porteur, sinon à sa place
-    static func ballScreenPoint(_ frame: TacticFrame, _ vp: AtelierViewport) -> CGPoint {
-        if let holder = frame.ballHolder, let p = frame.positions[holder] {
+    /// Position écran d'un ballon : au pied du porteur, sinon à sa place
+    static func ballScreenPoint(_ frame: TacticFrame, _ vp: AtelierViewport,
+                                ball id: String = TacticPlay.mainBall) -> CGPoint {
+        guard let ball = frame.ball(id) else { return .zero }
+        if let holder = ball.holder, let p = frame.positions[holder] {
             let c = vp.screen(p)
             let d = vp.playerDiameter
             return CGPoint(x: c.x + d * 0.45, y: c.y + d * 0.38)
         }
-        return vp.screen(frame.ball)
+        return vp.screen(ball.point)
     }
 
     static func drawBall(_ ctx: GraphicsContext, at point: CGPoint, selected: Bool) {
@@ -474,8 +476,8 @@ struct AtelierDiagram: View {
                 guard let p = frame.positions[actor.id] else { continue }
                 AtelierRenderer.drawActor(ctx, vp, actor, at: p)
             }
-            if play.hasBall {
-                AtelierRenderer.drawBall(ctx, at: AtelierRenderer.ballScreenPoint(frame, vp), selected: false)
+            for ball in play.ballIds {
+                AtelierRenderer.drawBall(ctx, at: AtelierRenderer.ballScreenPoint(frame, vp, ball: ball), selected: false)
             }
         }
     }
@@ -485,6 +487,7 @@ struct AtelierDiagram: View {
         for step in play.steps {
             points.append(contentsOf: step.positions.values)
             if let b = step.ball { points.append(b) }
+            points.append(contentsOf: (step.otherBalls ?? [:]).values.compactMap(\.position))
         }
         for prop in play.props {
             let w = (prop.size?.x ?? 0) / 2, h = (prop.size?.y ?? 0) / 2
