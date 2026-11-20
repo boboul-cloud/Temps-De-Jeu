@@ -308,7 +308,8 @@ struct UserGuideView: View {
                         "**Évolutions** : « + Évolution » repart du même terrain pour une variante (2 touches maximum, un défenseur en plus…)",
                         "**Fiche** : objectif, consignes et **matériel à prévoir calculé tout seul** (« 12 plots jaunes, 6 chasubles rouges… »), fiche PDF à imprimer",
                         "**Séances** : enchaînez des exercices minutés ; le matériel total se calcule, et **Faire les équipes** répartit les joueurs pointés présents par couleur de chasuble",
-                        "↶ Annuler / ↷ Rétablir à tout moment ; sur Mac et iPad avec clavier : ⌘Z, espace pour l'aperçu, ⌫ pour enlever"
+                        "**Enregistrement automatique** : l'exercice s'enregistre au fur et à mesure (« Enregistré » s'affiche sous son nom), même si l'app est fermée. **Enregistrer** le range dans « Mes exercices » et revient à l'Atelier. Les séances s'enregistrent aussi toutes seules",
+                        "↶ Annuler / ↷ Rétablir à tout moment ; sur Mac et iPad avec clavier : ⌘Z, ⌘S pour enregistrer, espace pour l'aperçu, ⌫ pour enlever"
                     ]
                 )
                 

@@ -48,7 +48,7 @@ final class AtelierEditorModel: ObservableObject {
     private var undoStack: [(TacticPlay, Int?, Int)] = []
     private var redoStack: [(TacticPlay, Int?, Int)] = []
 
-    init(play: TacticPlay) {
+    init(play: TacticPlay, startVignette: Int = 0) {
         var copy = play
         if copy.steps.isEmpty {
             copy.steps = [TacticStep(title: "Mise en place", text: "", positions: [:])]
@@ -58,7 +58,10 @@ final class AtelierEditorModel: ObservableObject {
             let points = AtelierDiagram.contentPoints(copy)
             copy.framing = points.isEmpty ? .center : TacticFraming.fitting(points, marginMeters: 4, minMeters: 14)
         }
+        // Date fixée une fois pour toutes : les enregistrements successifs gardent la même
+        if copy.createdAt == nil { copy.createdAt = Date() }
         self.play = copy
+        vignette = min(max(0, startVignette), max(0, copy.content.steps.count - 1))
         if let first = copy.actors.first(where: { !$0.isGoalkeeper }) { bibColor = first.bibColor }
     }
 

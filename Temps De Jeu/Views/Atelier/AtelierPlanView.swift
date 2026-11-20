@@ -32,7 +32,7 @@ struct AtelierPlanView: View {
 
     var body: some View {
         List {
-            Section("Séance") {
+            Section {
                 TextField("Nom de la séance", text: $plan.title)
                 Toggle("Date et heure", isOn: $hasDate.animation())
                 if hasDate {
@@ -41,6 +41,11 @@ struct AtelierPlanView: View {
                 }
                 TextField("Thème (ex. : jeu vers l'avant)", text: $plan.notes, axis: .vertical)
                     .lineLimit(1...4)
+            } header: {
+                Text("Séance")
+            } footer: {
+                Label("Enregistrée au fur et à mesure, dans « Séances ».", systemImage: "checkmark.circle")
+                    .foregroundStyle(.green)
             }
 
             programSection

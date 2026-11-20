@@ -28,12 +28,15 @@ struct AtelierEditorView: View {
     @State private var labelDraft = ""
     @State private var labelTarget: String?
     @State private var confirmClear = false
+    @Environment(\.scenePhase) private var scenePhase
+    /// Dernière version envoyée à `onSave` (nil : rien d'enregistré depuis l'ouverture)
+    @State private var lastSaved: TacticPlay?
+    @State private var pendingSave: Task<Void, Never>?
 
     init(play: TacticPlay, startVignette: Int = 0, onSave: @escaping (TacticPlay) -> Void) {
         self.onSave = onSave
-        let model = AtelierEditorModel(play: play)
-        model.vignette = min(max(0, startVignette), max(0, model.stepCount - 1))
-        _model = StateObject(wrappedValue: model)
+        // Construit une seule fois (l'écran parent se redessine à chaque enregistrement)
+        _model = StateObject(wrappedValue: AtelierEditorModel(play: play, startVignette: startVignette))
     }
 
     var body: some View {
@@ -94,15 +97,71 @@ struct AtelierEditorView: View {
         } message: {
             Text("Joueurs, matériel et étapes de cette version. Vous pourrez annuler.")
         }
+        .onChange(of: model.play) { scheduleSave() }
+        .onChange(of: scenePhase) { _, phase in
+            if phase != .active { saveNow() }
+        }
+        .onDisappear { saveNow() }
+        .background {
+            // ⌘S (Mac, iPad avec clavier) : enregistre tout de suite
+            Button("Enregistrer", action: saveNow)
+                .keyboardShortcut("s", modifiers: .command)
+                .opacity(0)
+                .allowsHitTesting(false)
+                .accessibilityHidden(true)
+        }
+    }
+
+    // MARK: - Enregistrement automatique
+
+    /// Enregistre peu après la dernière modification : rien n'est perdu si l'app
+    /// ou la fenêtre est fermée sans passer par « Enregistrer ».
+    private func scheduleSave() {
+        pendingSave?.cancel()
+        pendingSave = Task { @MainActor in
+            try? await Task.sleep(for: .milliseconds(700))
+            guard !Task.isCancelled else { return }
+            saveNow()
+        }
+    }
+
+    private func saveNow() {
+        pendingSave?.cancel()
+        pendingSave = nil
+        guard model.isDirty, !model.isEmpty, model.play != lastSaved else { return }
+        lastSaved = model.play
+        onSave(model.finalized())
+    }
+
+    private enum SaveState { case auto, pending, saved }
+
+    private var saveState: SaveState {
+        if model.isEmpty { return .auto }
+        if !model.isDirty || model.play == lastSaved { return .saved }
+        return .pending
+    }
+
+    /// « Enregistré » sous le nom de l'exercice
+    private var saveStatus: some View {
+        Group {
+            switch saveState {
+            case .auto: Label("Enregistrement automatique", systemImage: "arrow.triangle.2.circlepath")
+            case .pending: Label("Enregistrement…", systemImage: "arrow.triangle.2.circlepath")
+            case .saved: Label("Enregistré", systemImage: "checkmark.circle")
+            }
+        }
+        .font(.caption2)
+        .labelStyle(.titleAndIcon)
+        .foregroundStyle(saveState == .saved ? Color.green : Color.secondary)
+        .lineLimit(1)
+        .accessibilityIdentifier("atelier-etat-enregistrement")
     }
 
     // MARK: - Fermer
 
     private func close() {
         stopPreview()
-        if model.isDirty && !model.isEmpty {
-            onSave(model.finalized())
-        }
+        saveNow()
         dismiss()
     }
 
@@ -111,7 +170,7 @@ struct AtelierEditorView: View {
     private var topBar: some View {
         HStack(spacing: 8) {
             Button(action: close) {
-                Label("Terminé", systemImage: "checkmark.circle.fill")
+                Label("Enregistrer", systemImage: "checkmark.circle.fill")
                     .font(.subheadline.bold())
             }
             .buttonStyle(.borderedProminent)
@@ -121,17 +180,21 @@ struct AtelierEditorView: View {
                 renameDraft = model.play.title
                 showRename = true
             } label: {
-                HStack(spacing: 4) {
-                    Text(model.play.title)
-                        .font(.headline)
-                        .lineLimit(1)
-                    Image(systemName: "pencil")
-                        .font(.caption)
-                        .foregroundStyle(.secondary)
+                VStack(spacing: 1) {
+                    HStack(spacing: 4) {
+                        Text(model.play.title)
+                            .font(.headline)
+                            .lineLimit(1)
+                        Image(systemName: "pencil")
+                            .font(.caption)
+                            .foregroundStyle(.secondary)
+                    }
+                    saveStatus
                 }
                 .frame(maxWidth: .infinity)
             }
             .buttonStyle(.plain)
+            .accessibilityIdentifier("atelier-titre")
 
             Button {
                 path.append(.fiche)
@@ -684,7 +747,7 @@ struct AtelierEditorView: View {
         VStack(spacing: 0) {
             HStack(spacing: 8) {
                 Button(action: close) {
-                    Label("Terminé", systemImage: "checkmark.circle.fill")
+                    Label("Enregistrer", systemImage: "checkmark.circle.fill")
                         .font(.subheadline.bold())
                 }
                 .buttonStyle(.borderedProminent)
@@ -705,17 +768,21 @@ struct AtelierEditorView: View {
                 renameDraft = model.play.title
                 showRename = true
             } label: {
-                HStack(spacing: 4) {
-                    Text(model.play.title)
-                        .font(.headline)
-                        .multilineTextAlignment(.leading)
-                    Image(systemName: "pencil")
-                        .font(.caption)
-                        .foregroundStyle(.secondary)
-                    Spacer()
+                VStack(alignment: .leading, spacing: 2) {
+                    HStack(spacing: 4) {
+                        Text(model.play.title)
+                            .font(.headline)
+                            .multilineTextAlignment(.leading)
+                        Image(systemName: "pencil")
+                            .font(.caption)
+                            .foregroundStyle(.secondary)
+                        Spacer()
+                    }
+                    saveStatus
                 }
             }
             .buttonStyle(.plain)
+            .accessibilityIdentifier("atelier-titre")
             .padding(.horizontal, 12)
             .padding(.vertical, 8)
 

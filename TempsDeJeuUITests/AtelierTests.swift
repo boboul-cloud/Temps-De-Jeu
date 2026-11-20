@@ -114,7 +114,7 @@ final class AtelierTests: XCTestCase {
         XCTAssertTrue(element("atelier-termine").waitForExistence(timeout: 5))
         XCTAssertFalse(fermer.exists, "Le cinéma doit être fermé.")
 
-        // Terminé : l'exercice est enregistré dans « Mes exercices »
+        // Enregistrer : l'exercice est rangé dans « Mes exercices »
         element("atelier-termine").tap()
         let nouveau2 = element("atelier-nouvel-exercice")
         XCTAssertTrue(nouveau2.waitForExistence(timeout: 5))
@@ -124,8 +124,50 @@ final class AtelierTests: XCTestCase {
         shoot("atelier-8-mes-exercices")
     }
 
+    /// L'exercice s'enregistre tout seul : l'app est tuée sans toucher « Enregistrer »,
+    /// il est toujours là à la réouverture.
+    func testEnregistrementAutomatique() throws {
+        let nouveau = element("atelier-nouvel-exercice")
+        XCTAssertTrue(nouveau.waitForExistence(timeout: 20))
+        nouveau.tap()
+        expectText("Enregistrement automatique")
+
+        // Un nom unique pour le retrouver
+        let nom = "Auto \(Int.random(in: 1000...9999))"
+        element("atelier-titre").tap()
+        let champ = app.alerts.textFields.firstMatch
+        XCTAssertTrue(champ.waitForExistence(timeout: 5))
+        champ.tap()
+        champ.typeText(String(repeating: XCUIKeyboardKey.delete.rawValue, count: 40) + nom)
+        app.alerts.buttons["OK"].tap()
+
+        element("atelier-raccourcis").tap()
+        app.buttons["Rondo 4 contre 2"].firstMatch.tap()
+        XCTAssertTrue(element("atelier-joueur-rouge-1").waitForExistence(timeout: 5))
+        expectText("Enregistré")
+        shoot("auto-1-enregistre")
+
+        // Fermeture brutale, puis réouverture : l'exercice est dans « Mes exercices »
+        app.terminate()
+        app.launch()
+        XCTAssertTrue(element("atelier-nouvel-exercice").waitForExistence(timeout: 20))
+        expectText(nom)
+        shoot("auto-2-retrouve")
+
+        // Rangement : l'exercice de test (en tête de liste) est supprimé
+        app.buttons["Plus d'actions"].firstMatch.tap()
+        app.buttons["Supprimer"].firstMatch.tap()
+        let confirmer = app.sheets.buttons["Supprimer"].firstMatch
+        XCTAssertTrue(confirmer.waitForExistence(timeout: 5))
+        confirmer.tap()
+        let reste = app.staticTexts.matching(NSPredicate(format: "label == %@", nom)).firstMatch
+        XCTAssertFalse(reste.waitForExistence(timeout: 2), "L'exercice de test doit être supprimé.")
+    }
+
     /// Paysage : terrain à l'horizontale, panneau sur le côté ; puis cinéma
     func testPaysage() throws {
+        // Même en cas d'échec, les tests suivants repartent en portrait
+        addTeardownBlock { XCUIDevice.shared.orientation = .portrait }
         XCTAssertTrue(element("atelier-nouvel-exercice").waitForExistence(timeout: 20))
         app.buttons.matching(NSPredicate(format: "label == %@", "Modifier")).firstMatch.tap()
         XCTAssertTrue(element("atelier-termine").waitForExistence(timeout: 5))
