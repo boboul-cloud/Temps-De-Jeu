@@ -39,10 +39,11 @@ struct TrainingAttendanceView: View {
                     Button {
                         showTacticsLibrary = true
                     } label: {
-                        Label("Tactiques 3D", systemImage: "cube.transparent")
+                        Label("Atelier", systemImage: "square.and.pencil")
                             .labelStyle(.titleAndIcon)
                             .font(.subheadline.bold())
                     }
+                    .accessibilityIdentifier("ouvrir-atelier")
                 }
                 ToolbarItem(placement: .topBarTrailing) {
                     Menu {
@@ -89,9 +90,8 @@ struct TrainingAttendanceView: View {
             .sheet(isPresented: $showStats) {
                 TrainingStatsView(sessions: sessions)
             }
-            .sheet(isPresented: $showTacticsLibrary) {
+            .fullScreenCover(isPresented: $showTacticsLibrary) {
                 TacticsLibraryView()
-                    .largeSheetSizing()
             }
             .sheet(isPresented: $showExport) {
                 TrainingExportView(sessions: sessions) { importedSessions in

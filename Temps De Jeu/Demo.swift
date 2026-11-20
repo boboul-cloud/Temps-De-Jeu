@@ -7,6 +7,7 @@
 //  Tout ce qui les lit est compilé en Debug seulement : l'archive n'en voit rien.
 //
 //      -demo match | placement3d | placement8 | sequence | tactique | bibliotheque | joueurs | seance
+//            | atelier | atelier-accueil | atelier-cinema | atelier-seance
 //
 //  Les données de démonstration (catégorie U13 fictive, effectif aux noms
 //  inventés) sont écrites dans le simulateur créé pour les captures, puis
@@ -26,6 +27,63 @@ enum Demo {
     static let awayTeam = "AS Plateau"
     static let tacticId = "biblio-chevauchement-centre"
     static let tacticStep = 3
+
+    // MARK: Atelier
+
+    /// Exercice d'exemple : 4 contre 4 + 2 jokers, trois étapes et une évolution
+    @MainActor
+    static func atelierExercise() -> TacticPlay {
+        let model = AtelierEditorModel(play: AtelierEditorModel.newExercise())
+        model.bibColor = .rouge
+        model.apply(.game(perSide: 4, jokers: 2))
+        let ids = model.content.actors.map(\.id)
+        func pos(_ id: String) -> TacticPoint { model.frames[model.vignette].positions[id] ?? TacticPoint(x: 0.5, y: 0.5) }
+        func offset(_ p: TacticPoint, _ dx: Double, _ dy: Double) -> TacticPoint {
+            TacticPoint(x: p.x + dx / 68, y: p.y + dy / 105)
+        }
+        // Repère en mètres depuis le centre du terrain de jeu (dy < 0 : vers le but attaqué)
+        let center = model.framing.center
+        func at(_ dx: Double, _ dy: Double) -> TacticPoint {
+            TacticPoint(x: center.x + dx / 68, y: center.y + dy / 105)
+        }
+        // ids : 0-3 rouges (en bas), 4-7 bleus (en haut), 8-9 jokers
+        // 1 : passe du 1 au 2, le 3 décroche, le bleu 1 sort
+        model.addVignette()
+        model.updateStep(1, title: "Passe et appel", text: "Le 1 joue sur le 2 pendant que le 3 attaque l'espace.")
+        model.moveActor(ids[2], to: at(-5, 4))
+        model.moveActor(ids[4], to: at(6, -6))
+        model.dropBall(at: pos(ids[1]), onto: ids[1])
+        // 2 : conduite du 2, le 3 continue sa course
+        model.addVignette()
+        model.updateStep(2, title: "Conduite", text: "Le 2 fixe le défenseur en conduisant, puis sert le 3.")
+        model.moveActor(ids[1], to: at(7, -4))
+        model.moveActor(ids[2], to: at(-4, -8))
+        model.moveActor(ids[4], to: at(5, -8))
+        // 3 : passe au 3 qui frappe dans le mini-but
+        model.addVignette()
+        model.updateStep(3, title: "Passe décisive", text: "Le 3 reçoit dans la course.")
+        model.moveActor(ids[2], to: at(-1, -12))
+        model.dropBall(at: pos(ids[2]), onto: ids[2])
+        model.addVignette()
+        model.updateStep(4, title: "Finition", text: "Le 3 frappe dans le mini-but.")
+        let goal = model.content.props.first { $0.kind == .miniBut }?.position ?? TacticPoint(x: 0.5, y: 0.3)
+        model.dropBall(at: goal, onto: nil)
+        model.setBallKind(.tir)
+        model.updateInfo {
+            $0.title = "Jeu 4 contre 4 + 2 jokers"
+            $0.objective = "Conserver puis attaquer vite le mini-but adverse."
+            $0.instructions = ["Jouer en une ou deux touches", "Utiliser les jokers pour fixer"]
+            $0.level = "U13"
+            $0.duration = "20 min"
+            $0.category = .conservation
+        }
+        model.addEvolution()
+        model.renameEvolution(0, title: "2 touches maximum", text: "Chaque joueur a deux touches de balle au plus.")
+        model.selectEvolution(nil)
+        var play = model.finalized()
+        play.id = UUID.stable(from: "demo-atelier")   // une seule copie, même après plusieurs lancements
+        return play
+    }
 
     // MARK: Effectif (prénoms et noms inventés)
 

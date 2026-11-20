@@ -32,6 +32,7 @@ struct ContentView: View {
     @State private var demoPlacement = false
     @State private var demoTactic: TacticPlay?
     @State private var demoSession = false
+    @State private var demoAtelier: TacticPlay?
     #endif
     @State private var availabilityAlertTitle = ""
     @State private var availabilityAlertMessage = ""
@@ -156,7 +157,11 @@ struct ContentView: View {
                 .largeSheetSizing()
         }
         .fullScreenCover(item: $demoTactic) { play in
-            TacticPlayerView(play: play, palette: Pitch3DPalette(team: .blue, opponent: .red))
+            TacticPlayerView(play: play, palette: Pitch3DPalette(team: .blue, opponent: .red),
+                             cinema: Demo.screen == "atelier-cinema")
+        }
+        .fullScreenCover(item: $demoAtelier) { play in
+            AtelierEditorView(play: play, startVignette: 2) { _ in }
         }
         #endif
         .onChange(of: scenePhase) {
@@ -199,9 +204,8 @@ struct ContentView: View {
                 showTacticsLibrary = true
             }
         }
-        .sheet(isPresented: $showTacticsLibrary) {
+        .fullScreenCover(isPresented: $showTacticsLibrary) {
             TacticsLibraryView()
-                .largeSheetSizing()
         }
         .onChange(of: deepLinkManager.shouldNavigateToTraining) {
             if deepLinkManager.shouldNavigateToTraining {
@@ -447,6 +451,24 @@ struct ContentView: View {
             showTacticsLibrary = true
         case "joueurs":
             selectedTab = 1
+        case "atelier":
+            selectedTab = 2
+            demoAtelier = Demo.atelierExercise()
+        case "atelier-cinema":
+            selectedTab = 2
+            demoTactic = Demo.atelierExercise()
+        case "atelier-accueil", "atelier-seance":
+            selectedTab = 2
+            let play = Demo.atelierExercise()
+            TacticStore.shared.save(play)
+            if Demo.screen == "atelier-seance", TacticStore.shared.plans.isEmpty {
+                var plan = TrainingPlan(title: "Séance du mardi", date: Date())
+                plan.notes = "Jeu vers l'avant"
+                plan.items = [TrainingPlan.Item(tacticId: play.id, minutes: 20)]
+                    + TacticStore.shared.libraryTactics.prefix(2).map { TrainingPlan.Item(tacticId: $0.id, minutes: 15) }
+                TacticStore.shared.savePlan(plan)
+            }
+            showTacticsLibrary = true
         default:
             break
         }

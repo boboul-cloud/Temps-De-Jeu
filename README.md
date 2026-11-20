@@ -86,6 +86,16 @@ Système unique pour les clubs avec plusieurs équipes (A, B, C, D…) :
 - Lecture automatique, vitesse réglable, option « Afficher mes joueurs » (noms des titulaires)
 - Fichiers **`.tdjt`** (JSON lisible) : import / export / partage de tactiques
 
+### 🧰 Atelier d'exercices (plein écran)
+- Ouvert depuis **Présences › Atelier** : iPhone, iPad et Mac en **plein écran**, le terrain pivote à l'horizontale quand il y gagne de la place
+- **Tiroir de matériel** : joueurs, gardiens, ballon, plots, coupelles, piquets, mannequins, mini-buts, buts, zones (en mètres), lignes de plots, cerceaux, échelles, haies, ballons — on touche un outil puis le terrain (l'outil reste actif)
+- **8 couleurs** de chasubles et de matériel ; **raccourcis** (carrés, rondos, jeux réduits avec mini-buts, slalom…)
+- **Vignettes** façon Keynote : « + Étape » copie la précédente, on déplace, les flèches (course, passe, conduite, centre, tir) se tracent seules ; aperçu 2D et **mode cinéma** 3D plein écran avec sous-titres
+- **Évolutions** d'un exercice (même terrain, consigne différente), **annuler / rétablir**
+- **Fiche** : objectif, consignes, **matériel à prévoir calculé**, PDF à imprimer
+- **Séances** : exercices minutés, matériel total (en série ou ateliers simultanés), **équipes composées avec les présents** du jour, PDF de séance
+- Code : `Views/Atelier/`, `Models/AtelierModels.swift`, `Models/TrainingPlanModels.swift` ; séances dans `Application Support/Tactiques/mes-seances.json` et dans la sauvegarde complète ; testé par `TempsDeJeuUITests/AtelierTests`
+
 ### 💻 Version Mac
 - Application **Mac Catalyst** (Apple Silicon + Intel), disposition deux colonnes pour la 3D
 - `./tools/creer-dmg-mac.sh` génère le DMG dans `../Version Mac/` (signature locale)

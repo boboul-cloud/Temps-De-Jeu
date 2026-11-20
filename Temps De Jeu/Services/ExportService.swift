@@ -1989,6 +1989,7 @@ class ExportService {
         let staffRoles: [StaffRole]         // Rôles d'encadrement
         let profilesData: [ProfileBackupData]  // Données par profil
         var tactics: [TacticPlay]? = nil    // Séquences tactiques perso (absent des anciennes sauvegardes)
+        var trainingPlans: [TrainingPlan]? = nil  // Séances de l'Atelier (absent des anciennes sauvegardes)
     }
 
     /// Résultat de l'import d'une sauvegarde complète
@@ -2053,7 +2054,8 @@ class ExportService {
             staffMembers: staffMembers,
             staffRoles: staffRoles,
             profilesData: profilesData,
-            tactics: TacticStore.shared.userTactics
+            tactics: TacticStore.shared.userTactics,
+            trainingPlans: TacticStore.shared.plans
         )
 
         return try? encoder.encode(backup)
@@ -2153,6 +2155,9 @@ class ExportService {
         // 7. Séquences tactiques (les anciennes sauvegardes n'en ont pas : on garde celles de l'appareil)
         if let tactics = backup.tactics {
             TacticStore.shared.replaceUserTactics(tactics)
+        }
+        if let plans = backup.trainingPlans {
+            TacticStore.shared.replacePlans(plans)
         }
     }
 

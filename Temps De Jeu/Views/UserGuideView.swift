@@ -284,10 +284,31 @@ struct UserGuideView: View {
                         "Créez une **séquence pas à pas** : placez joueurs et ballon, validez la **Mise en place**, puis une action par étape",
                         "**Course** : déplacez un joueur sans ballon · **Conduite** : déplacez le porteur, le ballon suit · **Passe** : glissez le ballon sur un partenaire · **Tir** : glissez-le dans le but · **En l'air** pour un centre",
                         "Les flèches s'affichent **avant** de valider : vous voyez ce qui sera enregistré. Touchez un numéro d'étape pour la corriger",
-                        "**Créer une séquence d'entraînement** sans composition de match : Tactiques 3D › **+**, avec le cadrage *Zone de jeu* pour les petits espaces",
                         "▶︎ **Lire la démonstration** : joueurs et ballon s'animent d'une étape à l'autre, avec vos consignes",
-                        "**Bibliothèque d'exercices 3D** (Placement ou onglet Présences) : rondos, relance, pressing, contre-attaque, corners… avec objectif et consignes",
+                        "Pour les exercices d'entraînement, utilisez plutôt l'**Atelier** (section suivante)",
                         "Partagez ou importez des tactiques au format **.tdjt** (fichier JSON lisible) par Messages, AirDrop ou e-mail"
+                    ]
+                )
+                
+                Divider()
+                
+                // 17. Atelier d'exercices
+                guideSection(
+                    number: "17",
+                    title: "Atelier d'exercices",
+                    icon: "square.and.pencil",
+                    color: .green,
+                    steps: [
+                        "Onglet **Présences › Atelier** (ou Placement › Atelier d'exercices) : l'Atelier s'ouvre en plein écran",
+                        "**Nouvel exercice** : choisissez un élément dans le tiroir du bas (joueur, gardien, ballon, plot, coupelle, piquet, mannequin, mini-but, but, zone, ligne de plots, cerceau, échelle, haie, ballons) puis **touchez le terrain** : l'outil reste actif pour en poser plusieurs",
+                        "✨ **Raccourcis** : carré de plots, rondo, jeu 4 contre 4 avec mini-buts, slalom… posés en un geste",
+                        "Touchez un objet pour le régler : **8 couleurs** de chasubles et de matériel, numéro, gardien, tourner, copier, enlever. Glissez-le pour le déplacer",
+                        "**Étapes** : « + Étape » copie la précédente ; déplacez les joueurs, **glissez le ballon sur un partenaire** pour une passe (Passe, Centre ou Tir). Les flèches se tracent toutes seules, la position d'avant reste en transparence",
+                        "▶︎ **Aperçu** sur le terrain, ou **Cinéma** : la 3D en plein écran, avec la consigne en sous-titre",
+                        "**Évolutions** : « + Évolution » repart du même terrain pour une variante (2 touches maximum, un défenseur en plus…)",
+                        "**Fiche** : objectif, consignes et **matériel à prévoir calculé tout seul** (« 12 plots jaunes, 6 chasubles rouges… »), fiche PDF à imprimer",
+                        "**Séances** : enchaînez des exercices minutés ; le matériel total se calcule, et **Faire les équipes** répartit les joueurs pointés présents par couleur de chasuble",
+                        "↶ Annuler / ↷ Rétablir à tout moment ; sur Mac et iPad avec clavier : ⌘Z, espace pour l'aperçu, ⌫ pour enlever"
                     ]
                 )
                 

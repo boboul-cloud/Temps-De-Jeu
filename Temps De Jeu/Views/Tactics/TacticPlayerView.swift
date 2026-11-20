@@ -9,7 +9,8 @@
 import SwiftUI
 
 struct TacticPlayerView: View {
-    let play: TacticPlay
+    /// Exercice complet (avec ses évolutions)
+    let basePlay: TacticPlay
     var palette: Pitch3DPalette
     var roster: [MatchPlayer]
     /// Renseigné pour une séquence pas encore enregistrée (depuis le Placement)
@@ -27,16 +28,25 @@ struct TacticPlayerView: View {
     @State private var shareFile: TacticShareFile?
     @State private var didSetup = false
     @State private var saved = false
+    /// Évolution jouée (nil = exercice de base)
+    @State private var variantIndex: Int?
+    @State private var frames: [TacticFrame]
+    /// Plein écran : terrain seul, sous-titres et commandes réduites
+    @State private var cinemaMode: Bool
 
-    private let frames: [TacticFrame]
+    /// Exercice tel qu'il est joué (base ou évolution)
+    private var play: TacticPlay { basePlay.variant(variantIndex) }
 
     init(play: TacticPlay, palette: Pitch3DPalette = Pitch3DPalette(), roster: [MatchPlayer] = [],
-         onSave: ((TacticPlay) -> Void)? = nil) {
-        self.play = play
+         onSave: ((TacticPlay) -> Void)? = nil, cinema: Bool = false, initialEvolution: Int? = nil) {
+        self.basePlay = play
         self.palette = palette
         self.roster = roster
         self.onSave = onSave
-        self.frames = play.resolvedFrames()
+        let start = initialEvolution.flatMap { play.evolutions?.indices.contains($0) == true ? $0 : nil }
+        _variantIndex = State(initialValue: start)
+        _frames = State(initialValue: play.variant(start).resolvedFrames())
+        _cinemaMode = State(initialValue: cinema)
     }
 
     private var lastIndex: Int { max(0, frames.count - 1) }
@@ -46,23 +56,24 @@ struct TacticPlayerView: View {
         NavigationStack {
             GeometryReader { geo in
                 let wide = geo.size.width > geo.size.height && geo.size.width > 640
-                if wide {
-                    HStack(spacing: 0) {
-                        pitchArea
-                        Divider()
-                        controlPanel(wide: true)
-                            .frame(width: min(400, geo.size.width * 0.36))
-                    }
-                } else {
-                    VStack(spacing: 0) {
-                        pitchArea
-                        controlPanel(wide: false)
+                // Même terrain dans les trois dispositions (la vue 3D n'est pas recréée)
+                let layout = cinemaMode ? AnyLayout(ZStackLayout())
+                    : wide ? AnyLayout(HStackLayout(spacing: 0)) : AnyLayout(VStackLayout(spacing: 0))
+                layout {
+                    pitchArea
+                    if !cinemaMode {
+                        if wide { Divider() }
+                        controlPanel(wide: wide)
+                            .frame(width: wide ? min(400, geo.size.width * 0.36) : nil)
                     }
                 }
             }
-            .background(Color(.systemGroupedBackground))
+            .background(cinemaMode ? Color.black : Color(.systemGroupedBackground))
+            .statusBarHidden(cinemaMode)
+            .persistentSystemOverlays(cinemaMode ? .hidden : .automatic)
             .navigationTitle(play.title)
             .navigationBarTitleDisplayMode(.inline)
+            .toolbar(cinemaMode ? .hidden : .visible, for: .navigationBar)
             .toolbar {
                 ToolbarItem(placement: .cancellationAction) {
                     Button {
@@ -76,9 +87,16 @@ struct TacticPlayerView: View {
                     .accessibilityLabel("Fermer")
                 }
                 ToolbarItemGroup(placement: .primaryAction) {
+                    evolutionMenu
+                    Button {
+                        enterCinema()
+                    } label: {
+                        Label("Cinéma", systemImage: "arrow.up.left.and.arrow.down.right")
+                    }
+                    .accessibilityIdentifier("lecteur-cinema")
                     if let onSave {
                         Button {
-                            onSave(play)
+                            onSave(basePlay)
                             saved = true
                         } label: {
                             Label(saved ? "Enregistrée" : "Enregistrer", systemImage: saved ? "checkmark.circle.fill" : "square.and.arrow.down")
@@ -86,7 +104,7 @@ struct TacticPlayerView: View {
                         .disabled(saved)
                     }
                     Button {
-                        if let url = try? TacticStore.shared.exportURL(for: [play]) {
+                        if let url = try? TacticStore.shared.exportURL(for: [basePlay]) {
                             shareFile = TacticShareFile(url: url)
                         }
                     } label: {
@@ -117,25 +135,155 @@ struct TacticPlayerView: View {
     private var pitchArea: some View {
         ZStack {
             Pitch3DView(controller: scene3D)
+                .ignoresSafeArea(edges: cinemaMode ? .all : [])
 
-            VStack {
-                HStack {
+            if cinemaMode {
+                cinemaOverlay
+            } else {
+                VStack {
+                    HStack {
+                        Spacer()
+                        CameraPresetPicker(selected: scene3D.cameraPreset) { preset in
+                            scene3D.applyCamera(preset, animated: true)
+                        }
+                    }
+                    Spacer()
+                    if showArrows {
+                        HStack {
+                            ArrowLegend(compact: true)
+                            Spacer()
+                        }
+                    }
+                }
+                .padding(10)
+            }
+        }
+        .frame(maxWidth: .infinity, maxHeight: .infinity)
+    }
+
+    // MARK: - Mode cinéma
+
+    private var cinemaOverlay: some View {
+        GeometryReader { geo in
+            let landscape = geo.size.width > geo.size.height
+            VStack(spacing: 10) {
+                HStack(alignment: .top, spacing: 8) {
+                    Button {
+                        stopPlayback()
+                        dismiss()
+                    } label: {
+                        Image(systemName: "xmark")
+                            .font(.system(size: 16, weight: .bold))
+                            .frame(width: 40, height: 40)
+                            .background(.ultraThinMaterial, in: Circle())
+                    }
+                    .buttonStyle(.plain)
+                    .accessibilityLabel("Fermer")
+                    .accessibilityIdentifier("cinema-fermer")
                     Spacer()
                     CameraPresetPicker(selected: scene3D.cameraPreset) { preset in
                         scene3D.applyCamera(preset, animated: true)
                     }
                 }
                 Spacer()
-                if showArrows {
-                    HStack {
-                        ArrowLegend(compact: true)
-                        Spacer()
+                if landscape {
+                    // Paysage : sous-titre et commandes sur une seule ligne, bandeau bas et étroit
+                    HStack(alignment: .center, spacing: 14) {
+                        cinemaCaption(lines: 2)
+                        playbackControls
+                            .frame(width: min(400, geo.size.width * 0.45))
                     }
+                    .padding(.horizontal, 14)
+                    .padding(.vertical, 8)
+                    .frame(maxWidth: 900)
+                    .background(.regularMaterial, in: RoundedRectangle(cornerRadius: 16))
+                } else {
+                    VStack(alignment: .leading, spacing: 4) {
+                        cinemaCaption(lines: 3)
+                        playbackControls
+                    }
+                    .padding(14)
+                    .frame(maxWidth: 640)
+                    .background(.regularMaterial, in: RoundedRectangle(cornerRadius: 18))
                 }
             }
-            .padding(10)
+            .frame(maxWidth: .infinity)
+            .padding(.horizontal, 16)
+            .padding(.top, 8)
+            .padding(.bottom, 12)
         }
-        .frame(maxWidth: .infinity, maxHeight: .infinity)
+    }
+
+    private func cinemaCaption(lines: Int) -> some View {
+        VStack(alignment: .leading, spacing: 3) {
+            if !basePlay.evolutionList.isEmpty {
+                evolutionMenu
+                    .labelStyle(.titleAndIcon)
+            }
+            HStack {
+                Text(stepTitle)
+                    .font(.headline)
+                Spacer()
+                Text("\(stepIndex + 1) / \(frames.count)")
+                    .font(.caption.monospacedDigit().bold())
+                    .foregroundStyle(.secondary)
+            }
+            if !stepText.isEmpty {
+                Text(stepText)
+                    .font(.subheadline)
+                    .lineLimit(lines)
+                    .fixedSize(horizontal: false, vertical: true)
+            }
+        }
+        .frame(maxWidth: .infinity, alignment: .leading)
+    }
+
+    @ViewBuilder
+    private var evolutionMenu: some View {
+        if !basePlay.evolutionList.isEmpty {
+            Menu {
+                Button {
+                    selectVariant(nil)
+                } label: {
+                    if variantIndex == nil { Label("Exercice de base", systemImage: "checkmark") } else { Text("Exercice de base") }
+                }
+                ForEach(Array(basePlay.evolutionList.enumerated()), id: \.element.id) { index, evo in
+                    Button {
+                        selectVariant(index)
+                    } label: {
+                        if variantIndex == index { Label(evo.title, systemImage: "checkmark") } else { Text(evo.title) }
+                    }
+                }
+            } label: {
+                Label(variantIndex.flatMap { basePlay.evolutionList[safe: $0]?.title } ?? "Exercice de base",
+                      systemImage: "square.stack.3d.up")
+                    .font(.subheadline.bold())
+            }
+            .accessibilityLabel("Évolution")
+        }
+    }
+
+    private func enterCinema() {
+        cinemaMode = true
+        if !isPlaying {
+            DispatchQueue.main.asyncAfter(deadline: .now() + 0.4) { togglePlay() }
+        }
+    }
+
+    private func selectVariant(_ index: Int?) {
+        stopAuto()
+        variantIndex = index
+        let current = basePlay.variant(index)
+        frames = current.resolvedFrames()
+        stepIndex = 0
+        guard !frames.isEmpty else { return }
+        configureActors()
+        let bounds = current.focusBounds()
+        scene3D.setFocus(min: bounds.min, max: bounds.max)
+        scene3D.setBallVisible(current.hasBall)
+        scene3D.setFrame(frames[0])
+        refreshOverlays(animated: false)
+        scene3D.applyCamera(scene3D.cameraPreset, animated: true)
     }
 
     // MARK: - Panneau de contrôle
@@ -280,6 +428,11 @@ struct TacticPlayerView: View {
         scene3D.setFrame(frames[0])
         refreshOverlays(animated: false)
         scene3D.applyCamera(.coach, animated: false)
+        if cinemaMode {
+            DispatchQueue.main.asyncAfter(deadline: .now() + 0.8) {
+                if !isPlaying { togglePlay() }
+            }
+        }
         #if DEBUG
         if Demo.screen == "tactique" { jump(to: Demo.tacticStep) }
         #endif
@@ -295,7 +448,8 @@ struct TacticPlayerView: View {
                 team: actor.team,
                 label: override?.label ?? actor.label,
                 name: showNames ? (override?.name ?? actor.name) : nil,
-                isGoalkeeper: actor.isGoalkeeper
+                isGoalkeeper: actor.isGoalkeeper,
+                bib: AtelierColor(name: actor.bib)
             )
         }
         scene3D.configure(actors: actors, props: play.props, palette: palette)

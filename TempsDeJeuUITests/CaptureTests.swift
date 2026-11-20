@@ -59,10 +59,10 @@ final class CaptureTests: XCTestCase {
         waitFor("Passe dans la course du latéral")
         shoot("04-tactique")
 
-        // 5. La bibliothèque d'exercices.
-        launch("bibliotheque")
-        waitFor("Exercices animés en 3D")
-        shoot("05-bibliotheque")
+        // 5. L'Atelier : un exercice construit sur le terrain (étape 2, flèches calculées).
+        launch("atelier")
+        waitFor("Jeu 4 contre 4")
+        shoot("05-atelier")
 
         // 6. L'effectif de la catégorie.
         launch("joueurs")

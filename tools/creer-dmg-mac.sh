@@ -64,9 +64,12 @@ encore distribuée par l'App Store). Dans ce cas :
   2. En bas, cliquez sur « Ouvrir quand même » à côté de Temps De Jeu ;
   3. Confirmez. L'app s'ouvrira normalement ensuite.
 
-Nouveautés : Placement en 3D, bibliothèque d'exercices animés pas à pas,
-séquences tactiques personnelles et fichiers .tdjt (Match › Placement,
-ou onglet Présences › Tactiques 3D).
+Nouveautés : l'Atelier d'exercices en plein écran (onglet Présences ›
+Atelier) : terrain, matériel (plots, coupelles, piquets, mannequins,
+mini-buts, échelles…), chasubles de 8 couleurs, étapes animées, mode
+cinéma 3D, évolutions, matériel à prévoir calculé, fiches PDF et séances
+avec équipes composées à partir des présents. Aussi : Placement en 3D et
+fichiers .tdjt (Match › Placement).
 
 Version Mac complète : toutes les fonctionnalités sont débloquées,
 matchs illimités, sans achat. (Le widget n'existe que sur iPhone / iPad.)

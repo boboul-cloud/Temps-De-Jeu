@@ -20,6 +20,8 @@ struct Pitch3DActor: Equatable {
     var label: String
     var name: String?
     var isGoalkeeper: Bool
+    /// Chasuble choisie dans l'Atelier (remplace la couleur du camp)
+    var bib: AtelierColor? = nil
 }
 
 /// Couleurs des équipes
@@ -597,6 +599,9 @@ final class Pitch3DController: NSObject, ObservableObject, UIGestureRecognizerDe
     }
 
     private func jersey(for actor: Pitch3DActor) -> (fill: UIColor, text: UIColor) {
+        if let bib = actor.bib {
+            return (bib.uiColor, bib.textUIColor)
+        }
         if actor.isGoalkeeper {
             return Self.goalkeeperColors(avoiding: [UIColor(palette.team.color), UIColor(palette.opponent.color)])
         }
@@ -704,8 +709,9 @@ final class Pitch3DController: NSObject, ObservableObject, UIGestureRecognizerDe
     private func rebuildProps() {
         propsRoot.childNodes.forEach { $0.removeFromParentNode() }
         for prop in props {
-            let color = Materials.namedColor(prop.color, default: prop.kind == .zone ? .white : .orange)
+            let color = prop.atelierColor.uiColor
             let node: SCNNode
+            let angle = Float(-(prop.rotation ?? 0) * .pi / 180)
             switch prop.kind {
             case .plot:
                 let cone = SCNCone(topRadius: 0.035, bottomRadius: 0.17, height: 0.3)
@@ -714,6 +720,14 @@ final class Pitch3DController: NSObject, ObservableObject, UIGestureRecognizerDe
                 cone3D.position.y = 0.15
                 node = SCNNode()
                 node.addChildNode(cone3D)
+                node.name = "small-prop"
+            case .coupelle:
+                let disc = SCNCone(topRadius: 0.07, bottomRadius: 0.2, height: 0.07)
+                disc.firstMaterial = Materials.lambert(color)
+                let disc3D = SCNNode(geometry: disc)
+                disc3D.position.y = 0.035
+                node = SCNNode()
+                node.addChildNode(disc3D)
                 node.name = "small-prop"
             case .piquet:
                 let pole = SCNCylinder(radius: 0.03, height: 1.6)
@@ -725,16 +739,44 @@ final class Pitch3DController: NSObject, ObservableObject, UIGestureRecognizerDe
                 node.name = "small-prop"
             case .mannequin:
                 let capsule = SCNCapsule(capRadius: 0.28, height: 1.9)
-                capsule.firstMaterial = Materials.lambert(Materials.namedColor(prop.color, default: .yellow))
+                capsule.firstMaterial = Materials.lambert(color)
                 let shape = SCNNode(geometry: capsule)
                 shape.position.y = 0.95
                 shape.scale = SCNVector3(1, 1, 0.45)
                 node = SCNNode()
                 node.addChildNode(shape)
-                node.eulerAngles.y = Float(-(prop.rotation ?? 0) * .pi / 180)
+                node.eulerAngles.y = angle
             case .miniBut:
                 node = Self.miniGoalNode()
-                node.eulerAngles.y = Float(-(prop.rotation ?? 0) * .pi / 180)
+                node.eulerAngles.y = angle
+            case .but:
+                node = Self.miniGoalNode(width: 5, height: 2, depth: 1.5)
+                node.eulerAngles.y = angle
+            case .cerceau:
+                let hoop = SCNTorus(ringRadius: 0.4, pipeRadius: 0.025)
+                hoop.firstMaterial = Materials.lambert(color)
+                let hoopNode = SCNNode(geometry: hoop)
+                hoopNode.position.y = 0.03
+                node = SCNNode()
+                node.addChildNode(hoopNode)
+                node.name = "small-prop"
+            case .echelle:
+                node = Self.ladderNode(color: color)
+                node.eulerAngles.y = angle
+            case .haie:
+                node = Self.hurdleNode(color: color)
+                node.eulerAngles.y = angle
+                node.name = "small-prop"
+            case .ballon:
+                let sphere = SCNSphere(radius: 0.11)
+                let material = Materials.lambert(.white)
+                material.diffuse.contents = TextureFactory.ball()
+                sphere.firstMaterial = material
+                let ball = SCNNode(geometry: sphere)
+                ball.position.y = 0.11
+                node = SCNNode()
+                node.addChildNode(ball)
+                node.name = "small-prop"
             case .zone:
                 node = Self.zoneNode(size: prop.size ?? TacticPoint(x: 0.2, y: 0.15), color: color)
             }
@@ -743,6 +785,56 @@ final class Pitch3DController: NSObject, ObservableObject, UIGestureRecognizerDe
             propsRoot.addChildNode(node)
         }
         applyScale()
+    }
+
+    /// Échelle de rythme : 4 m de long (sur z quand rotation = 0), 0,5 m de large
+    private static func ladderNode(color: UIColor) -> SCNNode {
+        let node = SCNNode()
+        let material = Materials.lambert(color)
+        let length: Float = 4, width: Float = 0.5
+        for x in [-width / 2, width / 2] {
+            let rail = SCNBox(width: 0.04, height: 0.02, length: CGFloat(length), chamferRadius: 0)
+            rail.firstMaterial = material
+            let railNode = SCNNode(geometry: rail)
+            railNode.position = SCNVector3(x, 0.012, 0)
+            node.addChildNode(railNode)
+        }
+        let rungs = 9
+        for i in 0..<rungs {
+            let z = -length / 2 + length * Float(i) / Float(rungs - 1)
+            let rung = SCNBox(width: CGFloat(width), height: 0.015, length: 0.035, chamferRadius: 0)
+            rung.firstMaterial = material
+            let rungNode = SCNNode(geometry: rung)
+            rungNode.position = SCNVector3(0, 0.01, z)
+            node.addChildNode(rungNode)
+        }
+        return node
+    }
+
+    /// Petite haie : barre de 1 m (sur x quand rotation = 0) à 30 cm du sol
+    private static func hurdleNode(color: UIColor) -> SCNNode {
+        let node = SCNNode()
+        let material = Materials.lambert(color)
+        let width: Float = 1, height: Float = 0.3
+        let bar = SCNCylinder(radius: 0.025, height: CGFloat(width))
+        bar.firstMaterial = material
+        let barNode = SCNNode(geometry: bar)
+        barNode.eulerAngles.z = .pi / 2
+        barNode.position = SCNVector3(0, height, 0)
+        node.addChildNode(barNode)
+        for x in [-width / 2, width / 2] {
+            let leg = SCNCylinder(radius: 0.02, height: CGFloat(height))
+            leg.firstMaterial = material
+            let legNode = SCNNode(geometry: leg)
+            legNode.position = SCNVector3(x, height / 2, 0)
+            node.addChildNode(legNode)
+            let foot = SCNBox(width: 0.04, height: 0.02, length: 0.3, chamferRadius: 0)
+            foot.firstMaterial = material
+            let footNode = SCNNode(geometry: foot)
+            footNode.position = SCNVector3(x, 0.01, 0)
+            node.addChildNode(footNode)
+        }
+        return node
     }
 
     private static func zoneNode(size: TacticPoint, color: UIColor) -> SCNNode {
@@ -769,11 +861,10 @@ final class Pitch3DController: NSObject, ObservableObject, UIGestureRecognizerDe
         return node
     }
 
-    private static func miniGoalNode() -> SCNNode {
+    private static func miniGoalNode(width: Float = 2.0, height: Float = 1.0, depth: Float = 0.8) -> SCNNode {
         // Ouverture tournée vers +z (bas de l'écran) quand rotation = 0
         let node = SCNNode()
         let white = Materials.lambert(.white)
-        let width: Float = 2.0, height: Float = 1.0, depth: Float = 0.8
         for x in [-width / 2, width / 2] {
             let post = SCNCylinder(radius: 0.04, height: CGFloat(height))
             post.firstMaterial = white
@@ -1282,6 +1373,7 @@ enum Materials {
         case "blanc": return .white
         case "vert": return UIColor(red: 0.2, green: 0.85, blue: 0.3, alpha: 1)
         case "violet": return UIColor(red: 0.6, green: 0.3, blue: 0.9, alpha: 1)
+        case "rose": return UIColor(red: 1.0, green: 0.35, blue: 0.7, alpha: 1)
         default: return fallback
         }
     }

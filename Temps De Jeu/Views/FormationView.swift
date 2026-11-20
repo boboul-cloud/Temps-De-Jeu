@@ -198,9 +198,8 @@ struct FormationView: View {
                     sequenceDirty = false
                 }
             }
-            .sheet(isPresented: $showLibrary) {
+            .fullScreenCover(isPresented: $showLibrary) {
                 TacticsLibraryView(palette: palette3D, roster: roster)
-                    .largeSheetSizing()
             }
             .sheet(isPresented: $showStepsSheet) {
                 SequenceStepsSheet(steps: $sequenceSteps, onShow: { loadStep($0) }, onPlay: {
@@ -751,7 +750,7 @@ struct FormationView: View {
                 Button {
                     showLibrary = true
                 } label: {
-                    Label("Bibliothèque d'exercices 3D", systemImage: "books.vertical")
+                    Label("Atelier d'exercices", systemImage: "square.and.pencil")
                 }
             }
         } label: {

@@ -80,6 +80,9 @@ struct TacticActor: Codable, Identifiable, Hashable {
     var label: String          // Numéro ou lettre affichée sur le maillot
     var name: String?          // Ex : « Latéral droit »
     var position: PlayerPosition?
+    /// Couleur de chasuble choisie dans l'Atelier (`BibColor.rawValue`).
+    /// Absente : couleur du camp (mon équipe / adversaires / jokers).
+    var bib: String?
 
     var isGoalkeeper: Bool { position == .gardien }
 
@@ -89,14 +92,17 @@ struct TacticActor: Codable, Identifiable, Hashable {
         case label = "numero"
         case name = "nom"
         case position = "poste"
+        case bib = "chasuble"
     }
 
-    init(id: String, team: TacticTeam, label: String, name: String? = nil, position: PlayerPosition? = nil) {
+    init(id: String, team: TacticTeam, label: String, name: String? = nil, position: PlayerPosition? = nil,
+         bib: String? = nil) {
         self.id = id
         self.team = team
         self.label = label
         self.name = name
         self.position = position
+        self.bib = bib
     }
 
     init(from decoder: Decoder) throws {
@@ -108,6 +114,7 @@ struct TacticActor: Codable, Identifiable, Hashable {
             ?? ""
         name = try c.decodeIfPresent(String.self, forKey: .name)
         position = try? c.decodeIfPresent(PlayerPosition.self, forKey: .position)
+        bib = try? c.decodeIfPresent(String.self, forKey: .bib)
     }
 }
 
@@ -119,6 +126,18 @@ enum TacticPropKind: String, Codable, CaseIterable {
     case mannequin
     case zone
     case piquet
+    case coupelle
+    case but
+    case cerceau
+    case echelle
+    case haie
+    case ballon
+
+    /// Un type inconnu (fichier d'une version plus récente) devient un plot
+    init(from decoder: Decoder) throws {
+        let raw = (try? decoder.singleValueContainer().decode(String.self)) ?? ""
+        self = TacticPropKind(rawValue: raw.lowercased()) ?? .plot
+    }
 }
 
 struct TacticProp: Codable, Hashable {
@@ -142,6 +161,15 @@ struct TacticProp: Codable, Hashable {
         self.size = size
         self.color = color
         self.rotation = rotation
+    }
+
+    init(from decoder: Decoder) throws {
+        let c = try decoder.container(keyedBy: CodingKeys.self)
+        kind = (try? c.decode(TacticPropKind.self, forKey: .kind)) ?? .plot
+        position = try c.decode(TacticPoint.self, forKey: .position)
+        size = try? c.decodeIfPresent(TacticPoint.self, forKey: .size)
+        color = try? c.decodeIfPresent(String.self, forKey: .color)
+        rotation = try? c.decodeIfPresent(Double.self, forKey: .rotation)
     }
 }
 
@@ -318,6 +346,10 @@ struct TacticPlay: Codable, Identifiable, Hashable {
     var actors: [TacticActor]
     var props: [TacticProp]
     var steps: [TacticStep]
+    /// Variantes de l'exercice (même terrain, consignes différentes) — Atelier
+    var evolutions: [TacticEvolution]?
+    /// Partie du terrain affichée dans l'Atelier
+    var framing: TacticFraming?
     /// Tactique créée ou importée par l'utilisateur (modifiable / supprimable)
     var isUserCreated: Bool
     var createdAt: Date?
@@ -335,6 +367,8 @@ struct TacticPlay: Codable, Identifiable, Hashable {
         case actors = "acteurs"
         case props = "materiel"
         case steps = "etapes"
+        case evolutions
+        case framing = "cadrage"
         case isUserCreated = "perso"
         case createdAt = "creeLe"
     }
@@ -342,7 +376,8 @@ struct TacticPlay: Codable, Identifiable, Hashable {
     init(id: UUID = UUID(), title: String, category: TacticCategory, level: String? = nil,
          duration: String? = nil, headcount: String? = nil, objective: String = "",
          instructions: [String] = [], source: String? = nil, actors: [TacticActor],
-         props: [TacticProp] = [], steps: [TacticStep], isUserCreated: Bool = false, createdAt: Date? = nil) {
+         props: [TacticProp] = [], steps: [TacticStep], evolutions: [TacticEvolution]? = nil,
+         framing: TacticFraming? = nil, isUserCreated: Bool = false, createdAt: Date? = nil) {
         self.id = id
         self.title = title
         self.category = category
@@ -355,6 +390,8 @@ struct TacticPlay: Codable, Identifiable, Hashable {
         self.actors = actors
         self.props = props
         self.steps = steps
+        self.evolutions = evolutions
+        self.framing = framing
         self.isUserCreated = isUserCreated
         self.createdAt = createdAt
     }
@@ -380,6 +417,8 @@ struct TacticPlay: Codable, Identifiable, Hashable {
         actors = try c.decode([TacticActor].self, forKey: .actors)
         props = (try? c.decode([TacticProp].self, forKey: .props)) ?? []
         steps = try c.decode([TacticStep].self, forKey: .steps)
+        evolutions = try? c.decodeIfPresent([TacticEvolution].self, forKey: .evolutions)
+        framing = try? c.decodeIfPresent(TacticFraming.self, forKey: .framing)
         isUserCreated = (try? c.decode(Bool.self, forKey: .isUserCreated)) ?? false
         createdAt = try? c.decodeIfPresent(Date.self, forKey: .createdAt)
     }
@@ -404,14 +443,10 @@ struct TacticPlay: Codable, Identifiable, Hashable {
     /// Résumé du matériel (« 8 plots · 2 mini-buts »)
     var equipmentSummary: String? {
         guard !props.isEmpty else { return nil }
-        let names: [TacticPropKind: (String, String)] = [
-            .plot: ("plot", "plots"), .miniBut: ("mini-but", "mini-buts"), .mannequin: ("mannequin", "mannequins"),
-            .zone: ("zone", "zones"), .piquet: ("piquet", "piquets")
-        ]
         return TacticPropKind.allCases.compactMap { kind in
             let count = props.filter { $0.kind == kind }.count
-            guard count > 0, let name = names[kind] else { return nil }
-            return "\(count) \(count > 1 ? name.1 : name.0)"
+            guard count > 0 else { return nil }
+            return kind.counted(count)
         }.joined(separator: " · ")
     }
 }

@@ -23,15 +23,36 @@ final class TacticStore: ObservableObject {
     @Published private(set) var libraryTactics: [TacticPlay] = []
     /// Séquences créées depuis le Placement ou importées
     @Published private(set) var userTactics: [TacticPlay] = []
+    /// Séances de l'Atelier (enchaînements d'exercices)
+    @Published private(set) var plans: [TrainingPlan] = []
 
     static let libraryResourceName = "TactiquesEntrainement"
 
     private init() {
         loadLibrary()
         loadUserTactics()
+        loadPlans()
     }
 
     var allTactics: [TacticPlay] { userTactics + libraryTactics }
+
+    func tactic(_ id: UUID) -> TacticPlay? {
+        allTactics.first { $0.id == id }
+    }
+
+    /// Copie modifiable d'un exercice (bibliothèque ou perso)
+    func duplicate(_ play: TacticPlay) -> TacticPlay {
+        var copy = play
+        copy.id = UUID()
+        copy.isUserCreated = true
+        copy.createdAt = Date()
+        if !play.isUserCreated {
+            copy.source = play.source ?? "Bibliothèque Temps De Jeu"
+        } else {
+            copy.title = "\(play.title) (copie)"
+        }
+        return copy
+    }
 
     // MARK: - Bibliothèque intégrée
 
@@ -102,6 +123,50 @@ final class TacticStore: ObservableObject {
     func delete(_ play: TacticPlay) {
         userTactics.removeAll { $0.id == play.id }
         persist()
+    }
+
+    // MARK: - Séances
+
+    private var plansFileURL: URL {
+        userFileURL.deletingLastPathComponent().appendingPathComponent("mes-seances.json")
+    }
+
+    private func loadPlans() {
+        guard let data = try? Data(contentsOf: plansFileURL) else { return }
+        let decoder = JSONDecoder()
+        decoder.dateDecodingStrategy = .iso8601
+        plans = (try? decoder.decode([TrainingPlan].self, from: data)) ?? []
+    }
+
+    private func persistPlans() {
+        let encoder = JSONEncoder()
+        encoder.outputFormatting = [.prettyPrinted, .sortedKeys]
+        encoder.dateEncodingStrategy = .iso8601
+        do {
+            try encoder.encode(plans).write(to: plansFileURL, options: .atomic)
+        } catch {
+            print("[Tactiques] Erreur d'enregistrement des séances : \(error)")
+        }
+    }
+
+    func savePlan(_ plan: TrainingPlan) {
+        if let index = plans.firstIndex(where: { $0.id == plan.id }) {
+            plans[index] = plan
+        } else {
+            plans.insert(plan, at: 0)
+        }
+        persistPlans()
+    }
+
+    func deletePlan(_ plan: TrainingPlan) {
+        plans.removeAll { $0.id == plan.id }
+        persistPlans()
+    }
+
+    /// Remplace toutes les séances (restauration d'une sauvegarde complète)
+    func replacePlans(_ newPlans: [TrainingPlan]) {
+        plans = newPlans
+        persistPlans()
     }
 
     // MARK: - Import / export
