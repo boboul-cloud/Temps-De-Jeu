@@ -23,6 +23,8 @@ struct AtelierPlanView: View {
     @State private var editing: AtelierEditRequest?
     @State private var shareFile: TacticShareFile?
     @State private var editMode: EditMode = .inactive
+    @State private var confirmDelete = false
+    @Environment(\.dismiss) private var dismiss
 
     private var exercises: [(TrainingPlan.Item, TacticPlay)] {
         plan.items.compactMap { item in store.tactic(item.tacticId).map { (item, $0) } }
@@ -64,8 +66,29 @@ struct AtelierPlanView: View {
             } footer: {
                 Text("Une page de garde (programme, matériel, équipes) puis une page par exercice avec son schéma.")
             }
+
+            Section {
+                Button(role: .destructive) {
+                    confirmDelete = true
+                } label: {
+                    Label("Supprimer la séance", systemImage: "trash")
+                        .foregroundStyle(.red)
+                }
+                .accessibilityIdentifier("seance-supprimer")
+            } footer: {
+                Text("Les exercices restent dans « Mes exercices ».")
+            }
         }
         .listStyle(.insetGrouped)
+        .confirmationDialog("Supprimer cette séance ?", isPresented: $confirmDelete, titleVisibility: .visible) {
+            Button("Supprimer", role: .destructive) {
+                loaded = false   // plus d'enregistrement automatique
+                store.deletePlan(plan)
+                dismiss()
+            }
+        } message: {
+            Text(plan.title)
+        }
         .navigationTitle(plan.title.isEmpty ? "Séance" : plan.title)
         .navigationBarTitleDisplayMode(.inline)
         .environment(\.editMode, $editMode)

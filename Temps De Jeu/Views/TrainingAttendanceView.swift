@@ -14,6 +14,7 @@ struct TrainingAttendanceView: View {
     @State private var players: [Player] = []
     @State private var showNewSession = false
     @State private var selectedSession: TrainingSession?
+    @State private var sessionToDelete: TrainingSession?
     @State private var showStats = false
     @State private var showExport = false
     @State private var showTacticsLibrary = false
@@ -71,6 +72,8 @@ struct TrainingAttendanceView: View {
                     } label: {
                         Image(systemName: "ellipsis.circle.fill")
                     }
+                    .accessibilityLabel("Entraînements : plus d'actions")
+                    .accessibilityIdentifier("entrainements-menu")
                 }
             }
             .sheet(isPresented: $showNewSession) {
@@ -80,12 +83,15 @@ struct TrainingAttendanceView: View {
                 }
             }
             .sheet(item: $selectedSession) { session in
-                TrainingSessionDetailView(session: session, players: TeamManager.shared.loadPlayers()) { updatedSession in
+                TrainingSessionDetailView(session: session, players: TeamManager.shared.loadPlayers(),
+                                          onSave: { updatedSession in
                     if let index = sessions.firstIndex(where: { $0.id == updatedSession.id }) {
                         sessions[index] = updatedSession
                         TrainingManager.shared.saveSessions(sessions)
                     }
-                }
+                }, onDelete: {
+                    delete(session)
+                })
             }
             .sheet(isPresented: $showStats) {
                 TrainingStatsView(sessions: sessions)
@@ -156,11 +162,36 @@ struct TrainingAttendanceView: View {
             ForEach(sortedSessions) { session in
                 TrainingSessionRow(session: session)
                     .contentShape(Rectangle())
+                    .accessibilityElement(children: .combine)
+                    .accessibilityAddTraits(.isButton)
+                    .accessibilityIdentifier("entrainement-ligne")
                     .onTapGesture {
                         selectedSession = session
                     }
+                    .contextMenu {
+                        Button {
+                            selectedSession = session
+                        } label: {
+                            Label("Ouvrir", systemImage: "square.and.pencil")
+                        }
+                        Button(role: .destructive) {
+                            sessionToDelete = session
+                        } label: {
+                            Label("Supprimer", systemImage: "trash")
+                        }
+                    }
             }
             .onDelete(perform: deleteSession)
+        }
+        .confirmationDialog("Supprimer cet entraînement ?",
+                            isPresented: Binding(get: { sessionToDelete != nil }, set: { if !$0 { sessionToDelete = nil } }),
+                            titleVisibility: .visible) {
+            Button("Supprimer", role: .destructive) {
+                if let sessionToDelete { delete(sessionToDelete) }
+                sessionToDelete = nil
+            }
+        } message: {
+            Text("Les présences pointées et les réponses au sondage seront perdues.")
         }
     }
     
@@ -169,6 +200,11 @@ struct TrainingAttendanceView: View {
         for session in sessionsToDelete {
             sessions.removeAll { $0.id == session.id }
         }
+        TrainingManager.shared.saveSessions(sessions)
+    }
+
+    private func delete(_ session: TrainingSession) {
+        sessions.removeAll { $0.id == session.id }
         TrainingManager.shared.saveSessions(sessions)
     }
 }
@@ -520,8 +556,11 @@ struct TrainingSessionDetailView: View {
     let session: TrainingSession
     let players: [Player]
     let onSave: (TrainingSession) -> Void
+    /// Supprime l'entraînement (bouton rouge de la fiche)
+    var onDelete: (() -> Void)?
     
     @Environment(\.dismiss) private var dismiss
+    @State private var confirmDelete = false
     @State private var date: Date
     @State private var notes: String
     @State private var location: String
@@ -533,10 +572,12 @@ struct TrainingSessionDetailView: View {
     @State private var presentGuestIds: Set<UUID> = []
     @State private var showAvailabilityPoll = false
     
-    init(session: TrainingSession, players: [Player], onSave: @escaping (TrainingSession) -> Void) {
+    init(session: TrainingSession, players: [Player], onSave: @escaping (TrainingSession) -> Void,
+         onDelete: (() -> Void)? = nil) {
         self.session = session
         self.players = players
         self.onSave = onSave
+        self.onDelete = onDelete
         _date = State(initialValue: session.date)
         _notes = State(initialValue: session.notes)
         _location = State(initialValue: session.location)
@@ -621,6 +662,16 @@ struct TrainingSessionDetailView: View {
                             Image(systemName: "paperplane.fill")
                                 .foregroundStyle(.orange)
                         }
+                    }
+
+                    if onDelete != nil {
+                        Button(role: .destructive) {
+                            confirmDelete = true
+                        } label: {
+                            Label("Supprimer cet entraînement", systemImage: "trash")
+                                .foregroundStyle(.red)
+                        }
+                        .accessibilityIdentifier("entrainement-supprimer")
                     }
                 }
                 
@@ -737,6 +788,14 @@ struct TrainingSessionDetailView: View {
             }
             .sheet(item: $pdfPreviewItem) { item in
                 PDFPreviewView(pdfData: item.data, title: item.title)
+            }
+            .confirmationDialog("Supprimer cet entraînement ?", isPresented: $confirmDelete, titleVisibility: .visible) {
+                Button("Supprimer", role: .destructive) {
+                    onDelete?()
+                    dismiss()
+                }
+            } message: {
+                Text("\(dateFormatter.string(from: session.date)). Les présences pointées et les réponses au sondage seront perdues.")
             }
             .sheet(isPresented: $showAvailabilityPoll) {
                 AvailabilityPollView(session: session, players: players) { updatedSession in

@@ -205,6 +205,7 @@ struct UserGuideView: View {
                         "Utilisez **Tout sélectionner** pour pointer rapidement",
                         "Ajoutez une note optionnelle (thème de l'entraînement)",
                         "Appuyez sur un entraînement pour le modifier ou **exporter en PDF**",
+                        "Pour **supprimer** un entraînement : bouton rouge dans sa fiche, ou appui long (clic droit sur Mac) sur la ligne",
                         "Consultez les **Statistiques** pour voir le taux de présence par joueur",
                         "**Exportez** les présences en PDF ou JSON sur une période"
                     ]
@@ -308,7 +309,7 @@ struct UserGuideView: View {
                         "▶︎ **Aperçu** sur le terrain, ou **Cinéma** : la 3D en plein écran, avec la consigne en sous-titre",
                         "**Évolutions** : « + Évolution » repart du même terrain pour une variante (2 touches maximum, un défenseur en plus…)",
                         "**Fiche** : objectif, consignes et **matériel à prévoir calculé tout seul** (« 12 plots jaunes, 6 chasubles rouges… »), fiche PDF à imprimer",
-                        "**Séances** : enchaînez des exercices minutés ; le matériel total se calcule, et **Faire les équipes** répartit les joueurs pointés présents par couleur de chasuble",
+                        "**Séances** : enchaînez des exercices minutés ; le matériel total se calcule, et **Faire les équipes** répartit les joueurs pointés présents par couleur de chasuble. Pour supprimer une séance : **Supprimer la séance** en bas de sa page, ou appui long (clic droit sur Mac) dans la liste",
                         "**Enregistrement automatique** : l'exercice s'enregistre au fur et à mesure (« Enregistré » s'affiche sous son nom), même si l'app est fermée. **Enregistrer** le range dans « Mes exercices » et revient à l'Atelier. Les séances s'enregistrent aussi toutes seules",
                         "↶ Annuler / ↷ Rétablir à tout moment ; sur Mac et iPad avec clavier : ⌘Z, ⌘S pour enregistrer, espace pour l'aperçu, ⌫ pour enlever"
                     ]

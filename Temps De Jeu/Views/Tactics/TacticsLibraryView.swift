@@ -329,7 +329,15 @@ struct TacticsLibraryView: View {
                             }
                             .padding(.vertical, 2)
                         }
+                        .accessibilityIdentifier("seance-ligne")
                         .swipeActions(edge: .trailing) {
+                            Button(role: .destructive) {
+                                planToDelete = plan
+                            } label: {
+                                Label("Supprimer", systemImage: "trash")
+                            }
+                        }
+                        .contextMenu {
                             Button(role: .destructive) {
                                 planToDelete = plan
                             } label: {

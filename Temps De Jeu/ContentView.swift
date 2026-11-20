@@ -451,6 +451,8 @@ struct ContentView: View {
             showTacticsLibrary = true
         case "joueurs":
             selectedTab = 1
+        case "presences":
+            selectedTab = 2
         case "atelier":
             selectedTab = 2
             demoAtelier = Demo.atelierExercise()
