@@ -6,6 +6,30 @@ La build 30 a été archivée et envoyée chez Apple le **21/11/2026 à 16 h 04*
 « Uploaded to Apple », sans erreur ni avertissement). Elle contient l'Atelier d'exercices
 (branche `atelier`, commit `3882247`) et aucune donnée de démonstration.
 
+## À remplir à la main dans App Store Connect (mise à jour)
+
+**AgentDouble ne prend pas cette app** : il écarte toute app qui a déjà une version en vente
+(verrou « déjà publiée », `src/app/etat.ts`), donc Temps De Jeu n'apparaît pas dans
+« + Choisir une app ». Pour une mise à jour, seuls les champs de la version changent ; le
+reste (nom, sous-titre, catégories, adresses, confidentialité, classification) est déjà en
+place depuis la 1.6.1 et ne bouge pas.
+
+Dans App Store Connect › Temps De Jeu › onglet Distribution, version iOS **1.7** (la créer avec
+« + » à côté de « App iOS » si elle n'existe pas), dans cet ordre :
+
+1. **Captures** : supprimer les anciennes, déposer les 6 de `captures/iphone-6.9/` dans
+   « iPhone 6,9 pouces » et les 6 de `captures/ipad-13/` dans « iPad 13 pouces », dans
+   l'ordre des numéros.
+2. **Texte promotionnel** : bloc de la section 3.
+3. **Description** : bloc de la section 4.
+4. **Mots-clés** : bloc de la section 5.
+5. **Nouveautés de cette version** : bloc « Nouveautés de cette version ».
+6. **Build** : « Ajouter une build » › 30 (une fois le traitement d'Apple terminé).
+7. **Informations pour la vérification de l'app** › Notes : bloc de la section 6. Pas de
+   compte de démonstration (« Connexion requise » décoché).
+8. Achat intégré : rien à joindre, Premium est déjà validé.
+9. Enregistrer, relire, puis « Ajouter pour vérification » et soumettre.
+
 ## 1. Identité de l'app
 
 | Champ | Valeur |
@@ -33,9 +57,7 @@ Les trois adresses répondent (vérifié le 21/11/2026, code 200) et parlent bie
 160/170 caractères.
 
 ```
-Nouveau : l'Atelier d'exercices. Plots, chasubles, joueurs et ballons sur le
-terrain, étapes animées en 3D, séances minutées avec le matériel calculé tout
-seul.
+Nouveau : l'Atelier d'exercices. Plots, chasubles, joueurs et ballons sur le terrain, étapes animées en 3D, séances minutées avec le matériel calculé tout seul.
 ```
 
 ## 4. Description (4000)
@@ -139,9 +161,8 @@ Photos : la photo d'un joueur ou d'un membre du staff se choisit avec le sélect
 
 ## Nouveautés de cette version (4000)
 
-1804/4000 caractères. **Attention :** AgentDouble ne lit pas ce champ dans la feuille
-(il est prévu pour les apps neuves, sans « Nouveautés »). Pour une mise à jour, Apple
-l'exige : il faut le coller dans App Store Connect (« Nouveautés de cette version »).
+1804/4000 caractères. Obligatoire pour une mise à jour : à coller dans App Store Connect
+(« Nouveautés de cette version »).
 
 ```
 NOUVEAUTÉS DE LA VERSION 1.7
@@ -210,7 +231,8 @@ voient les utilisateurs, l'app ne déclarant pas le français comme langue (voir
 - [x] build 30 archivée et envoyée chez Apple (21/11/2026, 16 h 04)
 - [x] l'archive n'embarque aucune donnée de démonstration (« FC Rivière » absent du binaire)
 - [ ] attendre que la build 30 ait fini son traitement chez Apple (e-mail « has completed processing »), puis la choisir dans la version 1.7
-- [ ] coller les « Nouveautés de cette version » dans App Store Connect (non lues par AgentDouble)
+- [ ] remplir à la main les champs de la version (voir « À remplir à la main » en tête de
+      feuille) : AgentDouble refuse les apps déjà publiées
 - [ ] remplacer les 6 captures iPhone et les 6 captures iPad par celles du 21/11 (la 05 est maintenant l'Atelier)
 - [ ] la version Mac en DMG (hors App Store, sans limite) n'est pas concernée par cette soumission
 - [ ] plus tard (build suivante, pas bloquant) : déclarer le français (`developmentRegion = fr`
