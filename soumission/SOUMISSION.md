@@ -230,11 +230,14 @@ voient les utilisateurs, l'app ne déclarant pas le français comme langue (voir
 - [x] rien n'a été créé ni soumis chez Apple
 - [x] build 30 archivée et envoyée chez Apple (21/11/2026, 16 h 04)
 - [x] l'archive n'embarque aucune donnée de démonstration (« FC Rivière » absent du binaire)
-- [ ] attendre que la build 30 ait fini son traitement chez Apple (e-mail « has completed processing »), puis la choisir dans la version 1.7
-- [ ] remplir à la main les champs de la version (voir « À remplir à la main » en tête de
-      feuille) : AgentDouble refuse les apps déjà publiées
-- [ ] remplacer les 6 captures iPhone et les 6 captures iPad par celles du 21/11 (la 05 est maintenant l'Atelier)
-- [ ] la version Mac en DMG (hors App Store, sans limite) n'est pas concernée par cette soumission
+- [x] build 30 choisie dans la version 1.7
+- [x] champs de la version remplis à la main (AgentDouble refuse les apps déjà publiées)
+- [x] captures : celles de la 1.6.1 gardées (choix du 21/11/2026) ; les nouvelles restent dans
+      `captures/` pour une prochaine fois
+- [x] conformité Chine : évaluation de sécurité « Non », contenu généré par IA « Non »
+- [x] nouveau questionnaire de classification par âge (2025) : tout à « Non » / « Aucun » → 4+
+- [x] **soumise pour vérification le 21/11/2026**
+- [x] la version Mac en DMG (hors App Store, sans limite) n'est pas concernée par cette soumission
 - [ ] plus tard (build suivante, pas bloquant) : déclarer le français (`developmentRegion = fr`
       ou `CFBundleLocalizations = fr`) pour que « More », « Edit » et les feuilles système
       s'affichent en français
