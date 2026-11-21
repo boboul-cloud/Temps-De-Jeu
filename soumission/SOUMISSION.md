@@ -238,6 +238,6 @@ voient les utilisateurs, l'app ne déclarant pas le français comme langue (voir
 - [x] nouveau questionnaire de classification par âge (2025) : tout à « Non » / « Aucun » → 4+
 - [x] **soumise pour vérification le 21/11/2026**
 - [x] la version Mac en DMG (hors App Store, sans limite) n'est pas concernée par cette soumission
-- [ ] plus tard (build suivante, pas bloquant) : déclarer le français (`developmentRegion = fr`
-      ou `CFBundleLocalizations = fr`) pour que « More », « Edit » et les feuilles système
-      s'affichent en français
+- [x] après la soumission, pour la build suivante (31) : français déclaré (`developmentRegion = fr`,
+      `CFBundleLocalizations = fr`, app et widget). L'onglet « More » devient « Autre », les
+      dates suivent le français, et l'App Store affichera « Français » au lieu d'« Anglais »

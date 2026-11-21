@@ -9,8 +9,8 @@ final class SauvegardeTests: XCTestCase {
         app.launchArguments = ["-AppleLanguages", "(fr)", "-AppleLocale", "fr_FR", "-demo", "joueurs"]
         app.launch()
 
-        // Réglages et Exports (dans « Plus » sur iPhone)
-        let more = app.tabBars.buttons.matching(NSPredicate(format: "label IN %@", ["Plus", "More"])).firstMatch
+        // Réglages et Exports (dans « Autre » sur iPhone)
+        let more = app.tabBars.buttons.matching(NSPredicate(format: "label IN %@", ["Autre", "Plus", "More"])).firstMatch
         if more.waitForExistence(timeout: 10) { more.tap() }
         let settings = app.staticTexts["Réglages et Exports"].firstMatch
         XCTAssertTrue(settings.waitForExistence(timeout: 10))
