@@ -6,6 +6,21 @@ La build 30 a été archivée et envoyée chez Apple le **21/11/2026 à 16 h 04*
 « Uploaded to Apple », sans erreur ni avertissement). Elle contient l'Atelier d'exercices
 (branche `atelier`, commit `3882247`) et aucune donnée de démonstration.
 
+## Après l'examen de la 1.7 — à lire avant d'archiver
+
+La 1.7 (build 30) est **en examen chez Apple depuis le 21/11/2026**. Le projet Xcode est déjà
+passé en **1.7.1 (build 31)**, qui ajoute le français déclaré (onglet « Autre », App Store en
+« Français »).
+
+- **1.7 acceptée** : archiver tel quel (Product › Archive) envoie la 1.7.1. Puis fusionner la
+  branche `atelier` dans `main` (encore en 1.6.1). Pour la fiche de la 1.7.1 : Nouveautés
+  courtes (langue française, corrections), les captures du 21/11 sont prêtes dans `captures/`.
+- **1.7 refusée sur la fiche** (captures, textes…) : corriger dans App Store Connect et
+  resoumettre, sans nouvelle build ni changement dans Xcode.
+- **1.7 refusée sur l'app (nouvelle build nécessaire)** : **remettre la version à 1.7** dans
+  Xcode avant d'archiver (Apple n'accepte que des builds du numéro en cours d'examen) ; garder
+  la build 31 ou plus.
+
 ## À remplir à la main dans App Store Connect (mise à jour)
 
 **AgentDouble ne prend pas cette app** : il écarte toute app qui a déjà une version en vente
