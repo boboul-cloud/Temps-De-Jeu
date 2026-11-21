@@ -2,6 +2,10 @@
 
 Version **1.7**, build **30** — mise à jour de l'app publiée en 1.6.1 (build 29).
 
+La build 30 a été archivée et envoyée chez Apple le **21/11/2026 à 16 h 04** (Xcode :
+« Uploaded to Apple », sans erreur ni avertissement). Elle contient l'Atelier d'exercices
+(branche `atelier`, commit `3882247`) et aucune donnée de démonstration.
+
 ## 1. Identité de l'app
 
 | Champ | Valeur |
@@ -22,31 +26,39 @@ Version **1.7**, build **30** — mise à jour de l'app publiée en 1.6.1 (build
 | URL marketing | `https://boboul-cloud.github.io/Temps-De-Jeu/` |
 | Politique de confidentialité | `https://boboul-cloud.github.io/Temps-De-Jeu/privacy.html` |
 
-Les trois adresses répondent (vérifié le 15/11/2026, code 200) et parlent bien de Temps De Jeu.
+Les trois adresses répondent (vérifié le 21/11/2026, code 200) et parlent bien de Temps De Jeu.
 
 ## 3. Texte promotionnel (170)
 
-158/170 caractères.
+160/170 caractères.
 
 ```
-Nouveau : placement en 3D et 12 exercices d'entraînement animés pas à pas. Rondos, relance, pressing, contre-attaque : montrez chaque situation à vos joueurs.
+Nouveau : l'Atelier d'exercices. Plots, chasubles, joueurs et ballons sur le
+terrain, étapes animées en 3D, séances minutées avec le matériel calculé tout
+seul.
 ```
 
 ## 4. Description (4000)
 
-3529/4000 caractères.
+3967/4000 caractères.
 
 ```
 TEMPS DE JEU, l'outil des éducateurs de football amateur. Gérez vos matchs, vos entraînements et vos effectifs depuis votre iPhone ou votre iPad. Conçue par un éducateur, pour les éducateurs.
 
-NOUVEAU : PLACEMENT ET TACTIQUES EN 3D
+NOUVEAU : L'ATELIER D'EXERCICES
+• Dessinez vos exercices en plein écran : joueurs, gardiens, ballons, plots, coupelles, piquets, mannequins, mini-buts, zones, cerceaux, échelles, haies
+• 8 couleurs de chasubles et de matériel, et des raccourcis prêts à poser : carrés, rondos, jeux réduits avec mini-buts, slaloms
+• Étapes animées : glissez le ballon sur un partenaire pour une passe, déplacez le porteur pour une conduite ; les flèches se tracent toutes seules
+• Mode cinéma : votre exercice en 3D plein écran, avec la consigne en sous-titre
+• Fiche d'exercice : objectif, consignes et matériel à prévoir calculé tout seul, en PDF à imprimer
+• Séances : enchaînez des exercices minutés, obtenez le matériel total et faites les équipes avec les joueurs présents
+
+PLACEMENT ET TACTIQUES EN 3D
 • Votre composition sur un terrain en relief : déplacez joueurs et ballon du bout du doigt
 • Quatre caméras : coach, tribune, vue de dessus, immersion
-• Construisez vos séquences au doigt : déplacez le porteur pour une conduite, glissez le ballon sur un partenaire pour une passe, dans le but pour un tir. Les flèches s'affichent avant de valider chaque étape
-• Créez vos séances d'entraînement sans composition de match, cadrées sur la zone de jeu, avec une consigne par étape
-• 12 exercices d'entraînement prêts à l'emploi : rondo, conservation, relance à 3, troisième homme, chevauchement, une-deux, remise du pivot, pressing haut, coulissement, contre-attaque, contre-pressing, corner
-• Flèches de course, de passe, de conduite et de tir, joueurs clés en surbrillance, lecture automatique et vitesse réglable
-• Partagez vos tactiques en fichier .tdjt par Messages, AirDrop ou e-mail
+• Construisez vos séquences au doigt : conduite, passe, tir. Les flèches s'affichent avant de valider chaque étape
+• 12 exercices animés prêts à l'emploi (rondo, relance à 3, troisième homme, pressing haut, contre-attaque, corner…), à copier et adapter
+• Partagez exercices et tactiques en fichier .tdjt par Messages, AirDrop ou e-mail
 
 GESTION DE MATCH EN TEMPS RÉEL
 Lancez le chrono, faites vos remplacements en un geste et suivez en direct le temps de jeu de chaque joueur. Chaque arrêt de jeu est chronométré (touche, corner, coup franc, penalty, blessure, VAR…) et le temps additionnel se calcule tout seul (blessures, VAR, anti-jeu, 30 s par remplacement). Enregistrez buts, passes décisives, fautes et cartons au fil du match.
@@ -79,13 +91,13 @@ SAISONS ET HISTORIQUE
 Organisez matchs et entraînements par saison. Archivez et repartez de zéro en un geste, sans perdre vos données.
 
 EXPORT ET PARTAGE
-PDF, compositions (.tdj), matchs (.tdjm), tactiques (.tdjt) : partage par iMessage, AirDrop ou e-mail, avec import automatique chez le destinataire.
+PDF, compositions (.tdj), matchs (.tdjm), exercices et tactiques (.tdjt) : partage par iMessage, AirDrop ou e-mail, avec import automatique chez le destinataire.
 
 WIDGET
 Votre prochain match ou entraînement sur l'écran d'accueil.
 
 PREMIUM
-5 matchs gratuits pour tout essayer. Premium (achat unique, sans abonnement) : matchs illimités et toutes les futures mises à jour incluses.
+5 matchs gratuits pour tout essayer. Premium (achat unique, sans abonnement) : matchs illimités et toutes les futures mises à jour incluses. L'Atelier, les exercices 3D et les séances sont accessibles sans achat.
 
 Toutes vos données restent sur votre appareil. Aucun compte, aucune publicité.
 
@@ -94,15 +106,16 @@ TEMPS DE JEU, c'est moins de paperasse et plus de terrain.
 
 ## 5. Mots-clés (100, virgules comprises, sans espace)
 
-99/100 caractères. Aucun mot du nom (temps, jeu) ni du sous-titre (matchs, effectifs, tactique, 3D).
+97/100 caractères. Aucun mot du nom (temps, jeu) ni du sous-titre (matchs, effectifs, tactique, 3D).
+« pressing » laisse sa place à « séance », plus cherché depuis l'arrivée de l'Atelier.
 
 ```
-football,coach,entraîneur,éducateur,remplacements,chrono,stats,cartons,exercices,rondo,pressing,U13
+football,coach,entraîneur,éducateur,remplacements,chrono,stats,cartons,exercices,rondo,séance,U13
 ```
 
 ## 6. Notes pour l'examinateur
 
-1600/4000 caractères.
+1945/4000 caractères.
 
 ```
 Aucun compte n'est nécessaire : toutes les données restent sur l'appareil.
@@ -111,12 +124,13 @@ ESSAYER L'APP EN DEUX MINUTES
 1. Onglet Joueurs : ajoutez quelques joueurs avec le bouton +.
 2. Onglet Match : renseignez les équipes, touchez « Sélectionner les joueurs pour ce match », cochez-les et désignez les titulaires.
 3. Touchez « Placement » puis le sélecteur 2D/3D en haut à droite : la composition s'affiche sur un terrain 3D ; faites glisser un joueur pour le déplacer.
-4. Onglet Présences > bouton « Tactiques 3D » en haut à gauche : bibliothèque de 12 exercices animés ; touchez-en un, puis Lecture.
-5. Dans cette bibliothèque, touchez + : une séance s'ouvre avec 4 joueurs et 2 adversaires. Touchez « Mise en place », faites glisser le n°6 (le ballon suit : conduite), touchez « Étape 2 », glissez le ballon sur le n°10 (passe), touchez « Étape 3 », puis le bouton Lecture.
-6. Onglet Match > « Démarrer le match » : chrono, arrêts de jeu, remplacements.
+4. Onglet Présences > bouton « Atelier » en haut à gauche : l'Atelier d'exercices s'ouvre en plein écran. Onglet « Bibliothèque » : 12 exercices animés en 3D ; touchez-en un, puis Lecture.
+5. Onglet « Mes exercices » > « Nouvel exercice ». Touchez « Raccourcis » (étoiles jaunes) > « Rondo 4 contre 2 » : plots, joueurs et ballon se posent. Touchez « Étape », glissez le ballon sur un autre joueur (passe), puis « Cinéma » pour la 3D plein écran. « Fiche » affiche le matériel à prévoir, calculé tout seul. « Enregistrer » range l'exercice dans « Mes exercices ».
+6. Onglet « Séances » > « Nouvelle séance » > « Ajouter un exercice » : la durée et le matériel total se calculent.
+7. Onglet Match > « Démarrer le match » : chrono, arrêts de jeu, remplacements.
 
 ACHAT INTÉGRÉ
-Un seul achat non consommable, « Temps De Jeu Premium » (com.tempsDeJeu.premium) : matchs illimités au-delà des 5 matchs gratuits. Il est proposé dans l'onglet Réglages et Exports > « Version gratuite » > Upgrade, et quand la limite de 5 matchs est atteinte. « Restaurer mes achats » se trouve sur le même écran.
+Un seul achat non consommable, « Temps De Jeu Premium » (com.tempsDeJeu.premium) : matchs illimités au-delà des 5 matchs gratuits. Il est proposé dans l'onglet Réglages et Exports > « Version gratuite » > Upgrade, et quand la limite de 5 matchs est atteinte. « Restaurer mes achats » se trouve sur le même écran. L'Atelier, les exercices 3D et les séances sont accessibles sans achat.
 
 AUTORISATIONS
 Notifications : signaler une réponse reçue à un sondage de disponibilité et rappeler les joueurs qui n'ont pas encore répondu. Refuser n'empêche rien d'autre.
@@ -125,12 +139,18 @@ Photos : la photo d'un joueur ou d'un membre du staff se choisit avec le sélect
 
 ## Nouveautés de cette version (4000)
 
-1299/4000 caractères. **Attention :** AgentDouble ne lit pas ce champ dans la feuille
+1804/4000 caractères. **Attention :** AgentDouble ne lit pas ce champ dans la feuille
 (il est prévu pour les apps neuves, sans « Nouveautés »). Pour une mise à jour, Apple
 l'exige : il faut le coller dans App Store Connect (« Nouveautés de cette version »).
 
 ```
 NOUVEAUTÉS DE LA VERSION 1.7
+
+ATELIER D'EXERCICES
+Onglet Présences › Atelier : dessinez vos exercices en plein écran. Posez joueurs, gardiens, ballons, plots, coupelles, piquets, mannequins, mini-buts, zones, échelles ou haies, en 8 couleurs, ou partez d'un raccourci (carré, rondo, jeu réduit, slalom). Ajoutez des étapes : les flèches de course, de passe et de conduite se tracent toutes seules. Regardez le résultat en 3D plein écran avec le mode cinéma, la consigne en sous-titre.
+
+FICHES ET SÉANCES
+Chaque exercice a sa fiche : objectif, consignes et matériel à prévoir calculé tout seul, en PDF à imprimer. Enchaînez vos exercices en séances minutées : matériel total, équipes faites avec les joueurs présents, fiche de séance en PDF.
 
 PLACEMENT EN 3D
 Basculez la vue Placement en 3D : votre composition sur un terrain en relief, joueurs et ballon déplaçables du bout du doigt, quatre caméras (coach, tribune, dessus, immersion).
@@ -138,21 +158,19 @@ Basculez la vue Placement en 3D : votre composition sur un terrain en relief, jo
 SÉQUENCES PAS À PAS
 Construisez vos situations au doigt : le ballon se colle au joueur, déplacer le porteur fait une conduite, glisser le ballon sur un partenaire une passe, dans le but un tir, et « En l'air » un centre. Les flèches s'affichent avant de valider chaque étape. Ajoutez une consigne par étape, revenez sur une étape pour la corriger, puis lancez la démonstration animée.
 
-SÉANCES D'ENTRAÎNEMENT
-Créez une séquence sans composition de match depuis la bibliothèque Tactiques 3D, avec un cadrage « zone de jeu » pour les petits espaces. Vos séquences restent modifiables.
-
 BIBLIOTHÈQUE D'EXERCICES 3D
-12 exercices d'entraînement animés avec objectif, consignes et déroulé : rondo, conservation, relance à 3, troisième homme, chevauchement, une-deux, remise du pivot, pressing haut, coulissement, contre-attaque, contre-pressing, corner. Accessible depuis Placement et l'onglet Présences.
+12 exercices animés avec objectif, consignes et déroulé : rondo, conservation, relance à 3, troisième homme, chevauchement, une-deux, remise du pivot, pressing haut, coulissement, contre-attaque, contre-pressing, corner. « Copier dans mes exercices » pour les adapter dans l'Atelier.
 
-PARTAGE DE TACTIQUES
-Partagez vos séquences en fichier .tdjt par Messages, AirDrop ou e-mail : elles s'ouvrent directement dans l'app.
+PARTAGE
+Partagez exercices et tactiques en fichier .tdjt par Messages, AirDrop ou e-mail : ils s'ouvrent directement dans l'app.
 
 Corrections et améliorations diverses.
 ```
 
 ## 7. Confidentialité de l'app
 
-Réponse au questionnaire : **Aucune donnée collectée.**
+Réponse au questionnaire : **Aucune donnée collectée.** Inchangée : l'Atelier enregistre
+exercices et séances sur l'appareil (`Application Support/Tactiques/`).
 
 - Tout est stocké sur l'appareil (UserDefaults, fichiers locaux) ; aucun serveur, aucune analyse d'audience, aucune publicité, aucun SDK tiers.
 - Les sondages de disponibilité passent par une page web statique (GitHub Pages) qui ne stocke rien : les réponses reviennent dans un lien que l'éducateur ouvre.
@@ -165,17 +183,21 @@ sportive, pas de contenu généré partagé, pas de messagerie, pas d'accès web
 
 ## 9. Captures d'écran
 
-Prises le **15/11/2026** par le test d'interface `TempsDeJeuUITests/CaptureTests.swift`
+Prises le **21/11/2026** par le test d'interface `TempsDeJeuUITests/CaptureTests.swift`
 (`./tools/captures.sh`), barre d'état 9:41, langue française, données de démonstration
 fictives (catégorie U13 « FC Rivière », prénoms et noms inventés). Mêmes écrans sur iPhone
 6,9 pouces (`captures/iphone-6.9/`, 1320 × 2868) et iPad 13 pouces (`captures/ipad-13/`, 2064 × 2752).
 
-1. `01-match` — match en direct : chrono 27:24, score 2-1, temps effectif, arrêts, passes.
+1. `01-match` — match en direct : chrono 27:22, score 2-1, temps effectif, arrêts, passes.
 2. `02-placement-3d` — Placement en 3D, 4-3-3 avec les noms, trois adversaires et le ballon.
-3. `03-sequence` — séance d'entraînement en construction, cadrage « zone de jeu » : aperçu « Conduite n°6 · Course n°10 » avant validation de l'étape 2.
+3. `03-sequence` — séquence en construction, cadrage « zone de jeu » : aperçu « Conduite n°6 · Course n°10 » avant validation de l'étape 2.
 4. `04-tactique` — exercice « Chevauchement du latéral et centre », étape 4/6 : flèches de passe et de course, halo sur le latéral.
-5. `05-bibliotheque` — bibliothèque Tactiques 3D par catégories.
+5. `05-atelier` — **nouveau** : l'Atelier, exercice « Jeu 4 contre 4 + 2 jokers » sur un carré 25 × 30 m avec mini-buts et plots, étape 2 (course et conduite tracées), tiroir de matériel en bas.
 6. `06-joueurs` — effectif de la catégorie (16 joueurs par poste).
+
+La 05 remplace l'ancienne `05-bibliotheque` (bibliothèque Tactiques 3D, écran devenu l'accueil
+de l'Atelier). Sur iPhone, l'onglet système « More » reste en anglais (01 et 06) : c'est ce que
+voient les utilisateurs, l'app ne déclarant pas le français comme langue (voir section 10).
 
 ## 10. À vérifier avant d'envoyer
 
@@ -185,7 +207,12 @@ fictives (catégorie U13 « FC Rivière », prénoms et noms inventés). Mêmes 
 - [x] captures aux dimensions exactes, vérifiées avec `sips`
 - [x] mise à jour d'une app déjà publiée, pas une variante
 - [x] rien n'a été créé ni soumis chez Apple
+- [x] build 30 archivée et envoyée chez Apple (21/11/2026, 16 h 04)
+- [x] l'archive n'embarque aucune donnée de démonstration (« FC Rivière » absent du binaire)
+- [ ] attendre que la build 30 ait fini son traitement chez Apple (e-mail « has completed processing »), puis la choisir dans la version 1.7
 - [ ] coller les « Nouveautés de cette version » dans App Store Connect (non lues par AgentDouble)
-- [ ] archiver la build 30 dans Xcode (Product › Archive) et l'envoyer avant de soumettre
-- [ ] l'archive iOS n'embarque aucune donnée de démonstration (`Demo.swift` est compilé en Debug seulement)
+- [ ] remplacer les 6 captures iPhone et les 6 captures iPad par celles du 21/11 (la 05 est maintenant l'Atelier)
 - [ ] la version Mac en DMG (hors App Store, sans limite) n'est pas concernée par cette soumission
+- [ ] plus tard (build suivante, pas bloquant) : déclarer le français (`developmentRegion = fr`
+      ou `CFBundleLocalizations = fr`) pour que « More », « Edit » et les feuilles système
+      s'affichent en français

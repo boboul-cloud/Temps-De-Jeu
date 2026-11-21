@@ -39,6 +39,6 @@ Exports > « Version gratuite » > Upgrade, et dans l'onglet Match : le bandeau
 « Version gratuite » propose « Passer Premium » (au-delà de 5 matchs, le
 bouton « Démarrer le match » est grisé).
 « Restaurer mes achats » est sur le même écran. Toutes les autres fonctions,
-dont le placement 3D et la bibliothèque d'exercices, restent accessibles sans
-achat.
+dont le placement 3D, l'Atelier d'exercices, la bibliothèque d'exercices et les
+séances, restent accessibles sans achat.
 ```
