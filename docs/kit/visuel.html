@@ -1,0 +1,59 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="UTF-8">
+<title>Visuel Temps De Jeu (1080 × 1350)</title>
+<meta name="robots" content="noindex">
+<style>
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body { width: 1080px; height: 1350px; overflow: hidden; font-family: -apple-system, BlinkMacSystemFont, "SF Pro Display", "Segoe UI", Roboto, Arial, sans-serif; color: #fff;
+    background: radial-gradient(ellipse 90% 60% at 70% 100%, #1f7a35 0%, #0d2a17 55%, #050a07 100%); position: relative; }
+  .pitch { position: absolute; inset: auto -120px -260px -120px; height: 760px; transform: perspective(900px) rotateX(58deg); transform-origin: 50% 100%;
+    background: repeating-linear-gradient(90deg, #2f8f3a 0 90px, #36a043 90px 180px); border: 6px solid rgba(255,255,255,.85); border-bottom: 0; opacity: .55; }
+  .pitch::before { content: ""; position: absolute; left: 50%; top: 0; bottom: 0; width: 6px; margin-left: -3px; background: rgba(255,255,255,.85); }
+  .pitch::after { content: ""; position: absolute; left: 50%; top: 50%; width: 300px; height: 300px; margin: -150px 0 0 -150px; border: 6px solid rgba(255,255,255,.85); border-radius: 50%; }
+  .head { position: absolute; left: 80px; top: 80px; right: 80px; }
+  .brand { display: flex; align-items: center; gap: 26px; }
+  .brand img { width: 108px; height: 108px; border-radius: 26px; }
+  .brand h1 { font-size: 96px; line-height: 1; font-weight: 850; letter-spacing: -0.045em; }
+  .brand h1 span { color: #c6f432; }
+  .tag { margin-top: 36px; font-size: 52px; line-height: 1.12; font-weight: 800; letter-spacing: -0.03em; max-width: 900px; }
+  .tag em { font-style: normal; color: #c6f432; }
+  .list { margin-top: 34px; list-style: none; font-size: 34px; line-height: 1.35; color: #d8e4dc; font-weight: 600; }
+  .list li { display: flex; gap: 16px; align-items: baseline; margin: 6px 0; }
+  .list li::before { content: ""; flex: none; width: 18px; height: 18px; border-radius: 5px; background: #34c759; transform: translateY(-4px) rotate(45deg); }
+  .phones { position: absolute; right: 50px; bottom: 70px; display: flex; gap: 24px; align-items: flex-end; }
+  .phone { width: 250px; padding: 10px; border-radius: 48px; background: #0b0d0f; border: 3px solid rgba(255,255,255,.22); }
+  .phone img { width: 100%; display: block; border-radius: 39px; }
+  .phone.big { width: 290px; transform: translateY(-40px); }
+  .badge { position: absolute; left: 80px; bottom: 90px; width: 360px; }
+  .free { display: inline-block; background: #c6f432; color: #0b1406; font-weight: 850; font-size: 46px; padding: 12px 24px; border-radius: 16px; letter-spacing: -0.02em; }
+  .sub { margin-top: 16px; font-size: 28px; color: #d8e4dc; font-weight: 600; line-height: 1.35; }
+  .store { margin-top: 26px; display: inline-flex; align-items: center; gap: 14px; background: #fff; color: #000; border-radius: 18px; padding: 14px 26px 14px 20px; }
+  .store svg { width: 44px; height: 44px; }
+  .store span { display: flex; flex-direction: column; line-height: 1.05; font-weight: 750; font-size: 34px; }
+  .store small { font-size: 18px; font-weight: 500; }
+</style>
+</head>
+<body>
+  <div class="pitch"></div>
+  <div class="head">
+    <div class="brand"><img src="../assets/img/icone.png" alt=""><h1>Temps De <span>Jeu</span></h1></div>
+    <p class="tag">L’app des éducateurs de football <em>qui n’oublie personne sur le banc.</em></p>
+    <ul class="list">
+      <li>Temps de jeu équitable en direct</li>
+      <li>Présences et sondages de disponibilité</li>
+      <li>Séances et exercices animés en 3D</li>
+    </ul>
+  </div>
+  <div class="badge">
+    <span class="free">Gratuit</span>
+    <p class="sub">Sans compte, sans publicité.<br>iPhone et iPad.</p>
+    <span class="store"><svg viewBox="0 0 24 24"><path d="M18.71 19.5c-.83 1.24-1.71 2.45-3.05 2.47-1.34.03-1.77-.79-3.29-.79-1.53 0-2 .77-3.27.82-1.31.05-2.3-1.32-3.14-2.53C4.25 17 2.94 12.45 4.7 9.39c.87-1.52 2.43-2.48 4.12-2.51 1.28-.02 2.5.87 3.29.87.78 0 2.26-1.07 3.81-.91.65.03 2.47.26 3.64 1.98-.09.06-2.17 1.28-2.15 3.81.03 3.02 2.65 4.03 2.68 4.04-.03.07-.42 1.44-1.38 2.83M13 3.5c.73-.83 1.94-1.46 2.94-1.5.13 1.17-.34 2.35-1.04 3.19-.69.85-1.83 1.51-2.95 1.42-.15-1.15.41-2.35 1.05-3.11z"/></svg><span><small>Télécharger dans</small>l’App Store</span></span>
+  </div>
+  <div class="phones">
+    <div class="phone"><img src="../assets/img/iphone-01-match.webp" alt=""></div>
+    <div class="phone big"><img src="../assets/img/iphone-05-atelier.webp" alt=""></div>
+  </div>
+</body>
+</html>
