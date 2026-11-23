@@ -1,627 +1,593 @@
 <!DOCTYPE html>
 <html lang="fr">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Temps De Jeu - Gérez le temps de jeu de vos joueurs</title>
-    <meta name="description" content="Application iOS complète pour gérer le temps de jeu, les cartons, l'encadrement, les entraînements et les statistiques de vos équipes de football. Idéale pour les entraîneurs de clubs amateurs.">
-    <meta name="theme-color" content="#34C759">
-    
-    <!-- Open Graph -->
-    <meta property="og:title" content="Temps De Jeu">
-    <meta property="og:description" content="Gérez le temps de jeu, les cartons, l'encadrement et les statistiques de vos équipes de football">
-    <meta property="og:type" content="website">
-    <meta property="og:image" content="https://boboul-cloud.github.io/Temps-De-Jeu/og-image.png">
-    
-    <!-- Favicon -->
-    <link rel="icon" type="image/png" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>⚽</text></svg>">
-    
-    <style>
-        * {
-            margin: 0;
-            padding: 0;
-            box-sizing: border-box;
-        }
-        
-        :root {
-            --green: #34C759;
-            --green-dark: #2DA44E;
-            --bg: #0a0a0a;
-            --card: #1a1a1a;
-            --text: #ffffff;
-            --text-muted: #8e8e93;
-        }
-        
-        body {
-            font-family: -apple-system, BlinkMacSystemFont, 'SF Pro Display', 'Segoe UI', Roboto, sans-serif;
-            background: var(--bg);
-            color: var(--text);
-            line-height: 1.6;
-            min-height: 100vh;
-        }
-        
-        .container {
-            max-width: 1200px;
-            margin: 0 auto;
-            padding: 0 24px;
-        }
-        
-        /* Hero */
-        .hero {
-            min-height: 100vh;
-            display: flex;
-            flex-direction: column;
-            justify-content: center;
-            align-items: center;
-            text-align: center;
-            padding: 60px 24px;
-            background: radial-gradient(ellipse at top, rgba(52, 199, 89, 0.15) 0%, transparent 60%);
-        }
-        
-        .hero-icon {
-            font-size: 80px;
-            margin-bottom: 24px;
-            animation: bounce 2s ease-in-out infinite;
-        }
-        
-        @keyframes bounce {
-            0%, 100% { transform: translateY(0); }
-            50% { transform: translateY(-10px); }
-        }
-        
-        .hero h1 {
-            font-size: clamp(2.5rem, 8vw, 4rem);
-            font-weight: 700;
-            margin-bottom: 16px;
-            background: linear-gradient(135deg, var(--text) 0%, var(--green) 100%);
-            -webkit-background-clip: text;
-            -webkit-text-fill-color: transparent;
-            background-clip: text;
-        }
-        
-        .hero p {
-            font-size: clamp(1.1rem, 3vw, 1.4rem);
-            color: var(--text-muted);
-            max-width: 600px;
-            margin-bottom: 40px;
-        }
-        
-        .cta-buttons {
-            display: flex;
-            gap: 16px;
-            flex-wrap: wrap;
-            justify-content: center;
-        }
-        
-        .btn {
-            display: inline-flex;
-            align-items: center;
-            gap: 8px;
-            padding: 16px 32px;
-            border-radius: 14px;
-            font-size: 1.1rem;
-            font-weight: 600;
-            text-decoration: none;
-            transition: all 0.3s ease;
-        }
-        
-        .btn-primary {
-            background: var(--green);
-            color: white;
-        }
-        
-        .btn-primary:hover {
-            background: var(--green-dark);
-            transform: translateY(-2px);
-            box-shadow: 0 10px 40px rgba(52, 199, 89, 0.3);
-        }
-        
-        .btn-secondary {
-            background: var(--card);
-            color: var(--text);
-            border: 1px solid #333;
-        }
-        
-        .btn-secondary:hover {
-            background: #252525;
-            transform: translateY(-2px);
-        }
-        
-        /* Features */
-        .features {
-            padding: 100px 24px;
-        }
-        
-        .features h2 {
-            text-align: center;
-            font-size: 2.5rem;
-            margin-bottom: 60px;
-        }
-        
-        .features-grid {
-            display: grid;
-            grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
-            gap: 24px;
-            max-width: 1000px;
-            margin: 0 auto;
-        }
-        
-        .feature-card {
-            background: var(--card);
-            border-radius: 20px;
-            padding: 32px;
-            border: 1px solid #222;
-            transition: all 0.3s ease;
-        }
-        
-        .feature-card:hover {
-            transform: translateY(-4px);
-            border-color: var(--green);
-            box-shadow: 0 20px 60px rgba(0,0,0,0.3);
-        }
-        
-        .feature-icon {
-            font-size: 48px;
-            margin-bottom: 16px;
-        }
-        
-        .feature-card h3 {
-            font-size: 1.3rem;
-            margin-bottom: 12px;
-        }
-        
-        .feature-card p {
-            color: var(--text-muted);
-            font-size: 1rem;
-        }
-        
-        /* Cascade Section */
-        .cascade {
-            padding: 100px 24px;
-            background: linear-gradient(180deg, transparent 0%, rgba(52, 199, 89, 0.05) 50%, transparent 100%);
-        }
-        
-        .cascade h2 {
-            text-align: center;
-            font-size: 2.5rem;
-            margin-bottom: 24px;
-        }
-        
-        .cascade > p {
-            text-align: center;
-            color: var(--text-muted);
-            max-width: 600px;
-            margin: 0 auto 60px;
-            font-size: 1.1rem;
-        }
-        
-        .cascade-flow {
-            display: flex;
-            justify-content: center;
-            align-items: center;
-            gap: 20px;
-            flex-wrap: wrap;
-            max-width: 800px;
-            margin: 0 auto;
-        }
-        
-        .team-bubble {
-            width: 100px;
-            height: 100px;
-            border-radius: 50%;
-            display: flex;
-            flex-direction: column;
-            align-items: center;
-            justify-content: center;
-            font-weight: 700;
-            font-size: 2rem;
-            transition: all 0.3s ease;
-        }
-        
-        .team-a { background: linear-gradient(135deg, #FF6B6B, #FF8E8E); }
-        .team-b { background: linear-gradient(135deg, #4ECDC4, #6EE7DF); }
-        .team-c { background: linear-gradient(135deg, #45B7D1, #68C9E2); }
-        .team-d { background: linear-gradient(135deg, #96E6A1, #B5F0BA); }
-        
-        .team-bubble span {
-            font-size: 0.7rem;
-            font-weight: 500;
-            opacity: 0.8;
-        }
-        
-        .arrow {
-            font-size: 2rem;
-            color: var(--green);
-            animation: pulse 1.5s ease-in-out infinite;
-        }
-        
-        @keyframes pulse {
-            0%, 100% { opacity: 1; }
-            50% { opacity: 0.5; }
-        }
-        
-        /* Support */
-        .support {
-            padding: 100px 24px;
-            background: linear-gradient(180deg, transparent 0%, rgba(52, 199, 89, 0.05) 50%, transparent 100%);
-        }
-        
-        .support h2 {
-            text-align: center;
-            font-size: 2.5rem;
-            margin-bottom: 16px;
-        }
-        
-        .support > .container > p {
-            text-align: center;
-            color: var(--text-muted);
-            max-width: 600px;
-            margin: 0 auto 48px;
-            font-size: 1.1rem;
-        }
-        
-        .support-grid {
-            display: grid;
-            grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
-            gap: 24px;
-            max-width: 900px;
-            margin: 0 auto 48px;
-        }
-        
-        .support-card {
-            background: var(--card);
-            border-radius: 20px;
-            padding: 32px;
-            border: 1px solid #222;
-        }
-        
-        .support-card h3 {
-            font-size: 1.2rem;
-            margin-bottom: 12px;
-        }
-        
-        .support-card p {
-            color: var(--text-muted);
-            font-size: 0.95rem;
-            margin-bottom: 8px;
-        }
-        
-        .support-card a {
-            color: var(--green);
-            text-decoration: none;
-            font-weight: 600;
-        }
-        
-        .support-card a:hover {
-            text-decoration: underline;
-        }
-        
-        .faq {
-            max-width: 700px;
-            margin: 0 auto;
-        }
-        
-        .faq h3 {
-            text-align: center;
-            font-size: 1.5rem;
-            margin-bottom: 24px;
-        }
-        
-        .faq-item {
-            background: var(--card);
-            border-radius: 14px;
-            padding: 24px;
-            margin-bottom: 12px;
-            border: 1px solid #222;
-        }
-        
-        .faq-item summary {
-            cursor: pointer;
-            font-weight: 600;
-            font-size: 1.05rem;
-            list-style: none;
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-        }
-        
-        .faq-item summary::-webkit-details-marker {
-            display: none;
-        }
-        
-        .faq-item summary::after {
-            content: '+';
-            font-size: 1.4rem;
-            color: var(--green);
-            transition: transform 0.2s;
-        }
-        
-        .faq-item[open] summary::after {
-            content: '−';
-        }
-        
-        .faq-item p {
-            color: var(--text-muted);
-            margin-top: 12px;
-            font-size: 0.95rem;
-            line-height: 1.7;
-        }
-        
-        /* Footer */
-        footer {
-            padding: 40px 24px;
-            text-align: center;
-            color: var(--text-muted);
-            border-top: 1px solid #222;
-        }
-        
-        footer a {
-            color: var(--green);
-            text-decoration: none;
-        }
-        
-        footer a:hover {
-            text-decoration: underline;
-        }
-        
-        /* Responsive */
-        @media (max-width: 600px) {
-            .cascade-flow {
-                flex-direction: column;
-            }
-            
-            .arrow {
-                transform: rotate(90deg);
-            }
-        }
-    </style>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+  <title>Temps De Jeu · Matchs, entraînements et tactique en 3D pour éducateurs</title>
+  <meta name="description" content="L’app des éducateurs de football amateur : temps de jeu équitable, match en direct, cartons, statistiques, Atelier d’exercices, séances et tactique en 3D. Sur iPhone et iPad.">
+  <meta name="theme-color" content="#050a07">
+  <meta name="color-scheme" content="dark">
+  <meta name="apple-itunes-app" content="app-id=6758916303">
+  <link rel="canonical" href="https://boboul-cloud.github.io/Temps-De-Jeu/">
+
+  <meta property="og:type" content="website">
+  <meta property="og:locale" content="fr_FR">
+  <meta property="og:title" content="Temps De Jeu · Matchs, entraînements et tactique en 3D">
+  <meta property="og:description" content="Atelier d’exercices, séances, exercices animés en 3D, match en direct et temps de jeu équitable. L’app des éducateurs de football amateur.">
+  <meta property="og:url" content="https://boboul-cloud.github.io/Temps-De-Jeu/">
+  <meta property="og:image" content="https://boboul-cloud.github.io/Temps-De-Jeu/og-image.png">
+  <meta property="og:image:width" content="1200">
+  <meta property="og:image:height" content="630">
+  <meta name="twitter:card" content="summary_large_image">
+
+  <link rel="icon" type="image/png" href="favicon.png">
+  <link rel="apple-touch-icon" href="apple-touch-icon.png">
+  <link rel="preload" href="assets/exercices.json" as="fetch" type="application/json" crossorigin>
+  <link rel="modulepreload" href="assets/terrain3d.js?v=17">
+  <link rel="stylesheet" href="assets/site.css?v=17">
+  <script>document.documentElement.classList.add('js')</script>
+
+  <script type="application/ld+json">
+  {
+    "@context": "https://schema.org",
+    "@type": "SoftwareApplication",
+    "name": "Temps De Jeu",
+    "operatingSystem": "iOS, iPadOS",
+    "applicationCategory": "SportsApplication",
+    "inLanguage": "fr",
+    "description": "Gestion du temps de jeu, des matchs, des entraînements et des exercices en 3D pour les éducateurs de football amateur.",
+    "url": "https://boboul-cloud.github.io/Temps-De-Jeu/",
+    "downloadUrl": "https://apps.apple.com/fr/app/temps-de-jeu/id6758916303",
+    "softwareVersion": "1.7",
+    "offers": { "@type": "Offer", "price": "0", "priceCurrency": "EUR" },
+    "author": { "@type": "Person", "name": "Robert Oulhen" }
+  }
+  </script>
 </head>
 <body>
-    <!-- Hero -->
-    <section class="hero">
-        <div class="hero-icon">⚽</div>
-        <h1>Temps De Jeu</h1>
-        <p>L'application iOS complète pour gérer le temps de jeu, les cartons, l'encadrement, les entraînements et les statistiques de vos équipes de football. Idéale pour les entraîneurs de clubs amateurs.</p>
-        <div class="cta-buttons">
-            <a href="https://apps.apple.com/app/temps-de-jeu/id6758916303" class="btn btn-primary">
-                <svg width="24" height="24" viewBox="0 0 24 24" fill="currentColor"><path d="M18.71 19.5c-.83 1.24-1.71 2.45-3.05 2.47-1.34.03-1.77-.79-3.29-.79-1.53 0-2 .77-3.27.82-1.31.05-2.3-1.32-3.14-2.53C4.25 17 2.94 12.45 4.7 9.39c.87-1.52 2.43-2.48 4.12-2.51 1.28-.02 2.5.87 3.29.87.78 0 2.26-1.07 3.81-.91.65.03 2.47.26 3.64 1.98-.09.06-2.17 1.28-2.15 3.81.03 3.02 2.65 4.03 2.68 4.04-.03.07-.42 1.44-1.38 2.83M13 3.5c.73-.83 1.94-1.46 2.94-1.5.13 1.17-.34 2.35-1.04 3.19-.69.85-1.83 1.51-2.95 1.42-.15-1.15.41-2.35 1.05-3.11z"/></svg>
-                Télécharger sur l'App Store
-            </a>
+  <a class="skip" href="#contenu">Aller au contenu</a>
+
+  <header class="nav" id="nav">
+    <a class="brand" href="#accueil" aria-label="Temps De Jeu, accueil">
+      <img src="assets/img/icone.png" alt="" width="34" height="34">
+      <span>Temps De Jeu</span>
+    </a>
+    <nav class="nav-links" aria-label="Sections">
+      <a href="#atelier">Atelier</a>
+      <a href="#exercices">Exercices 3D</a>
+      <a href="#match">Match</a>
+      <a href="#fonctions">Fonctions</a>
+      <a href="#aide">Aide</a>
+    </nav>
+    <a class="btn btn-store btn-sm" href="https://apps.apple.com/fr/app/temps-de-jeu/id6758916303">
+      <svg viewBox="0 0 24 24" aria-hidden="true"><use href="#i-apple"/></svg>
+      <span>App Store</span>
+    </a>
+  </header>
+
+  <!-- ============================================================ ACCUEIL 3D -->
+  <section class="hero" id="accueil">
+    <canvas id="hero-canvas" aria-hidden="true"></canvas>
+    <img class="hero-fallback" src="assets/img/ipad-02-placement-3d.webp" alt="" aria-hidden="true">
+    <div class="hero-shade" aria-hidden="true"></div>
+
+    <div class="hero-inner" id="contenu">
+      <a class="pill" href="#atelier"><span class="pill-dot"></span>Nouveau dans la 1.7&nbsp;: l’Atelier d’exercices</a>
+      <h1 class="hero-title">
+        <span class="w">Temps</span> <span class="w">De</span> <span class="w accent">Jeu</span>
+      </h1>
+      <p class="hero-lead">Matchs, effectifs, entraînements et tactique en 3D. L’app des éducateurs de football amateur, sur iPhone et iPad.</p>
+      <div class="hero-cta">
+        <a class="btn btn-store" href="https://apps.apple.com/fr/app/temps-de-jeu/id6758916303">
+          <svg viewBox="0 0 24 24" aria-hidden="true"><use href="#i-apple"/></svg>
+          <span class="btn-stack"><small>Télécharger dans</small>l’App Store</span>
+        </a>
+        <a class="btn btn-ghost" href="#exercices">
+          <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M8 5.5v13l10.5-6.5z" fill="currentColor"/></svg>
+          Voir les exercices 3D
+        </a>
+      </div>
+      <p class="hero-note">5 matchs offerts · Atelier, séances et exercices 3D gratuits · sans compte ni publicité</p>
+    </div>
+
+    <div class="cinema" id="hero-cinema" aria-live="polite">
+      <div class="cinema-head">
+        <span class="cinema-tag">Mode cinéma</span>
+        <span class="cinema-ex" id="hero-ex">Contre-attaque 3 contre 2</span>
+        <span class="cinema-step" id="hero-step">1/7</span>
+      </div>
+      <p class="cinema-title" id="hero-step-title">Mise en place</p>
+      <p class="cinema-text" id="hero-step-text">Ballon récupéré au milieu&nbsp;: trois attaquants contre deux défenseurs qui reculent.</p>
+      <div class="cinema-progress" id="hero-progress" aria-hidden="true"></div>
+    </div>
+
+    <ul class="legend" aria-label="Légende des flèches">
+      <li><i class="lg lg-course"></i>Course</li>
+      <li><i class="lg lg-passe"></i>Passe</li>
+      <li><i class="lg lg-conduite"></i>Conduite</li>
+      <li><i class="lg lg-tir"></i>Tir</li>
+    </ul>
+
+    <div class="goal-flash" id="goal-flash" aria-hidden="true"><span>BUT&nbsp;!</span></div>
+    <a class="scroll-cue" href="#chiffres" aria-label="Descendre"><span></span></a>
+  </section>
+
+  <!-- ============================================================ CHIFFRES -->
+  <section class="stats" id="chiffres" aria-label="En chiffres">
+    <div class="wrap stats-row">
+      <div class="stat reveal"><strong data-count="12">12</strong><span>exercices animés en 3D</span></div>
+      <div class="stat reveal" style="--d:.08s"><strong data-count="4">4</strong><span>caméras sur le terrain</span></div>
+      <div class="stat reveal" style="--d:.16s"><strong data-count="11">11</strong><span>types de matériel dans l’Atelier</span></div>
+      <div class="stat reveal" style="--d:.24s"><strong data-count="8">8</strong><span>couleurs de chasubles</span></div>
+      <div class="stat reveal" style="--d:.32s"><strong data-count="11">11</strong><span>arrêts de jeu chronométrés</span></div>
+    </div>
+  </section>
+
+  <!-- ============================================================ ATELIER -->
+  <section class="section atelier" id="atelier">
+    <div class="wrap">
+      <header class="section-head reveal">
+        <p class="eyebrow"><span class="tag-new">Nouveau</span>Entraînement</p>
+        <h2>L’Atelier d’exercices</h2>
+        <p class="lead">Posez le matériel, placez vos joueurs, ajoutez des étapes&nbsp;: les flèches se tracent toutes seules, et l’exercice se rejoue en 3D avec la consigne en sous-titre.</p>
+      </header>
+
+      <div class="device device-ipad reveal" id="atelier-demo">
+        <div class="device-screen">
+          <svg class="ad-chrome" viewBox="0 0 1024 768" aria-hidden="true"></svg>
+          <div class="ad-pitch-wrap">
+            <svg class="ad-pitch" viewBox="0 0 1024 460" role="img" aria-label="Démonstration animée de l’Atelier : un exercice 4 contre 4 avec deux jokers se construit étape par étape"></svg>
+            <div class="ad-cinema-sub"></div>
+          </div>
+          <svg class="ad-finger" viewBox="0 0 1024 768" aria-hidden="true"></svg>
         </div>
-    </section>
-    
-    <!-- Features -->
-    <section class="features">
-        <div class="container">
-            <h2>Fonctionnalités</h2>
-            <div class="features-grid">
-                <div class="feature-card">
-                    <div class="feature-icon">⏱️</div>
-                    <h3>Chronomètre intelligent</h3>
-                    <p>Suivez le temps de jeu de chaque joueur en temps réel. 11 types d'arrêts de jeu (touche, corner, coup franc, penalty, blessure, VAR…) avec calcul automatique du temps additionnel.</p>
-                </div>
-                <div class="feature-card">
-                    <div class="feature-icon">🔄</div>
-                    <h3>Remplacements faciles</h3>
-                    <p>Gérez les remplacements par simple glisser-déposer. Support des prolongations (2 × 15 min). Historique complet des changements.</p>
-                </div>
-                <div class="feature-card">
-                    <div class="feature-icon">📊</div>
-                    <h3>Statistiques en direct</h3>
-                    <p>Jauge de temps effectif, répartition des arrêts par type et par équipe, tableau des buteurs, fautes par joueur et par période. Analyse détaillée par match et sur la saison.</p>
-                </div>
-                <div class="feature-card">
-                    <div class="feature-icon">📱</div>
-                    <h3>Partage instantané</h3>
-                    <p>Partagez compositions (.tdj) et matchs (.tdjm) via iMessage, AirDrop ou PDF. Import intelligent avec dédoublonnage automatique et routage par code catégorie.</p>
-                </div>
-                <div class="feature-card">
-                    <div class="feature-icon">🎯</div>
-                    <h3>Timeline des événements</h3>
-                    <p>Buts, cartons, remplacements, fautes : tout est enregistré avec le temps exact et l'icône du type d'événement.</p>
-                </div>
-                <div class="feature-card">
-                    <div class="feature-icon">👥</div>
-                    <h3>Gestion d'effectif</h3>
-                    <p>Créez votre effectif avec positions, disponibilités (disponible, blessé, absent, suspendu) et photos des joueurs. Sélection domicile / extérieur.</p>
-                </div>
-                <div class="feature-card">
-                    <div class="feature-icon">🟨</div>
-                    <h3>Gestion des cartons</h3>
-                    <p>Suivi complet des cartons jaunes, 2ème jaunes, rouges et blancs. Tableau de bord dédié avec classement, filtrage par type, historique et purge des cartons purgés.</p>
-                </div>
-                <div class="feature-card">
-                    <div class="feature-icon">⬜</div>
-                    <h3>Carton blanc & expulsion temporaire</h3>
-                    <p>Support du carton blanc avec expulsion temporaire de 10 minutes. Compte à rebours en direct avec alerte automatique quand le joueur peut revenir.</p>
-                </div>
-                <div class="feature-card">
-                    <div class="feature-icon">🏠</div>
-                    <h3>Multi-catégories</h3>
-                    <p>Gérez plusieurs équipes (U13, U15, Seniors…) avec une base de joueurs partagée. Chaque catégorie a ses propres matchs, entraînements et saison. Barre de sélection rapide en haut de l'écran.</p>
-                </div>
-                <div class="feature-card">
-                    <div class="feature-icon">🔑</div>
-                    <h3>Code catégorie</h3>
-                    <p>Chaque catégorie possède un code unique à 6 caractères. L'entraîneur principal le génère et le partage aux adjoints pour que les imports de composition arrivent automatiquement sur la bonne catégorie.</p>
-                </div>
-                <div class="feature-card">
-                    <div class="feature-icon">👔</div>
-                    <h3>Gestion de l'encadrement</h3>
-                    <p>Ajoutez coachs, adjoints, délégués, arbitres et staff médical avec photos, téléphone et email. Appel direct depuis l'app. Assignation multi-catégorie avec rôles personnalisables.</p>
-                </div>
-                <div class="feature-card">
-                    <div class="feature-icon">🏋️</div>
-                    <h3>Entraînements & présences</h3>
-                    <p>Pointez les présences aux entraînements, invitez des joueurs d'autres catégories, suivez les statistiques de présence par joueur et exportez les feuilles de présence en PDF.</p>
-                </div>
-                <div class="feature-card">
-                    <div class="feature-icon">🔀</div>
-                    <h3>Joueurs inter-catégories</h3>
-                    <p>Un joueur appartient à une catégorie d'origine et peut être assigné ou invité dans d'autres. Sa catégorie d'origine est toujours visible grâce à un badge de couleur.</p>
-                </div>
-                <div class="feature-card">
-                    <div class="feature-icon">📅</div>
-                    <h3>Gestion des saisons</h3>
-                    <p>Organisez vos données par saison avec archivage et réinitialisation pour repartir de zéro chaque année.</p>
-                </div>
-                <div class="feature-card">
-                    <div class="feature-icon">📦</div>
-                    <h3>Import / Export complet</h3>
-                    <p>Exportez effectifs, matchs et entraînements en PDF ou JSON (.tdj / .tdjm). Import intelligent avec fusion des données et dédoublonnage automatique des cartons et événements.</p>
-                </div>
-                <div class="feature-card">
-                    <div class="feature-icon">📖</div>
-                    <h3>Guide d'utilisation intégré</h3>
-                    <p>Mode d'emploi complet accessible depuis les réglages avec 15 sections illustrées couvrant toutes les fonctionnalités de l'application.</p>
-                </div>
-                <div class="feature-card">
-                    <div class="feature-icon">📩</div>
-                    <h3>Sondage de disponibilité</h3>
-                    <p>Envoyez un lien de sondage à vos joueurs via WhatsApp, SMS ou iMessage. Ils répondent depuis n'importe quel téléphone (iPhone ou Android). Réponses en temps réel, appliquées en un clic aux présences.</p>
-                </div>
-                <div class="feature-card">
-                    <div class="feature-icon">📱</div>
-                    <h3>Widget écran d'accueil</h3>
-                    <p>Widget « Prochain événement » en 3 tailles : petit, moyen et écran de verrouillage. Affiche le prochain match ou entraînement avec les réponses au sondage. Choix de la catégorie par widget.</p>
-                </div>
+      </div>
+      <p class="caption-small reveal">Démonstration fidèle à l’app&nbsp;: plein écran sur iPhone et iPad, le terrain pivote à l’horizontale quand il y gagne de la place.</p>
+
+      <div class="cards cards-3">
+        <article class="card reveal">
+          <div class="card-ico"><svg viewBox="0 0 24 24"><rect x="3" y="7" width="18" height="13" rx="2"/><path d="M8 7V5a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2M3 12h18"/></svg></div>
+          <h3>Tout le matériel</h3>
+          <p>Joueurs, gardiens, ballons, plots, coupelles, piquets, mannequins, mini-buts, buts, zones en mètres, cerceaux, échelles, haies. On touche un outil, puis le terrain&nbsp;: l’outil reste actif.</p>
+        </article>
+        <article class="card reveal" style="--d:.06s">
+          <div class="card-ico"><svg viewBox="0 0 24 24"><path d="M8 3 3 6l2 5 3-1v11h8V10l3 1 2-5-5-3a4 4 0 0 1-8 0z"/></svg></div>
+          <h3>8 couleurs de chasubles</h3>
+          <p class="swatches" aria-hidden="true"><i style="--c:#2673f2"></i><i style="--c:#e62626"></i><i style="--c:#ffd91a"></i><i style="--c:#ff800d"></i><i style="--c:#33cc4d"></i><i style="--c:#994de6"></i><i style="--c:#ff59b3"></i><i style="--c:#ffffff"></i></p>
+          <p>Pour les joueurs comme pour le matériel. Les raccourcis posent en un geste un carré, un rondo, un jeu réduit avec mini-buts ou un slalom.</p>
+        </article>
+        <article class="card reveal" style="--d:.12s">
+          <div class="card-ico"><svg viewBox="0 0 24 24"><rect x="3" y="5" width="7" height="6" rx="1"/><rect x="14" y="5" width="7" height="6" rx="1"/><rect x="3" y="14" width="7" height="6" rx="1"/><path d="M14 17h7M17.5 13.5v7"/></svg></div>
+          <h3>Des étapes, comme dans Keynote</h3>
+          <p>«&nbsp;+ Étape&nbsp;» copie la précédente. Déplacez un joueur&nbsp;: course. Le porteur&nbsp;: conduite. Le ballon sur un partenaire&nbsp;: passe. Dans le but&nbsp;: tir.</p>
+        </article>
+        <article class="card reveal">
+          <div class="card-ico"><svg viewBox="0 0 24 24"><path d="M12 2l9 5v10l-9 5-9-5V7z"/><path d="M12 22V12M21 7l-9 5-9-5"/></svg></div>
+          <h3>Mode cinéma 3D</h3>
+          <p>Votre exercice en 3D plein écran, joueurs en mouvement et consigne en sous-titre. Idéal à montrer aux joueurs avant la séance.</p>
+        </article>
+        <article class="card reveal" style="--d:.06s">
+          <div class="card-ico"><svg viewBox="0 0 24 24"><circle cx="6" cy="5" r="2"/><circle cx="6" cy="19" r="2"/><circle cx="18" cy="9" r="2"/><path d="M6 7v10M18 11a6 6 0 0 1-6 6H8"/></svg></div>
+          <h3>Évolutions</h3>
+          <p>Même terrain, consigne différente&nbsp;: «&nbsp;2 touches maximum&nbsp;», «&nbsp;but en une touche&nbsp;»… Annuler et rétablir à tout moment, enregistrement automatique.</p>
+        </article>
+        <article class="card reveal" style="--d:.12s">
+          <div class="card-ico"><svg viewBox="0 0 24 24"><path d="M6 2h9l5 5v15H6z"/><path d="M14 2v6h6M9 13h6M9 17h6"/></svg></div>
+          <h3>Fiche à imprimer</h3>
+          <p>Objectif, consignes et matériel à prévoir, calculé tout seul. Une fiche PDF prête pour le terrain ou le classeur du club.</p>
+        </article>
+      </div>
+    </div>
+  </section>
+
+  <!-- ============================================================ SÉANCES -->
+  <section class="section seances" id="seances">
+    <div class="wrap">
+      <header class="section-head reveal">
+        <p class="eyebrow"><span class="tag-new">Nouveau</span>Séances</p>
+        <h2>Une séance complète, minutée, matériel compris</h2>
+        <p class="lead">Enchaînez vos exercices, en série ou en ateliers simultanés. L’app additionne le temps et le matériel, puis compose les équipes avec les joueurs présents ce jour-là.</p>
+      </header>
+
+      <div class="seance-grid">
+        <article class="paper reveal" aria-label="Exemple de fiche d’exercice">
+          <div class="paper-head">
+            <span class="paper-cat">Conservation · U11+</span>
+            <span class="paper-pdf">PDF</span>
+          </div>
+          <h3>Rondo 4 contre 2</h3>
+          <svg class="paper-pitch" viewBox="0 0 320 170" aria-hidden="true">
+            <rect width="320" height="170" rx="10" fill="#2f8f3a"/>
+            <g fill="#36a043"><rect x="0" width="40" height="170"/><rect x="80" width="40" height="170"/><rect x="160" width="40" height="170"/><rect x="240" width="40" height="170"/></g>
+            <rect x="100" y="25" width="120" height="120" fill="rgba(255,255,255,.12)" stroke="#fff" stroke-width="2" stroke-dasharray="7 5"/>
+            <g fill="#ff800d" stroke="#fff" stroke-width="1.5"><path d="M100 17l7 12h-14z"/><path d="M220 17l7 12h-14z"/><path d="M100 137l7 12h-14z"/><path d="M220 137l7 12h-14z"/></g>
+            <path class="paper-pass" d="M160 145 L106 87" stroke="#ffdb1a" stroke-width="3.5" fill="none" stroke-linecap="round"/>
+            <path class="paper-pass p2" d="M106 85 L214 85" stroke="#ffdb1a" stroke-width="3.5" fill="none" stroke-linecap="round"/>
+            <g font-size="13" font-weight="800" text-anchor="middle" font-family="-apple-system, Helvetica, Arial, sans-serif">
+              <g transform="translate(160 145)"><circle r="12" fill="#2673f2" stroke="#fff" stroke-width="2.5"/><text y="4.5" fill="#fff">6</text></g>
+              <g transform="translate(100 85)"><circle r="12" fill="#2673f2" stroke="#fff" stroke-width="2.5"/><text y="4.5" fill="#fff">8</text></g>
+              <g transform="translate(160 25)"><circle r="12" fill="#2673f2" stroke="#fff" stroke-width="2.5"/><text y="4.5" fill="#fff">10</text></g>
+              <g transform="translate(220 85)"><circle r="12" fill="#2673f2" stroke="#fff" stroke-width="2.5"/><text y="4.5" fill="#fff">4</text></g>
+              <g transform="translate(150 95)"><circle r="12" fill="#e62626" stroke="#fff" stroke-width="2.5"/><text y="4.5" fill="#fff">7</text></g>
+              <g transform="translate(176 74)"><circle r="12" fill="#e62626" stroke="#fff" stroke-width="2.5"/><text y="4.5" fill="#fff">9</text></g>
+            </g>
+          </svg>
+          <p class="paper-label">Objectif</p>
+          <p>Conserver le ballon sous pression en trouvant la passe qui élimine les deux défenseurs.</p>
+          <p class="paper-label">Consignes</p>
+          <ul class="paper-list">
+            <li>Corps orienté pour voir deux solutions avant de recevoir</li>
+            <li>Deux touches maximum, puis une touche pour les plus forts</li>
+            <li>Les défenseurs pressent à deux&nbsp;: l’un sort, l’autre ferme l’axe</li>
+          </ul>
+          <p class="paper-label">Matériel à prévoir <em>calculé tout seul</em></p>
+          <ul class="paper-mat">
+            <li><b data-count="4">4</b> plots orange</li>
+            <li><b data-count="1">1</b> ballon</li>
+            <li><b data-count="4">4</b> chasubles bleues</li>
+            <li><b data-count="2">2</b> chasubles rouges</li>
+          </ul>
+        </article>
+
+        <article class="glass seance reveal" style="--d:.1s" aria-label="Exemple de séance">
+          <div class="seance-head">
+            <div>
+              <p class="seance-kicker">Séance du mercredi · U13</p>
+              <h3>Jeu de passes et finition</h3>
             </div>
-        </div>
-    </section>
-    
-    <!-- Cascade -->
-    <section class="cascade">
-        <h2>Système Cascade</h2>
-        <p>Unique pour les clubs avec plusieurs équipes. L'équipe A sélectionne ses joueurs et transmet automatiquement les disponibles à l'équipe B, et ainsi de suite.</p>
-        <div class="cascade-flow">
-            <div class="team-bubble team-a">A<span>sélectionne</span></div>
-            <div class="arrow">→</div>
-            <div class="team-bubble team-b">B<span>sélectionne</span></div>
-            <div class="arrow">→</div>
-            <div class="team-bubble team-c">C<span>sélectionne</span></div>
-            <div class="arrow">→</div>
-            <div class="team-bubble team-d">D<span>reçoit</span></div>
-        </div>
-    </section>
-    
-    <!-- Support -->
-    <section class="support" id="support">
-        <div class="container">
-            <h2>Support & Aide</h2>
-            <p>Vous avez une question, un problème ou une suggestion ? Nous sommes là pour vous aider.</p>
-            
-            <div class="support-grid">
-                <div class="support-card">
-                    <div class="feature-icon">📧</div>
-                    <h3>Contactez-nous</h3>
-                    <p>Pour toute question, signalement de bug ou demande de fonctionnalité, envoyez-nous un email :</p>
-                    <a href="mailto:bob.oulhen@gmail.com">bob.oulhen@gmail.com</a>
-                    <p style="margin-top: 12px;">Nous répondons généralement sous 48 heures.</p>
-                </div>
-                <div class="support-card">
-                    <div class="feature-icon">🐛</div>
-                    <h3>Signaler un bug</h3>
-                    <p>Vous avez trouvé un problème ? Ouvrez une issue sur notre dépôt GitHub :</p>
-                    <a href="https://github.com/boboul-cloud/Temps-De-Jeu/issues" target="_blank">Ouvrir une issue GitHub</a>
-                </div>
-                <div class="support-card">
-                    <div class="feature-icon">💡</div>
-                    <h3>Suggestions</h3>
-                    <p>Vos idées comptent ! Proposez de nouvelles fonctionnalités par email ou via GitHub.</p>
-                    <a href="mailto:bob.oulhen@gmail.com?subject=Suggestion%20Temps%20De%20Jeu">Envoyer une suggestion</a>
-                </div>
+            <p class="seance-total"><b data-count="75">75</b><span>min</span></p>
+          </div>
+          <div class="seance-bar" aria-hidden="true">
+            <i style="--w:20%;--c:#34c759"></i><i style="--w:16%;--c:#2673f2"></i><i style="--w:27%;--c:#ff8c1a"></i><i style="--w:20%;--c:#ff3838"></i><i style="--w:17%;--c:#994de6"></i>
+          </div>
+          <ol class="seance-list">
+            <li><i style="--c:#34c759"></i><span>Échauffement&nbsp;: conduite et slalom</span><b>15 min</b></li>
+            <li><i style="--c:#2673f2"></i><span>Rondo 4 contre 2 <em>3 ateliers simultanés</em></span><b>12 min</b></li>
+            <li><i style="--c:#ff8c1a"></i><span>Jeu 4 contre 4 + 2 jokers</span><b>20 min</b></li>
+            <li><i style="--c:#ff3838"></i><span>Remise du pivot et frappe</span><b>15 min</b></li>
+            <li><i style="--c:#994de6"></i><span>Match à thème</span><b>13 min</b></li>
+          </ol>
+          <p class="seance-label">Matériel total</p>
+          <ul class="chips-mat">
+            <li><b data-count="24">24</b> coupelles</li>
+            <li><b data-count="16">16</b> plots</li>
+            <li><b data-count="6">6</b> piquets</li>
+            <li><b data-count="4">4</b> mini-buts</li>
+            <li><b data-count="12">12</b> ballons</li>
+            <li><b data-count="14">14</b> chasubles</li>
+          </ul>
+          <div class="teams" id="teams">
+            <div class="teams-head">
+              <p class="seance-label">Équipes avec les <span id="present-count">12</span> présents</p>
+              <button class="btn-mini" type="button" id="teams-shuffle">
+                <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 7h11l-3-3M20 17H9l3 3"/></svg>
+                Refaire les équipes
+              </button>
             </div>
-            
-            <div class="faq">
-                <h3>Questions fréquentes</h3>
-                
-                <details class="faq-item">
-                    <summary>Comment créer mon premier match ?</summary>
-                    <p>Commencez par ajouter vos joueurs dans l'onglet "Joueurs", puis créez un nouveau match depuis l'onglet "Match". Choisissez domicile ou extérieur, sélectionnez les joueurs titulaires et remplaçants, puis lancez le chronomètre.</p>
-                </details>
-                
-                <details class="faq-item">
-                    <summary>Mes données sont-elles sauvegardées ?</summary>
-                    <p>Oui, toutes vos données sont sauvegardées localement sur votre appareil. Elles sont conservées tant que l'application est installée. Vous pouvez aussi exporter vos données via les fonctions d'export.</p>
-                </details>
-                
-                <details class="faq-item">
-                    <summary>Comment fonctionne l'achat Premium ?</summary>
-                    <p>L'achat Premium est un achat unique (non renouvelable) qui débloque un nombre illimité de matchs. Il est géré par Apple via l'App Store et peut être restauré sur tous vos appareils connectés au même identifiant Apple.</p>
-                </details>
-                
-                <details class="faq-item">
-                    <summary>Comment restaurer mon achat Premium ?</summary>
-                    <p>Allez dans les réglages de l'application et appuyez sur "Restaurer les achats". Si vous avez déjà acheté Premium avec le même identifiant Apple, votre accès sera immédiatement rétabli.</p>
-                </details>
-                
-                <details class="faq-item">
-                    <summary>L'application fonctionne-t-elle hors ligne ?</summary>
-                    <p>Oui, Temps De Jeu fonctionne entièrement hors ligne. Aucune connexion internet n'est nécessaire pour gérer vos matchs. La connexion est uniquement requise pour les achats intégrés.</p>
-                </details>
-                
-                <details class="faq-item">
-                    <summary>Comment exporter les statistiques d'un match ?</summary>
-                    <p>À la fin d'un match, appuyez sur le bouton de partage pour générer un rapport PDF contenant toutes les statistiques détaillées du match. Vous pouvez le partager via AirDrop, email, iMessage, etc.</p>
-                </details>
-
-                <details class="faq-item">
-                    <summary>Comment gérer plusieurs catégories (U13, Seniors…) ?</summary>
-                    <p>Allez dans l'onglet "Catégories" pour créer vos différentes équipes. Les joueurs sont créés dans une catégorie d'origine puis peuvent être assignés à d'autres catégories. Chaque catégorie a ses propres matchs, entraînements et statistiques.</p>
-                </details>
-
-                <details class="faq-item">
-                    <summary>Un joueur peut-il s'entraîner avec une autre catégorie ?</summary>
-                    <p>Oui. Lors de la création ou modification d'un entraînement, dépliez la section "Joueurs d'autres catégories" pour ajouter des joueurs invités. Leur présence sera comptabilisée dans les statistiques de leur catégorie d'origine et ils seront signalés par un badge de couleur.</p>
-                </details>
-
-                <details class="faq-item">
-                    <summary>Comment pointer les présences aux entraînements ?</summary>
-                    <p>Dans l'onglet "Entraînements", créez une nouvelle session et cochez les joueurs présents. Vous pouvez ensuite consulter les statistiques de présence par période et exporter les feuilles de présence en PDF.</p>
-                </details>
-
-                <details class="faq-item">
-                    <summary>Comment envoyer un sondage de disponibilité aux joueurs ?</summary>
-                    <p>Ouvrez un entraînement existant et appuyez sur « Sondage disponibilité ». Partagez le lien généré via WhatsApp, SMS ou iMessage. Vos joueurs peuvent répondre depuis n'importe quel téléphone, même Android. Les réponses (Présent, Absent, Incertain) arrivent en temps réel. Appuyez sur « Appliquer aux présences » pour reporter automatiquement les réponses, y compris pour les joueurs ajoutés après la création de l'entraînement.</p>
-                </details>
-
-                <details class="faq-item">
-                    <summary>Comment ajouter le widget sur mon écran d'accueil ?</summary>
-                    <p>Maintenez appuyé sur votre écran d'accueil, appuyez sur le « + » en haut, puis cherchez « Temps De Jeu ». Trois tailles sont disponibles : petit (prochain événement), moyen (match + entraînement côte à côte) et rectangle pour l'écran de verrouillage. Maintenez appuyé sur le widget pour choisir la catégorie à afficher.</p>
-                </details>
-
-                <details class="faq-item">
-                    <summary>Comment transférer mes données sur un autre appareil ?</summary>
-                    <p>Utilisez la fonction d'export JSON pour sauvegarder vos données (effectif, matchs, entraînements), puis importez-les sur le nouvel appareil. Les fichiers (.tdj pour compositions, .tdjm pour matchs) peuvent être partagés via AirDrop, email ou tout autre moyen. L'import est intelligent : il dédoublonne automatiquement les données existantes.</p>
-                </details>
-
-                <details class="faq-item">
-                    <summary>Comment fonctionne le carton blanc ?</summary>
-                    <p>Le carton blanc entraîne une expulsion temporaire de 10 minutes. Un compte à rebours s'affiche en direct pendant le match et une alerte vous prévient automatiquement quand le joueur peut revenir sur le terrain.</p>
-                </details>
-
-                <details class="faq-item">
-                    <summary>Comment gérer l'encadrement (coachs, délégués…) ?</summary>
-                    <p>Dans l'onglet "Réglages", section "Encadrement", ajoutez les membres de votre staff avec leur rôle, numéro de téléphone et email. Vous pouvez les assigner à plusieurs catégories et les appeler directement depuis l'app.</p>
-                </details>
-
-                <details class="faq-item">
-                    <summary>Qu'est-ce que le code catégorie ?</summary>
-                    <p>C'est un code unique de 6 caractères généré pour chaque catégorie. L'entraîneur principal le partage aux adjoints pour que les imports de composition arrivent automatiquement sur la bonne catégorie, même entre différents appareils.</p>
-                </details>
+            <div class="teams-pool" id="teams-pool" aria-live="polite"></div>
+            <div class="teams-cols">
+              <div class="team-col" data-team="bleu"><p>Chasubles bleues</p><div class="team-slots" id="team-bleu"></div></div>
+              <div class="team-col" data-team="orange"><p>Chasubles orange</p><div class="team-slots" id="team-orange"></div></div>
             </div>
+          </div>
+        </article>
+      </div>
+    </div>
+  </section>
+
+  <!-- ============================================================ EXERCICES 3D -->
+  <section class="section bibli" id="exercices">
+    <div class="wrap">
+      <header class="section-head reveal">
+        <p class="eyebrow">Tactique 3D</p>
+        <h2>12 exercices animés, sous tous les angles</h2>
+        <p class="lead">Ce sont les exercices de la bibliothèque de l’app, rejoués ici avec les mêmes données. Choisissez un exercice et une caméra, puis lancez la lecture.</p>
+      </header>
+
+      <div class="viewer reveal" id="viewer">
+        <div class="viewer-stage">
+          <div class="viewer-canvas">
+          <canvas id="lib-canvas" aria-label="Exercice animé en 3D"></canvas>
+          <img class="viewer-fallback" src="assets/img/ipad-04-tactique.webp" alt="Exercice « Chevauchement du latéral et centre » dans l’app" loading="lazy">
+          <div class="cams" role="group" aria-label="Caméra">
+            <button type="button" data-cam="coach" aria-pressed="true">Coach</button>
+            <button type="button" data-cam="tribune" aria-pressed="false">Tribune</button>
+            <button type="button" data-cam="dessus" aria-pressed="false">Dessus</button>
+            <button type="button" data-cam="immersion" aria-pressed="false">Immersion</button>
+          </div>
+          <p class="viewer-hint">Glissez pour tourner autour du terrain</p>
+          </div>
+          <div class="viewer-bar">
+            <div class="viewer-controls">
+              <button type="button" class="ctl" id="lib-prev" aria-label="Étape précédente"><svg viewBox="0 0 24 24"><path d="M15 6l-6 6 6 6"/></svg></button>
+              <button type="button" class="ctl ctl-play" id="lib-play" aria-label="Pause"><svg viewBox="0 0 24 24" class="i-pause"><path d="M8 5v14M16 5v14"/></svg><svg viewBox="0 0 24 24" class="i-play"><path d="M8 5.5v13l10.5-6.5z"/></svg></button>
+              <button type="button" class="ctl" id="lib-next" aria-label="Étape suivante"><svg viewBox="0 0 24 24"><path d="M9 6l6 6-6 6"/></svg></button>
+            </div>
+            <div class="viewer-caption" aria-live="polite">
+              <p class="vc-step"><span id="lib-step">Étape 1/5</span> · <b id="lib-step-title">Mise en place</b></p>
+              <p class="vc-text" id="lib-step-text"></p>
+            </div>
+            <div class="viewer-dots" id="lib-dots" aria-hidden="true"></div>
+          </div>
         </div>
-    </section>
-    
-    <!-- Footer -->
-    <footer>
-        <p>Créé avec ❤️ par Robert Oulhen</p>
-        <p style="margin-top: 12px;">
-            <a href="privacy.html">Politique de confidentialité</a> · 
-            <a href="terms.html">Conditions d'utilisation</a> ·
-            <a href="#support">Support</a>
-        </p>
-        <p style="margin-top: 8px; font-size: 0.9rem;">© 2026 Temps De Jeu. Mis à jour le 7 mars 2026.</p>
-    </footer>
+        <aside class="viewer-info" id="lib-info">
+          <p class="vi-cat" id="lib-cat">Conservation</p>
+          <h3 id="lib-title">Rondo 4 contre 2</h3>
+          <ul class="vi-meta">
+            <li><span>Niveau</span><b id="lib-level">U11+</b></li>
+            <li><span>Durée</span><b id="lib-duration">12 min</b></li>
+            <li><span>Effectif</span><b id="lib-size">4 c 2</b></li>
+          </ul>
+          <p class="vi-label">Objectif</p>
+          <p id="lib-goal"></p>
+          <p class="vi-label">Consignes</p>
+          <ul class="vi-list" id="lib-rules"></ul>
+        </aside>
+      </div>
+
+      <div class="ex-list" id="lib-list" role="tablist" aria-label="Exercices de la bibliothèque"></div>
+    </div>
+  </section>
+
+  <!-- ============================================================ PLACEMENT & SÉQUENCES -->
+  <section class="section placement" id="placement">
+    <div class="wrap split">
+      <div class="split-text">
+        <header class="section-head left reveal">
+          <p class="eyebrow">Placement et séquences</p>
+          <h2>Votre composition en relief</h2>
+          <p class="lead">Basculez la vue Placement en 3D&nbsp;: joueurs et ballon se déplacent du bout du doigt, sur un terrain que l’on regarde depuis le banc, la tribune, le ciel ou à hauteur de joueur.</p>
+        </header>
+        <ul class="ticks reveal">
+          <li><b>Quatre caméras</b>&nbsp;: coach, tribune, dessus, immersion. Rotation et zoom libres.</li>
+          <li><b>Séquences construites au doigt</b>&nbsp;: le ballon se colle au joueur, glisser sur un partenaire fait une passe, «&nbsp;En l’air&nbsp;» un centre.</li>
+          <li><b>Les flèches s’affichent avant de valider</b> chaque étape, avec une consigne par étape.</li>
+          <li><b>Partage en fichier .tdjt</b> par Messages, AirDrop ou e-mail&nbsp;: il s’ouvre directement dans l’app.</li>
+        </ul>
+      </div>
+      <div class="phones" id="phones" aria-label="Captures de l’app">
+        <figure class="phone ph-1"><img src="assets/img/iphone-03-sequence.webp" alt="Séquence en construction : aperçu de la conduite et de la course avant validation" loading="lazy" width="600" height="1304"></figure>
+        <figure class="phone ph-2"><img src="assets/img/iphone-02-placement-3d.webp" alt="Placement en 3D d’une équipe en 4-3-3, caméra Coach" loading="lazy" width="600" height="1304"></figure>
+        <figure class="phone ph-3"><img src="assets/img/iphone-04-tactique.webp" alt="Exercice du chevauchement : flèches de passe et de course, latéral en surbrillance" loading="lazy" width="600" height="1304"></figure>
+      </div>
+    </div>
+  </section>
+
+  <!-- ============================================================ MATCH -->
+  <section class="section match" id="match">
+    <div class="wrap">
+      <header class="section-head reveal">
+        <p class="eyebrow">Le jour du match</p>
+        <h2>Le chrono tourne, l’app compte pour vous</h2>
+        <p class="lead">Temps de jeu de chaque joueur, arrêts chronométrés, temps additionnel calculé, buts, passes décisives, cartons et remplacements en un geste.</p>
+      </header>
+
+      <div class="match-grid">
+        <div class="live glass reveal" id="live" aria-label="Démonstration du suivi de match en direct">
+          <div class="live-top">
+            <span class="live-badge"><i></i>En direct</span>
+            <span class="live-period" id="live-period">1<sup>re</sup> mi-temps</span>
+          </div>
+          <div class="score">
+            <div class="team"><span class="crest crest-home">FR</span><span>FC Rivière</span></div>
+            <div class="score-mid">
+              <p class="score-num"><span id="score-home">2</span><i>–</i><span id="score-away">1</span></p>
+              <p class="clock" id="live-clock">27:22</p>
+              <p class="added">Temps additionnel <b id="live-added">+1:30</b></p>
+            </div>
+            <div class="team"><span class="crest crest-away">AP</span><span>AS Plateau</span></div>
+          </div>
+
+          <div class="live-row">
+            <div class="ring-box">
+              <svg viewBox="0 0 120 120" class="ring" aria-hidden="true">
+                <circle cx="60" cy="60" r="50" class="ring-bg"/>
+                <circle cx="60" cy="60" r="50" class="ring-fg" id="live-ring"/>
+              </svg>
+              <div class="ring-label"><b id="live-eff">64 %</b><span>temps effectif</span></div>
+            </div>
+            <div class="stoppages">
+              <p class="mini-label">Arrêts de jeu <span class="stop-now" id="stop-now"></span></p>
+              <ul id="stop-list">
+                <li data-k="touche">Touche <b>9</b></li>
+                <li data-k="sixmetres">6 mètres <b>4</b></li>
+                <li data-k="corner">Corner <b>3</b></li>
+                <li data-k="coupfranc">Coup franc <b>5</b></li>
+                <li data-k="remplacement">Remplacement <b>2</b></li>
+                <li data-k="blessure">Blessure / soins <b>1</b></li>
+                <li data-k="but">But / célébration <b>3</b></li>
+                <li data-k="horsjeu">Hors-jeu <b>2</b></li>
+                <li data-k="var">VAR <b>0</b></li>
+              </ul>
+            </div>
+          </div>
+
+          <div class="live-row live-row-2">
+            <div class="events">
+              <p class="mini-label">Fil du match</p>
+              <ol id="live-events">
+                <li><span class="ev-min">24′</span><span class="ev ev-goal"></span>But · n°9 Martin <em>passe du n°10</em></li>
+                <li><span class="ev-min">18′</span><span class="ev ev-yellow"></span>Carton jaune · n°5 Garnier</li>
+                <li><span class="ev-min">11′</span><span class="ev ev-goal"></span>But · n°7 Petit</li>
+              </ol>
+            </div>
+            <div class="equity">
+              <p class="mini-label">Équité du temps de jeu <span class="eq-dot" id="eq-dot"></span></p>
+              <ul id="equity"></ul>
+            </div>
+          </div>
+        </div>
+
+        <figure class="phone phone-solo reveal" style="--d:.1s">
+          <img src="assets/img/iphone-01-match.webp" alt="Écran de match en direct : chrono, score, temps effectif et arrêts de jeu" loading="lazy" width="600" height="1304">
+        </figure>
+      </div>
+    </div>
+  </section>
+
+  <!-- ============================================================ CASCADE -->
+  <section class="section cascade" id="cascade">
+    <div class="wrap">
+      <header class="section-head reveal">
+        <p class="eyebrow">Clubs à plusieurs équipes</p>
+        <h2>La cascade&nbsp;: fini les doublons le week-end</h2>
+        <p class="lead">L’équipe A choisit ses joueurs et partage les disponibles par iMessage. L’équipe B voit qui est déjà pris, choisit à son tour, et transmet à la C.</p>
+      </header>
+      <div class="cascade-stage reveal" id="cascade-stage" aria-hidden="true">
+        <div class="cas-col" data-t="A"><p class="cas-name"><b>A</b>Seniors A</p><div class="cas-box"></div><p class="cas-state">sélectionne</p></div>
+        <div class="cas-link"><span class="bubble">.tdj</span></div>
+        <div class="cas-col" data-t="B"><p class="cas-name"><b>B</b>Seniors B</p><div class="cas-box"></div><p class="cas-state">reçoit</p></div>
+        <div class="cas-link"><span class="bubble">.tdj</span></div>
+        <div class="cas-col" data-t="C"><p class="cas-name"><b>C</b>Seniors C</p><div class="cas-box"></div><p class="cas-state">reçoit</p></div>
+        <div class="cas-link"><span class="bubble">.tdj</span></div>
+        <div class="cas-col" data-t="D"><p class="cas-name"><b>D</b>Seniors D</p><div class="cas-box"></div><p class="cas-state">reçoit</p></div>
+      </div>
+      <p class="caption-small reveal">Chaque catégorie a un code à 6 caractères&nbsp;: les compositions importées arrivent toutes seules sur la bonne équipe.</p>
+    </div>
+  </section>
+
+  <!-- ============================================================ FONCTIONS -->
+  <section class="section fonctions" id="fonctions">
+    <div class="wrap">
+      <header class="section-head reveal">
+        <p class="eyebrow">Tout le reste</p>
+        <h2>Tout ce qu’il faut à un éducateur</h2>
+        <p class="lead">Une seule app pour toutes vos équipes, du U7 aux seniors. Vos données restent sur votre appareil.</p>
+      </header>
+      <div class="cards cards-4">
+        <article class="card reveal"><div class="card-ico"><svg viewBox="0 0 24 24"><circle cx="12" cy="13" r="8"/><path d="M12 9v4l2.5 2.5M9.5 2.5h5M12 2.5V5"/></svg></div><h3>Chrono et arrêts de jeu</h3><p>11 types d’arrêts chronométrés (touche, corner, coup franc, penalty, blessure, VAR…). Temps additionnel calculé, prolongations 2 × 15 min.</p></article>
+        <article class="card reveal" style="--d:.05s"><div class="card-ico"><svg viewBox="0 0 24 24"><path d="M12 4v16M6 20h12M5 7h14M5 7l-3 6a3 3 0 0 0 6 0L5 7zM19 7l-3 6a3 3 0 0 0 6 0l-3-6z"/></svg></div><h3>Équité du temps de jeu</h3><p>Un indicateur vert, orange ou rouge vous alerte en direct si l’écart se creuse. Impossible d’oublier quelqu’un sur le banc.</p></article>
+        <article class="card reveal" style="--d:.1s"><div class="card-ico"><svg viewBox="0 0 24 24"><rect x="3.5" y="5" width="9" height="13" rx="1.5" transform="rotate(-10 8 11.5)"/><rect x="11.5" y="5" width="9" height="13" rx="1.5" transform="rotate(8 16 11.5)"/></svg></div><h3>Cartons, même blancs</h3><p>Jaunes, doubles jaunes, rouges et blancs avec exclusion temporaire de 10 min et compte à rebours. Suspensions purgées.</p></article>
+        <article class="card reveal" style="--d:.15s"><div class="card-ico"><svg viewBox="0 0 24 24"><path d="M4 20V11M10 20V5M16 20v-6M21 20H3"/></svg></div><h3>Statistiques</h3><p>Temps effectif, arrêts par type et par équipe, buteurs, passeurs, fautes par joueur et par période, récapitulatif en PDF.</p></article>
+        <article class="card reveal"><div class="card-ico"><svg viewBox="0 0 24 24"><path d="M12 3l9 5-9 5-9-5 9-5z"/><path d="M3 13l9 5 9-5"/></svg></div><h3>Multi-catégories</h3><p>Toutes vos équipes dans une app, base de joueurs partagée, badges de couleur pour les joueurs prêtés entre catégories.</p></article>
+        <article class="card reveal" style="--d:.05s"><div class="card-ico"><svg viewBox="0 0 24 24"><circle cx="9" cy="8" r="3.5"/><path d="M2.5 20a6.5 6.5 0 0 1 13 0"/><circle cx="17" cy="9" r="2.5"/><path d="M16 14.6a5 5 0 0 1 6 4.9"/></svg></div><h3>Encadrement</h3><p>Coachs, adjoints, arbitres, délégués, préparateurs… Rôles personnalisables, appel direct depuis l’app.</p></article>
+        <article class="card reveal" style="--d:.1s"><div class="card-ico"><svg viewBox="0 0 24 24"><rect x="4" y="3" width="16" height="18" rx="2"/><path d="M8 8l1.5 1.5L12 7M8 14l1.5 1.5L12 13M14.5 8.5H17M14.5 14.5H17"/></svg></div><h3>Présences</h3><p>Pointage des entraînements, joueurs invités d’autres catégories, statistiques de présence, feuilles en PDF.</p></article>
+        <article class="card reveal" style="--d:.15s"><div class="card-ico"><svg viewBox="0 0 24 24"><path d="M4 5h16v11H9l-5 4V5z"/><path d="M8.5 10.5l2 2 4-4"/></svg></div><h3>Sondage de disponibilité</h3><p>Un lien par WhatsApp, SMS ou iMessage&nbsp;: les joueurs répondent depuis n’importe quel téléphone, même Android.</p></article>
+        <article class="card reveal"><div class="card-ico"><svg viewBox="0 0 24 24"><rect x="3" y="3" width="8" height="8" rx="2"/><rect x="13" y="3" width="8" height="8" rx="2"/><rect x="3" y="13" width="18" height="8" rx="2"/></svg></div><h3>Widget</h3><p>Le prochain match ou entraînement sur l’écran d’accueil, avec les réponses au sondage.</p></article>
+        <article class="card reveal" style="--d:.05s"><div class="card-ico"><svg viewBox="0 0 24 24"><rect x="3" y="5" width="18" height="16" rx="2"/><path d="M3 10h18M8 3v4M16 3v4"/></svg></div><h3>Saisons</h3><p>Matchs et entraînements rangés par saison. Archivez et repartez de zéro sans rien perdre.</p></article>
+        <article class="card reveal" style="--d:.1s"><div class="card-ico"><svg viewBox="0 0 24 24"><path d="M12 3v12M7 8l5-5 5 5"/><path d="M5 12v7a2 2 0 0 0 2 2h10a2 2 0 0 0 2-2v-7"/></svg></div><h3>Partage et export</h3><p>PDF, compositions (.tdj), matchs (.tdjm), exercices et tactiques (.tdjt). Import automatique chez le destinataire.</p></article>
+        <article class="card reveal" style="--d:.15s"><div class="card-ico"><svg viewBox="0 0 24 24"><rect x="5" y="11" width="14" height="10" rx="2"/><path d="M8 11V7a4 4 0 0 1 8 0v4"/></svg></div><h3>Vos données chez vous</h3><p>Aucun compte, aucune publicité, aucun traceur. Tout reste sur votre iPhone ou votre iPad et fonctionne hors ligne.</p></article>
+      </div>
+    </div>
+  </section>
+
+  <!-- ============================================================ CAPTURES -->
+  <section class="section captures" id="captures">
+    <div class="wrap">
+      <header class="section-head reveal">
+        <p class="eyebrow">Captures</p>
+        <h2>Sur iPhone et sur iPad</h2>
+      </header>
+      <div class="tabs reveal" role="tablist" aria-label="Appareil">
+        <button type="button" role="tab" aria-selected="true" data-dev="iphone">iPhone</button>
+        <button type="button" role="tab" aria-selected="false" data-dev="ipad">iPad</button>
+      </div>
+      <div class="shots" id="shots" data-dev="iphone">
+        <figure class="shot"><div class="shot-frame"><img data-iphone="assets/img/iphone-01-match.webp" data-ipad="assets/img/ipad-01-match.webp" src="assets/img/iphone-01-match.webp" alt="Match en direct" loading="lazy"></div><figcaption>Match en direct</figcaption></figure>
+        <figure class="shot"><div class="shot-frame"><img data-iphone="assets/img/iphone-05-atelier.webp" data-ipad="assets/img/ipad-05-atelier.webp" src="assets/img/iphone-05-atelier.webp" alt="L’Atelier d’exercices" loading="lazy"></div><figcaption>Atelier d’exercices</figcaption></figure>
+        <figure class="shot"><div class="shot-frame"><img data-iphone="assets/img/iphone-02-placement-3d.webp" data-ipad="assets/img/ipad-02-placement-3d.webp" src="assets/img/iphone-02-placement-3d.webp" alt="Placement en 3D" loading="lazy"></div><figcaption>Placement en 3D</figcaption></figure>
+        <figure class="shot"><div class="shot-frame"><img data-iphone="assets/img/iphone-04-tactique.webp" data-ipad="assets/img/ipad-04-tactique.webp" src="assets/img/iphone-04-tactique.webp" alt="Exercice animé" loading="lazy"></div><figcaption>Exercice animé</figcaption></figure>
+        <figure class="shot"><div class="shot-frame"><img data-iphone="assets/img/iphone-03-sequence.webp" data-ipad="assets/img/ipad-03-sequence.webp" src="assets/img/iphone-03-sequence.webp" alt="Séquence pas à pas" loading="lazy"></div><figcaption>Séquence pas à pas</figcaption></figure>
+        <figure class="shot"><div class="shot-frame"><img data-iphone="assets/img/iphone-06-joueurs.webp" data-ipad="assets/img/ipad-06-joueurs.webp" src="assets/img/iphone-06-joueurs.webp" alt="Effectif par poste" loading="lazy"></div><figcaption>Effectif</figcaption></figure>
+      </div>
+    </div>
+  </section>
+
+  <!-- ============================================================ PREMIUM -->
+  <section class="section premium" id="premium">
+    <div class="wrap">
+      <header class="section-head reveal">
+        <p class="eyebrow">Prix</p>
+        <h2>Gratuit pour commencer, sans abonnement ensuite</h2>
+      </header>
+      <div class="plans">
+        <article class="plan reveal">
+          <p class="plan-name">Gratuit</p>
+          <p class="plan-price">0&nbsp;€</p>
+          <ul class="ticks">
+            <li>5 matchs complets pour tout essayer</li>
+            <li>L’Atelier d’exercices et les séances</li>
+            <li>Les 12 exercices animés en 3D</li>
+            <li>Effectif, présences, sondages, widget</li>
+          </ul>
+        </article>
+        <article class="plan plan-pro reveal" style="--d:.1s">
+          <p class="plan-name">Premium <span>achat unique</span></p>
+          <p class="plan-price">4,99&nbsp;€</p>
+          <ul class="ticks">
+            <li>Matchs illimités</li>
+            <li>Toutes les futures mises à jour incluses</li>
+            <li>Sur tous vos appareils (même identifiant Apple)</li>
+            <li>Pas d’abonnement</li>
+          </ul>
+          <a class="btn btn-store" href="https://apps.apple.com/fr/app/temps-de-jeu/id6758916303">
+            <svg viewBox="0 0 24 24" aria-hidden="true"><use href="#i-apple"/></svg>
+            <span class="btn-stack"><small>Télécharger dans</small>l’App Store</span>
+          </a>
+        </article>
+      </div>
+    </div>
+  </section>
+
+  <!-- ============================================================ AIDE -->
+  <section class="section aide" id="aide">
+    <div class="wrap">
+      <header class="section-head reveal">
+        <p class="eyebrow">Support</p>
+        <h2>Aide et questions fréquentes</h2>
+        <p class="lead">Une question, un problème, une idée&nbsp;? Réponse en général sous 48 heures.</p>
+      </header>
+      <div class="cards cards-3 contact">
+        <a class="card card-link reveal" href="mailto:bob.oulhen@gmail.com">
+          <div class="card-ico"><svg viewBox="0 0 24 24"><rect x="3" y="5" width="18" height="14" rx="2"/><path d="M3 7l9 6 9-6"/></svg></div>
+          <h3>Écrire</h3><p>bob.oulhen@gmail.com</p>
+        </a>
+        <a class="card card-link reveal" style="--d:.05s" href="https://github.com/boboul-cloud/Temps-De-Jeu/issues">
+          <div class="card-ico"><svg viewBox="0 0 24 24"><circle cx="12" cy="13" r="6"/><path d="M12 7V4M9 4.5 8 3M15 4.5 16 3M6 13H3M21 13h-3M6.8 9.5 4.5 8M17.2 9.5 19.5 8M6.8 16.5 4.5 18M17.2 16.5 19.5 18"/></svg></div>
+          <h3>Signaler un bug</h3><p>Ouvrir un ticket sur GitHub</p>
+        </a>
+        <a class="card card-link reveal" style="--d:.1s" href="mailto:bob.oulhen@gmail.com?subject=Suggestion%20Temps%20De%20Jeu">
+          <div class="card-ico"><svg viewBox="0 0 24 24"><path d="M9 18h6M10 21h4M12 3a6 6 0 0 0-3.5 10.9c.6.5 1 1.2 1 2.1h5c0-.9.4-1.6 1-2.1A6 6 0 0 0 12 3z"/></svg></div>
+          <h3>Proposer une idée</h3><p>Vos suggestions font l’app</p>
+        </a>
+      </div>
+
+      <div class="faq">
+        <details class="reveal"><summary>Comment ouvrir l’Atelier d’exercices&nbsp;?</summary><p>Onglet Présences, puis le bouton «&nbsp;Atelier&nbsp;» en haut à gauche. L’Atelier s’ouvre en plein écran avec trois onglets&nbsp;: Bibliothèque (les 12 exercices animés), Mes exercices et Séances.</p></details>
+        <details class="reveal"><summary>Comment créer un exercice avec des étapes&nbsp;?</summary><p>Dans «&nbsp;Mes exercices&nbsp;», touchez «&nbsp;Nouvel exercice&nbsp;». Posez le matériel et les joueurs (ou partez d’un raccourci), puis touchez «&nbsp;+ Étape&nbsp;»&nbsp;: déplacez un joueur pour une course, le porteur pour une conduite, glissez le ballon sur un partenaire pour une passe. Les flèches se tracent seules. «&nbsp;Cinéma&nbsp;» rejoue le tout en 3D.</p></details>
+        <details class="reveal"><summary>Comment préparer une séance&nbsp;?</summary><p>Onglet «&nbsp;Séances&nbsp;», «&nbsp;Nouvelle séance&nbsp;», puis «&nbsp;Ajouter un exercice&nbsp;». Donnez une durée à chaque exercice&nbsp;: le temps total et le matériel se calculent, en série ou en ateliers simultanés. Les équipes se composent avec les joueurs présents, et la séance s’exporte en PDF.</p></details>
+        <details class="reveal"><summary>L’Atelier et les exercices 3D sont-ils payants&nbsp;?</summary><p>Non. L’Atelier, les séances et la bibliothèque d’exercices 3D sont accessibles sans achat. Seuls les matchs au-delà des 5 premiers demandent Premium.</p></details>
+        <details class="reveal"><summary>Comment afficher ma composition en 3D&nbsp;?</summary><p>Onglet Match, «&nbsp;Placement&nbsp;», puis le sélecteur 2D / 3D en haut à droite. Faites glisser un joueur pour le déplacer et changez de caméra (Coach, Tribune, Dessus, Immersion).</p></details>
+        <details class="reveal"><summary>Comment partager un exercice avec un autre éducateur&nbsp;?</summary><p>Utilisez le bouton de partage de l’exercice&nbsp;: un fichier .tdjt part par Messages, AirDrop ou e-mail et s’ouvre directement dans Temps De Jeu chez le destinataire.</p></details>
+        <details class="reveal"><summary>Comment créer mon premier match&nbsp;?</summary><p>Ajoutez vos joueurs dans l’onglet Joueurs, puis dans l’onglet Match renseignez les équipes, touchez «&nbsp;Sélectionner les joueurs pour ce match&nbsp;», désignez les titulaires et démarrez le chrono.</p></details>
+        <details class="reveal"><summary>Comment fonctionne l’achat Premium&nbsp;?</summary><p>C’est un achat unique, sans abonnement, géré par Apple. Il débloque les matchs illimités et se restaure sur tous vos appareils avec le même identifiant Apple («&nbsp;Restaurer mes achats&nbsp;» dans Réglages et Exports).</p></details>
+        <details class="reveal"><summary>Mes données sont-elles sauvegardées&nbsp;?</summary><p>Tout est enregistré sur votre appareil, sans compte ni serveur. Exercices et séances font partie de la sauvegarde complète, que vous pouvez exporter pour la garder ou la transférer.</p></details>
+        <details class="reveal"><summary>L’app fonctionne-t-elle sans connexion&nbsp;?</summary><p>Oui, entièrement. Internet n’est utile que pour l’achat Premium et pour recevoir les réponses aux sondages de disponibilité.</p></details>
+        <details class="reveal"><summary>Comment envoyer un sondage de disponibilité&nbsp;?</summary><p>Ouvrez un entraînement et touchez «&nbsp;Sondage disponibilité&nbsp;». Partagez le lien par WhatsApp, SMS ou iMessage&nbsp;: les joueurs répondent Présent, Absent ou Incertain depuis n’importe quel téléphone, puis «&nbsp;Appliquer aux présences&nbsp;» reporte les réponses.</p></details>
+        <details class="reveal"><summary>Comment gérer plusieurs catégories et la cascade&nbsp;?</summary><p>Créez vos catégories (U13, Seniors…) dans l’onglet Catégories. Chacune a un code à 6 caractères à partager aux adjoints&nbsp;: les compositions importées arrivent alors sur la bonne équipe. L’équipe A partage ses disponibles à la B, qui voit les joueurs déjà retenus.</p></details>
+        <details class="reveal"><summary>Comment fonctionne le carton blanc&nbsp;?</summary><p>Il exclut le joueur 10 minutes. Un compte à rebours s’affiche pendant le match et une alerte prévient quand il peut revenir sur le terrain.</p></details>
+        <details class="reveal"><summary>Comment ajouter le widget&nbsp;?</summary><p>Maintenez le doigt sur l’écran d’accueil, touchez «&nbsp;+&nbsp;», cherchez Temps De Jeu et choisissez la taille. Maintenez le doigt sur le widget pour choisir la catégorie affichée.</p></details>
+      </div>
+    </div>
+  </section>
+
+  <footer class="footer">
+    <div class="wrap footer-in">
+      <a class="brand" href="#accueil"><img src="assets/img/icone.png" alt="" width="30" height="30" loading="lazy"><span>Temps De Jeu</span></a>
+      <nav aria-label="Liens">
+        <a href="privacy.html">Confidentialité</a>
+        <a href="terms.html">Conditions d’utilisation</a>
+        <a href="#aide">Support</a>
+        <a href="https://apps.apple.com/fr/app/temps-de-jeu/id6758916303">App Store</a>
+      </nav>
+      <p>Conçue par un éducateur, pour les éducateurs. © 2026 Robert Oulhen · Mis à jour le 23 novembre 2026.</p>
+    </div>
+  </footer>
+
+  <svg width="0" height="0" style="position:absolute" aria-hidden="true">
+    <symbol id="i-apple" viewBox="0 0 24 24"><path fill="currentColor" d="M18.71 19.5c-.83 1.24-1.71 2.45-3.05 2.47-1.34.03-1.77-.79-3.29-.79-1.53 0-2 .77-3.27.82-1.31.05-2.3-1.32-3.14-2.53C4.25 17 2.94 12.45 4.7 9.39c.87-1.52 2.43-2.48 4.12-2.51 1.28-.02 2.5.87 3.29.87.78 0 2.26-1.07 3.81-.91.65.03 2.47.26 3.64 1.98-.09.06-2.17 1.28-2.15 3.81.03 3.02 2.65 4.03 2.68 4.04-.03.07-.42 1.44-1.38 2.83M13 3.5c.73-.83 1.94-1.46 2.94-1.5.13 1.17-.34 2.35-1.04 3.19-.69.85-1.83 1.51-2.95 1.42-.15-1.15.41-2.35 1.05-3.11z"/></symbol>
+  </svg>
+
+  <script type="module" src="assets/site.js?v=17"></script>
 </body>
 </html>

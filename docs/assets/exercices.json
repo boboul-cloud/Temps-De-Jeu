@@ -1,0 +1,1893 @@
+{
+  "format": "tempsdejeu.tactique",
+  "version": 1,
+  "tactiques": [
+    {
+      "id": "biblio-rondo-4c2",
+      "titre": "Rondo 4 contre 2",
+      "categorie": "conservation",
+      "niveau": "U11+",
+      "duree": "12 min",
+      "effectif": "4 c 2",
+      "objectif": "Conserver le ballon sous pression en trouvant la passe qui élimine les deux défenseurs.",
+      "consignes": [
+        "Corps orienté pour voir deux solutions avant de recevoir",
+        "Passer dans le pied opposé au défenseur le plus proche",
+        "Deux touches maximum, puis une touche pour les plus forts",
+        "Les défenseurs pressent à deux : l'un sort, l'autre ferme la passe axiale"
+      ],
+      "source": "Bibliothèque Temps De Jeu",
+      "acteurs": [
+        {
+          "id": "a1",
+          "camp": "equipe",
+          "numero": "6",
+          "poste": "Milieu",
+          "nom": "Appui bas"
+        },
+        {
+          "id": "a2",
+          "camp": "equipe",
+          "numero": "8",
+          "poste": "Milieu",
+          "nom": "Appui gauche"
+        },
+        {
+          "id": "a3",
+          "camp": "equipe",
+          "numero": "10",
+          "poste": "Milieu",
+          "nom": "Appui haut"
+        },
+        {
+          "id": "a4",
+          "camp": "equipe",
+          "numero": "4",
+          "poste": "Défenseur",
+          "nom": "Appui droit"
+        },
+        {
+          "id": "d1",
+          "camp": "adversaire",
+          "numero": "7",
+          "nom": "Défenseur 1"
+        },
+        {
+          "id": "d2",
+          "camp": "adversaire",
+          "numero": "9",
+          "nom": "Défenseur 2"
+        }
+      ],
+      "materiel": [
+        {
+          "type": "zone",
+          "pos": [0.5, 0.5],
+          "taille": [0.176, 0.114],
+          "couleur": "blanc"
+        },
+        {
+          "type": "plot",
+          "pos": [0.412, 0.443],
+          "couleur": "orange"
+        },
+        {
+          "type": "plot",
+          "pos": [0.588, 0.443],
+          "couleur": "orange"
+        },
+        {
+          "type": "plot",
+          "pos": [0.412, 0.557],
+          "couleur": "orange"
+        },
+        {
+          "type": "plot",
+          "pos": [0.588, 0.557],
+          "couleur": "orange"
+        }
+      ],
+      "etapes": [
+        {
+          "titre": "Mise en place",
+          "texte": "Carré de 12 m de côté délimité par 4 plots. Un joueur en appui sur chaque côté, deux défenseurs au centre. Le 6 a le ballon.",
+          "positions": {
+            "a1": [0.5, 0.557],
+            "a2": [0.412, 0.5],
+            "a3": [0.5, 0.443],
+            "a4": [0.588, 0.5],
+            "d1": [0.478, 0.51],
+            "d2": [0.522, 0.486]
+          },
+          "porteur": "a1"
+        },
+        {
+          "titre": "Passe à l'appui latéral",
+          "texte": "Le 6 joue sur son partenaire de gauche. Les appuis glissent le long de leur côté pour offrir un angle de passe ; le premier défenseur sort au pressing.",
+          "positions": {
+            "a1": [0.463, 0.557],
+            "a3": [0.471, 0.443],
+            "d1": [0.449, 0.51],
+            "d2": [0.493, 0.49]
+          },
+          "duree": 1.6,
+          "porteur": "a2",
+          "focus": ["a2", "d1"]
+        },
+        {
+          "titre": "Passe qui casse la ligne",
+          "texte": "Le ballon traverse entre les deux défenseurs vers l'appui opposé. C'est la passe à rechercher en priorité : elle élimine les deux défenseurs.",
+          "positions": {
+            "a1": [0.537, 0.557],
+            "a3": [0.537, 0.443],
+            "d1": [0.478, 0.514],
+            "d2": [0.544, 0.505]
+          },
+          "duree": 1.6,
+          "porteur": "a4",
+          "focus": ["a2", "a4"]
+        },
+        {
+          "titre": "Jeu en une touche",
+          "texte": "L'appui droit remise immédiatement vers le haut avant que le défenseur n'arrive. L'appui gauche remonte déjà pour proposer la solution suivante.",
+          "positions": {
+            "a2": [0.412, 0.471],
+            "d1": [0.507, 0.495],
+            "d2": [0.544, 0.471]
+          },
+          "duree": 1.4,
+          "porteur": "a3",
+          "focus": ["a4", "a3"]
+        },
+        {
+          "titre": "Interception et changement de rôle",
+          "texte": "La passe axiale est coupée par un défenseur. Le joueur fautif prend sa place au centre ; le défenseur présent depuis le plus longtemps sort en appui.",
+          "positions": {
+            "d1": [0.522, 0.51]
+          },
+          "duree": 1.4,
+          "porteur": "d1",
+          "focus": ["d1", "a3"]
+        }
+      ]
+    },
+    {
+      "id": "biblio-conservation-5c5-2j",
+      "titre": "Conservation 5 c 5 + 2 jokers",
+      "categorie": "conservation",
+      "niveau": "U13+",
+      "duree": "20 min",
+      "effectif": "5 c 5 + 2 jokers",
+      "objectif": "Conserver collectivement le ballon, utiliser la largeur et faire circuler d'un joker à l'autre.",
+      "consignes": [
+        "Jokers en deux touches, toujours avec l'équipe qui a le ballon",
+        "Écarter au maximum : largeur et profondeur à chaque possession",
+        "Chercher le joueur entre les lignes avant de renverser",
+        "À la perte, contre-presser pendant 5 secondes"
+      ],
+      "source": "Bibliothèque Temps De Jeu",
+      "acteurs": [
+        {
+          "id": "e1",
+          "camp": "equipe",
+          "numero": "4",
+          "poste": "Défenseur"
+        },
+        {
+          "id": "e2",
+          "camp": "equipe",
+          "numero": "6",
+          "poste": "Milieu"
+        },
+        {
+          "id": "e3",
+          "camp": "equipe",
+          "numero": "8",
+          "poste": "Milieu"
+        },
+        {
+          "id": "e4",
+          "camp": "equipe",
+          "numero": "10",
+          "poste": "Milieu"
+        },
+        {
+          "id": "e5",
+          "camp": "equipe",
+          "numero": "7",
+          "poste": "Attaquant"
+        },
+        {
+          "id": "o1",
+          "camp": "adversaire",
+          "numero": "2"
+        },
+        {
+          "id": "o2",
+          "camp": "adversaire",
+          "numero": "6"
+        },
+        {
+          "id": "o3",
+          "camp": "adversaire",
+          "numero": "3"
+        },
+        {
+          "id": "o4",
+          "camp": "adversaire",
+          "numero": "8"
+        },
+        {
+          "id": "o5",
+          "camp": "adversaire",
+          "numero": "5"
+        },
+        {
+          "id": "j1",
+          "camp": "joker",
+          "numero": "J",
+          "nom": "Joker haut"
+        },
+        {
+          "id": "j2",
+          "camp": "joker",
+          "numero": "J",
+          "nom": "Joker bas"
+        }
+      ],
+      "materiel": [
+        {
+          "type": "zone",
+          "pos": [0.5, 0.5],
+          "taille": [0.441, 0.229],
+          "couleur": "blanc"
+        },
+        {
+          "type": "plot",
+          "pos": [0.279, 0.386],
+          "couleur": "jaune"
+        },
+        {
+          "type": "plot",
+          "pos": [0.721, 0.386],
+          "couleur": "jaune"
+        },
+        {
+          "type": "plot",
+          "pos": [0.279, 0.614],
+          "couleur": "jaune"
+        },
+        {
+          "type": "plot",
+          "pos": [0.721, 0.614],
+          "couleur": "jaune"
+        }
+      ],
+      "etapes": [
+        {
+          "titre": "Mise en place",
+          "texte": "Zone de 30 m × 24 m. Deux équipes de 5 et deux jokers placés aux extrémités, qui jouent toujours avec l'équipe en possession.",
+          "positions": {
+            "e1": [0.353, 0.571],
+            "e2": [0.5, 0.533],
+            "e3": [0.647, 0.571],
+            "e4": [0.382, 0.438],
+            "e5": [0.618, 0.429],
+            "o1": [0.397, 0.548],
+            "o2": [0.5, 0.5],
+            "o3": [0.603, 0.543],
+            "o4": [0.426, 0.457],
+            "o5": [0.588, 0.457],
+            "j1": [0.5, 0.39],
+            "j2": [0.529, 0.61]
+          },
+          "porteur": "e2"
+        },
+        {
+          "titre": "Sortir de la pression par le joker",
+          "texte": "Pressé de face, le 6 s'appuie sur le joker bas. Le latéral gauche s'écarte pour agrandir l'espace de jeu.",
+          "positions": {
+            "o2": [0.507, 0.514],
+            "e1": [0.309, 0.581]
+          },
+          "duree": 1.5,
+          "porteur": "j2",
+          "focus": ["e2", "j2"]
+        },
+        {
+          "titre": "Renverser le jeu",
+          "texte": "Le joker joue côté opposé, là où l'adversaire est moins nombreux. Le bloc adverse doit coulisser.",
+          "positions": {
+            "o3": [0.625, 0.548],
+            "o2": [0.581, 0.533],
+            "o5": [0.618, 0.476],
+            "e5": [0.662, 0.457]
+          },
+          "duree": 1.8,
+          "porteur": "e3",
+          "focus": ["j2", "e3"]
+        },
+        {
+          "titre": "Trouver le joueur entre les lignes",
+          "texte": "Le 10 profite du décalage pour se glisser entre les lignes adverses et reçoit une passe vers l'avant.",
+          "positions": {
+            "e4": [0.529, 0.486],
+            "o4": [0.471, 0.467]
+          },
+          "duree": 1.6,
+          "porteur": "e4",
+          "focus": ["e3", "e4"]
+        },
+        {
+          "titre": "Point marqué : joker opposé",
+          "texte": "Le 10 se retourne et trouve le joker haut. Le ballon est passé d'un joker à l'autre : l'équipe marque un point et garde le ballon.",
+          "positions": {
+            "o4": [0.485, 0.443]
+          },
+          "duree": 1.5,
+          "porteur": "j1",
+          "focus": ["e4", "j1"]
+        }
+      ]
+    },
+    {
+      "id": "biblio-relance-a-3",
+      "titre": "Relance courte à 3 (décrochage du 6)",
+      "categorie": "construction",
+      "niveau": "U15+",
+      "duree": "20 min",
+      "effectif": "8 c 3",
+      "objectif": "Sortir proprement le ballon face à un pressing à deux attaquants grâce à la supériorité numérique.",
+      "consignes": [
+        "Le 6 décroche quand les deux attaquants pressent les centraux",
+        "Centraux très écartés, à hauteur de la surface de réparation",
+        "Latéraux hauts et larges pour étirer le bloc adverse",
+        "Le joueur libre conduit pour fixer avant de passer"
+      ],
+      "source": "Bibliothèque Temps De Jeu",
+      "acteurs": [
+        {
+          "id": "g",
+          "camp": "equipe",
+          "numero": "1",
+          "poste": "Gardien",
+          "nom": "Gardien"
+        },
+        {
+          "id": "d4",
+          "camp": "equipe",
+          "numero": "4",
+          "poste": "Défenseur",
+          "nom": "Défenseur central gauche"
+        },
+        {
+          "id": "d5",
+          "camp": "equipe",
+          "numero": "5",
+          "poste": "Défenseur",
+          "nom": "Défenseur central droit"
+        },
+        {
+          "id": "d2",
+          "camp": "equipe",
+          "numero": "2",
+          "poste": "Défenseur",
+          "nom": "Latéral droit"
+        },
+        {
+          "id": "d3",
+          "camp": "equipe",
+          "numero": "3",
+          "poste": "Défenseur",
+          "nom": "Latéral gauche"
+        },
+        {
+          "id": "m6",
+          "camp": "equipe",
+          "numero": "6",
+          "poste": "Milieu",
+          "nom": "Milieu défensif"
+        },
+        {
+          "id": "m8",
+          "camp": "equipe",
+          "numero": "8",
+          "poste": "Milieu",
+          "nom": "Relayeur droit"
+        },
+        {
+          "id": "m10",
+          "camp": "equipe",
+          "numero": "10",
+          "poste": "Milieu",
+          "nom": "Relayeur gauche"
+        },
+        {
+          "id": "o9",
+          "camp": "adversaire",
+          "numero": "9",
+          "nom": "Attaquant 1"
+        },
+        {
+          "id": "o10",
+          "camp": "adversaire",
+          "numero": "10",
+          "nom": "Attaquant 2"
+        },
+        {
+          "id": "o8",
+          "camp": "adversaire",
+          "numero": "8",
+          "nom": "Milieu"
+        }
+      ],
+      "materiel": [],
+      "etapes": [
+        {
+          "titre": "Mise en place",
+          "texte": "Le gardien a le ballon. Deux attaquants adverses pressent les centraux, un milieu adverse surveille le 6.",
+          "positions": {
+            "g": [0.5, 0.962],
+            "d4": [0.397, 0.914],
+            "d5": [0.603, 0.914],
+            "d2": [0.853, 0.838],
+            "d3": [0.147, 0.838],
+            "m6": [0.5, 0.819],
+            "m8": [0.662, 0.743],
+            "m10": [0.338, 0.743],
+            "o9": [0.441, 0.857],
+            "o10": [0.559, 0.857],
+            "o8": [0.5, 0.771]
+          },
+          "porteur": "g"
+        },
+        {
+          "titre": "Le 6 décroche entre les centraux",
+          "texte": "Le 6 se place entre les deux centraux, qui s'écartent à hauteur de la surface. Les latéraux montent pour étirer le bloc adverse.",
+          "positions": {
+            "m6": [0.5, 0.905],
+            "d4": [0.279, 0.895],
+            "d5": [0.721, 0.895],
+            "d2": [0.882, 0.743],
+            "d3": [0.118, 0.743],
+            "o9": [0.412, 0.867],
+            "o10": [0.588, 0.867],
+            "o8": [0.5, 0.81]
+          },
+          "duree": 2.5,
+          "focus": ["m6", "d4", "d5"]
+        },
+        {
+          "titre": "Passe au 6 : 3 contre 2",
+          "texte": "Le gardien joue court sur le 6. La première ligne de relance est à trois contre deux attaquants : un joueur est forcément libre.",
+          "positions": {
+            "o9": [0.485, 0.876]
+          },
+          "duree": 1.4,
+          "porteur": "m6",
+          "focus": ["m6"]
+        },
+        {
+          "titre": "Le central gauche est libre",
+          "texte": "Un attaquant sort sur le 6 : le 6 trouve immédiatement le central gauche, laissé libre.",
+          "positions": {
+            "o9": [0.382, 0.876]
+          },
+          "duree": 1.5,
+          "porteur": "d4",
+          "focus": ["m6", "d4"]
+        },
+        {
+          "titre": "Conduire pour fixer",
+          "texte": "Le central avance balle au pied. Le milieu adverse doit sortir sur lui ; le relayeur gauche se décale dans son dos.",
+          "positions": {
+            "d4": [0.294, 0.79],
+            "o8": [0.353, 0.762],
+            "m10": [0.412, 0.686],
+            "o9": [0.353, 0.838]
+          },
+          "duree": 2.2,
+          "focus": ["d4", "o8"]
+        },
+        {
+          "titre": "Passe qui élimine la première ligne",
+          "texte": "Le relayeur reçoit face au jeu, dans le dos du milieu adverse : les trois adversaires sont éliminés.",
+          "positions": {},
+          "duree": 1.6,
+          "porteur": "m10",
+          "focus": ["d4", "m10"]
+        }
+      ]
+    },
+    {
+      "id": "biblio-troisieme-homme",
+      "titre": "Jeu à trois : le troisième homme",
+      "categorie": "construction",
+      "niveau": "U13+",
+      "duree": "15 min",
+      "effectif": "4 c 3",
+      "objectif": "Atteindre un partenaire marqué en passant par un appui : passe verticale, remise, passe vers l'avant.",
+      "consignes": [
+        "Le pivot vient au contact puis remise en une touche",
+        "Le troisième homme arrive face au jeu au moment de la passe verticale",
+        "Communiquer : appel de balle et annonce « remise ! »",
+        "L'ailier déclenche sa course au moment de la remise"
+      ],
+      "source": "Bibliothèque Temps De Jeu",
+      "acteurs": [
+        {
+          "id": "d4",
+          "camp": "equipe",
+          "numero": "4",
+          "poste": "Défenseur",
+          "nom": "Défenseur central"
+        },
+        {
+          "id": "m8",
+          "camp": "equipe",
+          "numero": "8",
+          "poste": "Milieu",
+          "nom": "Relayeur (troisième homme)"
+        },
+        {
+          "id": "a9",
+          "camp": "equipe",
+          "numero": "9",
+          "poste": "Attaquant",
+          "nom": "Pivot"
+        },
+        {
+          "id": "a7",
+          "camp": "equipe",
+          "numero": "7",
+          "poste": "Attaquant",
+          "nom": "Ailier droit"
+        },
+        {
+          "id": "o8",
+          "camp": "adversaire",
+          "numero": "8"
+        },
+        {
+          "id": "o5",
+          "camp": "adversaire",
+          "numero": "5"
+        },
+        {
+          "id": "o3",
+          "camp": "adversaire",
+          "numero": "3"
+        }
+      ],
+      "materiel": [],
+      "etapes": [
+        {
+          "titre": "Mise en place",
+          "texte": "Le central a le ballon. La passe directe vers le relayeur est fermée par un milieu adverse ; le pivot est marqué dans son dos.",
+          "positions": {
+            "d4": [0.441, 0.629],
+            "m8": [0.559, 0.571],
+            "a9": [0.456, 0.495],
+            "a7": [0.853, 0.476],
+            "o8": [0.529, 0.586],
+            "o5": [0.456, 0.471],
+            "o3": [0.809, 0.438]
+          },
+          "porteur": "d4"
+        },
+        {
+          "titre": "Passe verticale dans le pivot",
+          "texte": "L'avant-centre décroche au contact de son défenseur et reçoit une passe appuyée dans les pieds.",
+          "positions": {
+            "a9": [0.456, 0.524],
+            "o5": [0.456, 0.5]
+          },
+          "duree": 1.5,
+          "porteur": "a9",
+          "focus": ["d4", "a9"]
+        },
+        {
+          "titre": "Remise au troisième homme",
+          "texte": "Le pivot remet en une touche au relayeur qui arrive lancé, face au jeu. Le milieu adverse, tourné vers le central, est éliminé.",
+          "positions": {
+            "m8": [0.544, 0.548]
+          },
+          "duree": 1.4,
+          "porteur": "m8",
+          "focus": ["a9", "m8"]
+        },
+        {
+          "titre": "Passe en profondeur pour l'ailier",
+          "texte": "Au moment de la remise, l'ailier attaque l'espace dans le dos du latéral. Le relayeur le lance en profondeur pendant que le 9 pivote vers le but.",
+          "positions": {
+            "a7": [0.735, 0.362],
+            "o3": [0.772, 0.39],
+            "a9": [0.515, 0.419],
+            "o5": [0.485, 0.448],
+            "d4": [0.456, 0.571]
+          },
+          "duree": 2.2,
+          "porteur": "a7",
+          "focus": ["m8", "a7"]
+        }
+      ]
+    },
+    {
+      "id": "biblio-chevauchement-centre",
+      "titre": "Chevauchement du latéral et centre",
+      "categorie": "attaque",
+      "niveau": "U13+",
+      "duree": "20 min",
+      "effectif": "5 c 5",
+      "objectif": "Créer un surnombre sur un côté grâce au chevauchement, puis centrer pour les deux poteaux.",
+      "consignes": [
+        "L'ailier rentre balle au pied pour fixer son vis-à-vis",
+        "Le latéral annonce « derrière ! » et passe à l'extérieur",
+        "Centrer devant le gardien, avant la ligne de sortie de but",
+        "Attaquer les deux poteaux, un joueur au point de penalty"
+      ],
+      "source": "Bibliothèque Temps De Jeu",
+      "acteurs": [
+        {
+          "id": "d2",
+          "camp": "equipe",
+          "numero": "2",
+          "poste": "Défenseur",
+          "nom": "Latéral droit"
+        },
+        {
+          "id": "a7",
+          "camp": "equipe",
+          "numero": "7",
+          "poste": "Attaquant",
+          "nom": "Ailier droit"
+        },
+        {
+          "id": "m8",
+          "camp": "equipe",
+          "numero": "8",
+          "poste": "Milieu",
+          "nom": "Relayeur"
+        },
+        {
+          "id": "a9",
+          "camp": "equipe",
+          "numero": "9",
+          "poste": "Attaquant",
+          "nom": "Avant-centre"
+        },
+        {
+          "id": "a11",
+          "camp": "equipe",
+          "numero": "11",
+          "poste": "Attaquant",
+          "nom": "Ailier gauche"
+        },
+        {
+          "id": "o1",
+          "camp": "adversaire",
+          "numero": "1",
+          "nom": "Gardien",
+          "poste": "Gardien"
+        },
+        {
+          "id": "o3",
+          "camp": "adversaire",
+          "numero": "3",
+          "nom": "Latéral"
+        },
+        {
+          "id": "o4",
+          "camp": "adversaire",
+          "numero": "4",
+          "nom": "Central"
+        },
+        {
+          "id": "o5",
+          "camp": "adversaire",
+          "numero": "5",
+          "nom": "Central"
+        },
+        {
+          "id": "o6",
+          "camp": "adversaire",
+          "numero": "6",
+          "nom": "Milieu"
+        }
+      ],
+      "materiel": [],
+      "etapes": [
+        {
+          "titre": "Mise en place",
+          "texte": "Attaque côté droit. Le relayeur a le ballon, l'ailier droit est marqué par le latéral adverse, le latéral droit est en soutien.",
+          "positions": {
+            "d2": [0.765, 0.4],
+            "a7": [0.882, 0.286],
+            "m8": [0.618, 0.343],
+            "a9": [0.529, 0.21],
+            "a11": [0.235, 0.248],
+            "o1": [0.5, 0.038],
+            "o3": [0.838, 0.257],
+            "o4": [0.441, 0.133],
+            "o5": [0.559, 0.143],
+            "o6": [0.647, 0.286]
+          },
+          "porteur": "m8"
+        },
+        {
+          "titre": "Passe à l'ailier",
+          "texte": "Le relayeur ouvre sur l'ailier droit, qui reçoit près de la ligne de touche. Le latéral adverse sort sur lui.",
+          "positions": {
+            "o3": [0.853, 0.252]
+          },
+          "duree": 1.6,
+          "porteur": "a7",
+          "focus": ["a7"]
+        },
+        {
+          "titre": "L'ailier rentre, le latéral chevauche",
+          "texte": "L'ailier conduit vers l'intérieur pour attirer son défenseur. Le latéral droit déborde à l'extérieur en annonçant « derrière ! ».",
+          "positions": {
+            "a7": [0.794, 0.248],
+            "o3": [0.816, 0.224],
+            "d2": [0.926, 0.229],
+            "o6": [0.691, 0.267]
+          },
+          "duree": 2.2,
+          "focus": ["a7", "d2"]
+        },
+        {
+          "titre": "Passe dans la course du latéral",
+          "texte": "L'ailier glisse le ballon dans la course du latéral. Dans la surface, les attaquants se préparent à attaquer les deux poteaux.",
+          "positions": {
+            "d2": [0.926, 0.152],
+            "o3": [0.868, 0.19],
+            "a9": [0.544, 0.133],
+            "o5": [0.529, 0.105],
+            "a11": [0.353, 0.133],
+            "o4": [0.412, 0.095],
+            "m8": [0.618, 0.21],
+            "o6": [0.647, 0.233]
+          },
+          "duree": 1.8,
+          "porteur": "d2",
+          "focus": ["d2"]
+        },
+        {
+          "titre": "Centre et attaque des deux poteaux",
+          "texte": "Le 9 attaque le premier poteau et emmène son défenseur ; le centre est dosé au second poteau pour l'ailier gauche. Le relayeur couvre le point de penalty.",
+          "positions": {
+            "a9": [0.559, 0.057],
+            "o5": [0.529, 0.071],
+            "a11": [0.426, 0.057],
+            "o4": [0.456, 0.086],
+            "o1": [0.529, 0.029],
+            "m8": [0.588, 0.162],
+            "o6": [0.632, 0.181]
+          },
+          "duree": 2.4,
+          "porteur": "a11",
+          "action": "centre",
+          "aerien": true,
+          "focus": ["d2", "a9", "a11"]
+        },
+        {
+          "titre": "Reprise au second poteau",
+          "texte": "L'ailier gauche reprend le centre au second poteau, loin du gardien attiré au premier.",
+          "positions": {
+            "o1": [0.515, 0.024]
+          },
+          "duree": 1.4,
+          "ballon": [0.463, 0.003],
+          "action": "tir",
+          "focus": ["a11"]
+        }
+      ]
+    },
+    {
+      "id": "biblio-une-deux-frappe",
+      "titre": "Une-deux pour éliminer et frappe",
+      "categorie": "attaque",
+      "niveau": "U11+",
+      "duree": "15 min",
+      "effectif": "2 c 2 + gardien",
+      "objectif": "Éliminer un défenseur par une combinaison à deux puis conclure rapidement.",
+      "consignes": [
+        "Conduite rapide vers le défenseur pour le fixer",
+        "Passe appuyée dans le pied du partenaire",
+        "Accélérer dans le dos du défenseur juste après la passe",
+        "Remise en une touche, frappe en une ou deux touches"
+      ],
+      "source": "Bibliothèque Temps De Jeu",
+      "acteurs": [
+        {
+          "id": "m10",
+          "camp": "equipe",
+          "numero": "10",
+          "poste": "Milieu",
+          "nom": "Meneur"
+        },
+        {
+          "id": "a9",
+          "camp": "equipe",
+          "numero": "9",
+          "poste": "Attaquant",
+          "nom": "Pivot (mur)"
+        },
+        {
+          "id": "o6",
+          "camp": "adversaire",
+          "numero": "6",
+          "nom": "Milieu"
+        },
+        {
+          "id": "o4",
+          "camp": "adversaire",
+          "numero": "4",
+          "nom": "Central"
+        },
+        {
+          "id": "o1",
+          "camp": "adversaire",
+          "numero": "1",
+          "nom": "Gardien",
+          "poste": "Gardien"
+        }
+      ],
+      "materiel": [],
+      "etapes": [
+        {
+          "titre": "Mise en place",
+          "texte": "Le 10 a le ballon face à un milieu adverse, à 30 m du but. L'avant-centre sert d'appui, marqué dans son dos.",
+          "positions": {
+            "m10": [0.441, 0.314],
+            "a9": [0.544, 0.21],
+            "o6": [0.449, 0.271],
+            "o4": [0.551, 0.176],
+            "o1": [0.5, 0.029]
+          },
+          "porteur": "m10"
+        },
+        {
+          "titre": "Conduire pour fixer",
+          "texte": "Le 10 conduit vite vers son adversaire pour l'obliger à s'arrêter et à se positionner face à lui.",
+          "positions": {
+            "m10": [0.441, 0.286],
+            "o6": [0.449, 0.257]
+          },
+          "duree": 1.6,
+          "focus": ["m10", "o6"]
+        },
+        {
+          "titre": "La une : passe au mur",
+          "texte": "Le 9 vient à la rencontre ; le 10 lui donne une passe appuyée dans les pieds.",
+          "positions": {
+            "a9": [0.529, 0.219],
+            "o4": [0.537, 0.19]
+          },
+          "duree": 1.4,
+          "porteur": "a9",
+          "focus": ["m10", "a9"]
+        },
+        {
+          "titre": "La deux : remise dans la course",
+          "texte": "Juste après sa passe, le 10 accélère dans le dos du milieu adverse. Le 9 remet en une touche dans sa course.",
+          "positions": {
+            "m10": [0.397, 0.171],
+            "o6": [0.493, 0.233]
+          },
+          "duree": 1.6,
+          "porteur": "m10",
+          "focus": ["m10", "a9"]
+        },
+        {
+          "titre": "Frappe",
+          "texte": "Le 10 frappe dès sa première touche, côté opposé au gardien.",
+          "positions": {
+            "o1": [0.478, 0.033]
+          },
+          "duree": 1.4,
+          "ballon": [0.541, 0.003],
+          "action": "tir",
+          "focus": ["m10"]
+        }
+      ]
+    },
+    {
+      "id": "biblio-remise-pivot-frappe",
+      "titre": "Remise du pivot et frappe",
+      "categorie": "finition",
+      "niveau": "U13+",
+      "duree": "15 min",
+      "effectif": "4 c 1 + gardien",
+      "objectif": "Enchaîner jeu en pivot, remise et frappe lointaine en une touche.",
+      "consignes": [
+        "Le pivot protège le ballon, corps entre défenseur et ballon",
+        "Remise en une touche, appuyée, devant le milieu",
+        "Le milieu arrive lancé et frappe sans contrôle",
+        "Les attaquants suivent systématiquement la frappe"
+      ],
+      "source": "Bibliothèque Temps De Jeu",
+      "acteurs": [
+        {
+          "id": "m6",
+          "camp": "equipe",
+          "numero": "6",
+          "poste": "Milieu",
+          "nom": "Milieu défensif"
+        },
+        {
+          "id": "a9",
+          "camp": "equipe",
+          "numero": "9",
+          "poste": "Attaquant",
+          "nom": "Pivot"
+        },
+        {
+          "id": "m8",
+          "camp": "equipe",
+          "numero": "8",
+          "poste": "Milieu",
+          "nom": "Milieu gauche"
+        },
+        {
+          "id": "m10",
+          "camp": "equipe",
+          "numero": "10",
+          "poste": "Milieu",
+          "nom": "Milieu droit"
+        },
+        {
+          "id": "o5",
+          "camp": "adversaire",
+          "numero": "5",
+          "nom": "Central"
+        },
+        {
+          "id": "o1",
+          "camp": "adversaire",
+          "numero": "1",
+          "nom": "Gardien",
+          "poste": "Gardien"
+        }
+      ],
+      "materiel": [
+        {
+          "type": "mannequin",
+          "pos": [0.412, 0.295],
+          "couleur": "jaune"
+        },
+        {
+          "type": "mannequin",
+          "pos": [0.588, 0.295],
+          "couleur": "jaune"
+        }
+      ],
+      "etapes": [
+        {
+          "titre": "Mise en place",
+          "texte": "Le 6 a le ballon à 40 m du but. Deux mannequins figurent la ligne du milieu adverse ; le pivot est marqué par un central.",
+          "positions": {
+            "m6": [0.5, 0.381],
+            "a9": [0.5, 0.21],
+            "m8": [0.353, 0.286],
+            "m10": [0.647, 0.286],
+            "o5": [0.5, 0.181],
+            "o1": [0.5, 0.029]
+          },
+          "porteur": "m6"
+        },
+        {
+          "titre": "Le pivot décroche et reçoit",
+          "texte": "L'avant-centre décroche entre les mannequins et reçoit dos au but, corps entre le défenseur et le ballon.",
+          "positions": {
+            "a9": [0.5, 0.238],
+            "o5": [0.5, 0.214]
+          },
+          "duree": 1.6,
+          "porteur": "a9",
+          "focus": ["m6", "a9"]
+        },
+        {
+          "titre": "Remise en retrait",
+          "texte": "Le milieu gauche arrive lancé ; le pivot lui remet le ballon en une touche, devant lui. Le milieu droit attaque la surface.",
+          "positions": {
+            "m8": [0.426, 0.219],
+            "m10": [0.603, 0.143]
+          },
+          "duree": 1.4,
+          "porteur": "m8",
+          "focus": ["a9", "m8"]
+        },
+        {
+          "titre": "Frappe en une touche et suivi",
+          "texte": "Le milieu frappe sans contrôle. Le pivot et le milieu droit suivent la frappe pour un éventuel rebond.",
+          "positions": {
+            "a9": [0.456, 0.105],
+            "o5": [0.515, 0.162],
+            "m10": [0.574, 0.076],
+            "o1": [0.478, 0.033]
+          },
+          "duree": 1.6,
+          "ballon": [0.544, 0.003],
+          "action": "tir",
+          "focus": ["m8"]
+        }
+      ]
+    },
+    {
+      "id": "biblio-pressing-lateral",
+      "titre": "Pressing haut déclenché sur le latéral",
+      "categorie": "pressing",
+      "niveau": "U15+",
+      "duree": "20 min",
+      "effectif": "7 c 8",
+      "objectif": "Orienter la relance adverse vers un côté puis presser collectivement au signal pour récupérer haut.",
+      "consignes": [
+        "Attendre le déclencheur (passe vers le latéral) avant de sortir",
+        "Course courbée pour couper la passe en retrait",
+        "Le bloc coulisse : chacun prend le joueur le plus proche du ballon",
+        "Après la récupération, attaquer la profondeur en moins de trois passes"
+      ],
+      "source": "Bibliothèque Temps De Jeu",
+      "acteurs": [
+        {
+          "id": "a9",
+          "camp": "equipe",
+          "numero": "9",
+          "poste": "Attaquant",
+          "nom": "Avant-centre"
+        },
+        {
+          "id": "a11",
+          "camp": "equipe",
+          "numero": "11",
+          "poste": "Attaquant",
+          "nom": "Ailier gauche"
+        },
+        {
+          "id": "a7",
+          "camp": "equipe",
+          "numero": "7",
+          "poste": "Attaquant",
+          "nom": "Ailier droit"
+        },
+        {
+          "id": "m10",
+          "camp": "equipe",
+          "numero": "10",
+          "poste": "Milieu",
+          "nom": "Milieu offensif"
+        },
+        {
+          "id": "m8",
+          "camp": "equipe",
+          "numero": "8",
+          "poste": "Milieu",
+          "nom": "Relayeur"
+        },
+        {
+          "id": "m6",
+          "camp": "equipe",
+          "numero": "6",
+          "poste": "Milieu",
+          "nom": "Milieu défensif"
+        },
+        {
+          "id": "d3",
+          "camp": "equipe",
+          "numero": "3",
+          "poste": "Défenseur",
+          "nom": "Latéral gauche"
+        },
+        {
+          "id": "o1",
+          "camp": "adversaire",
+          "numero": "1",
+          "nom": "Gardien",
+          "poste": "Gardien"
+        },
+        {
+          "id": "o4",
+          "camp": "adversaire",
+          "numero": "4",
+          "nom": "Central"
+        },
+        {
+          "id": "o5",
+          "camp": "adversaire",
+          "numero": "5",
+          "nom": "Central"
+        },
+        {
+          "id": "o2",
+          "camp": "adversaire",
+          "numero": "2",
+          "nom": "Latéral"
+        },
+        {
+          "id": "o3",
+          "camp": "adversaire",
+          "numero": "3",
+          "nom": "Latéral"
+        },
+        {
+          "id": "o6",
+          "camp": "adversaire",
+          "numero": "6",
+          "nom": "Milieu"
+        },
+        {
+          "id": "o8",
+          "camp": "adversaire",
+          "numero": "8",
+          "nom": "Milieu"
+        },
+        {
+          "id": "o7",
+          "camp": "adversaire",
+          "numero": "7",
+          "nom": "Ailier"
+        }
+      ],
+      "materiel": [],
+      "etapes": [
+        {
+          "titre": "Mise en place",
+          "texte": "L'adversaire relance depuis ses centraux. Notre bloc attend, chaque joueur placé entre le ballon et un adversaire.",
+          "positions": {
+            "a9": [0.5, 0.162],
+            "a11": [0.25, 0.181],
+            "a7": [0.75, 0.181],
+            "m10": [0.5, 0.276],
+            "m8": [0.647, 0.305],
+            "m6": [0.353, 0.324],
+            "d3": [0.176, 0.438],
+            "o1": [0.5, 0.038],
+            "o4": [0.397, 0.105],
+            "o5": [0.603, 0.105],
+            "o2": [0.118, 0.229],
+            "o3": [0.882, 0.229],
+            "o6": [0.5, 0.229],
+            "o8": [0.324, 0.286],
+            "o7": [0.147, 0.4]
+          },
+          "porteur": "o4"
+        },
+        {
+          "titre": "Orienter la relance",
+          "texte": "L'avant-centre presse le central par une course courbée : il ferme la passe vers l'autre central et vers le 6. La relance est orientée vers le côté.",
+          "positions": {
+            "a9": [0.456, 0.133],
+            "m10": [0.5, 0.262],
+            "a11": [0.25, 0.171]
+          },
+          "duree": 2.0,
+          "focus": ["a9"]
+        },
+        {
+          "titre": "Déclencheur : passe vers le latéral",
+          "texte": "La passe vers le latéral est le signal. Pendant la course du ballon, l'ailier sort au pressing et tout le bloc se resserre sur le joueur le plus proche.",
+          "positions": {
+            "a11": [0.176, 0.2],
+            "a9": [0.368, 0.133],
+            "m10": [0.485, 0.252],
+            "m6": [0.331, 0.31],
+            "d3": [0.162, 0.424],
+            "a7": [0.603, 0.162],
+            "m8": [0.529, 0.305]
+          },
+          "duree": 2.2,
+          "porteur": "o2",
+          "focus": ["a11", "o2"]
+        },
+        {
+          "titre": "Fermer les lignes, récupérer",
+          "texte": "Toutes les passes courtes sont fermées. Le latéral adverse doit jouer long le long de la ligne : notre latéral gauche anticipe et intercepte.",
+          "positions": {
+            "a11": [0.14, 0.214],
+            "d3": [0.147, 0.367]
+          },
+          "duree": 1.8,
+          "porteur": "d3",
+          "focus": ["a11", "d3"]
+        },
+        {
+          "titre": "Attaquer vite après la récupération",
+          "texte": "Le latéral joue immédiatement vers l'avant sur le 6 pendant que l'avant-centre attaque la profondeur dans le dos du central.",
+          "positions": {
+            "m6": [0.279, 0.276],
+            "a9": [0.441, 0.076]
+          },
+          "duree": 1.8,
+          "porteur": "m6",
+          "focus": ["d3", "m6", "a9"]
+        },
+        {
+          "titre": "Passe en profondeur",
+          "texte": "Moins de trois passes après la récupération : l'avant-centre est lancé face au gardien.",
+          "positions": {
+            "a9": [0.456, 0.067],
+            "o4": [0.426, 0.1],
+            "o1": [0.485, 0.043]
+          },
+          "duree": 2.0,
+          "porteur": "a9",
+          "focus": ["m6", "a9"]
+        }
+      ]
+    },
+    {
+      "id": "biblio-coulissement-ligne-4",
+      "titre": "Coulissement de la ligne de 4",
+      "categorie": "defense",
+      "niveau": "U15+",
+      "duree": "20 min",
+      "effectif": "5 + gardien c 5",
+      "objectif": "Rester compact en coulissant collectivement du côté du ballon et en couvrant le partenaire qui sort.",
+      "consignes": [
+        "10 à 12 m entre deux défenseurs, jamais plus",
+        "Le latéral côté ballon sort, les autres couvrent en diagonale",
+        "Ballon en retrait : la ligne remonte ensemble",
+        "Le latéral opposé rentre dans l'axe et laisse le côté faible",
+        "Communiquer : « sors ! », « couvre ! », « monte ! »"
+      ],
+      "source": "Bibliothèque Temps De Jeu",
+      "acteurs": [
+        {
+          "id": "g",
+          "camp": "equipe",
+          "numero": "1",
+          "poste": "Gardien",
+          "nom": "Gardien"
+        },
+        {
+          "id": "d2",
+          "camp": "equipe",
+          "numero": "2",
+          "poste": "Défenseur",
+          "nom": "Latéral droit"
+        },
+        {
+          "id": "d5",
+          "camp": "equipe",
+          "numero": "5",
+          "poste": "Défenseur",
+          "nom": "Central droit"
+        },
+        {
+          "id": "d4",
+          "camp": "equipe",
+          "numero": "4",
+          "poste": "Défenseur",
+          "nom": "Central gauche"
+        },
+        {
+          "id": "d3",
+          "camp": "equipe",
+          "numero": "3",
+          "poste": "Défenseur",
+          "nom": "Latéral gauche"
+        },
+        {
+          "id": "m6",
+          "camp": "equipe",
+          "numero": "6",
+          "poste": "Milieu",
+          "nom": "Milieu défensif"
+        },
+        {
+          "id": "o10",
+          "camp": "adversaire",
+          "numero": "10",
+          "nom": "Meneur"
+        },
+        {
+          "id": "o11",
+          "camp": "adversaire",
+          "numero": "11",
+          "nom": "Ailier"
+        },
+        {
+          "id": "o7",
+          "camp": "adversaire",
+          "numero": "7",
+          "nom": "Ailier"
+        },
+        {
+          "id": "o9",
+          "camp": "adversaire",
+          "numero": "9",
+          "nom": "Avant-centre"
+        },
+        {
+          "id": "o8",
+          "camp": "adversaire",
+          "numero": "8",
+          "nom": "Milieu"
+        }
+      ],
+      "materiel": [],
+      "etapes": [
+        {
+          "titre": "Mise en place",
+          "texte": "Ligne de quatre à plat devant son gardien, le 6 devant elle. L'adversaire a le ballon dans l'axe.",
+          "positions": {
+            "g": [0.5, 0.952],
+            "d3": [0.206, 0.781],
+            "d4": [0.412, 0.781],
+            "d5": [0.588, 0.781],
+            "d2": [0.794, 0.781],
+            "m6": [0.529, 0.648],
+            "o10": [0.588, 0.552],
+            "o11": [0.882, 0.629],
+            "o7": [0.118, 0.61],
+            "o9": [0.5, 0.705],
+            "o8": [0.353, 0.552]
+          },
+          "porteur": "o10"
+        },
+        {
+          "titre": "Ballon côté droit : tout le bloc coulisse",
+          "texte": "Le latéral droit sort sur l'ailier, les autres défenseurs coulissent en gardant 10 à 12 m entre eux. Le côté opposé est volontairement laissé libre.",
+          "positions": {
+            "d2": [0.853, 0.686],
+            "d5": [0.706, 0.752],
+            "d4": [0.559, 0.762],
+            "d3": [0.397, 0.762],
+            "m6": [0.676, 0.648],
+            "o9": [0.529, 0.695],
+            "g": [0.544, 0.952]
+          },
+          "duree": 2.4,
+          "porteur": "o11",
+          "focus": ["d2", "d5"]
+        },
+        {
+          "titre": "Passe en retrait : la ligne remonte",
+          "texte": "Le ballon revient vers l'arrière : la ligne remonte ensemble pour réduire l'espace entre les lignes et piéger les attaquants hors-jeu.",
+          "positions": {
+            "o10": [0.618, 0.533],
+            "d2": [0.824, 0.714],
+            "d5": [0.676, 0.724],
+            "d4": [0.529, 0.724],
+            "d3": [0.382, 0.724],
+            "o9": [0.5, 0.676],
+            "m6": [0.618, 0.61]
+          },
+          "duree": 2.0,
+          "porteur": "o10",
+          "focus": ["d5", "d4"]
+        },
+        {
+          "titre": "Renversement : coulisser de l'autre côté",
+          "texte": "Transversale vers l'ailier opposé. Pendant le vol du ballon, toute la ligne glisse ; le latéral gauche sort, le latéral droit rentre dans l'axe.",
+          "positions": {
+            "d3": [0.176, 0.667],
+            "d4": [0.324, 0.724],
+            "d5": [0.471, 0.733],
+            "d2": [0.647, 0.724],
+            "m6": [0.382, 0.61],
+            "o9": [0.471, 0.686],
+            "g": [0.456, 0.952]
+          },
+          "duree": 2.8,
+          "porteur": "o7",
+          "aerien": true,
+          "focus": ["d3", "d2"]
+        },
+        {
+          "titre": "Contenir et fermer l'intérieur",
+          "texte": "Le latéral se place côté intérieur et pousse l'ailier vers la touche ; le central gauche couvre dans son dos.",
+          "positions": {
+            "o7": [0.132, 0.686],
+            "d3": [0.176, 0.705],
+            "d4": [0.294, 0.743],
+            "d5": [0.441, 0.752],
+            "d2": [0.618, 0.743],
+            "o9": [0.441, 0.705]
+          },
+          "duree": 2.2,
+          "focus": ["d3", "d4"]
+        }
+      ]
+    },
+    {
+      "id": "biblio-contre-attaque-3c2",
+      "titre": "Contre-attaque 3 contre 2",
+      "categorie": "transition",
+      "niveau": "U13+",
+      "duree": "15 min",
+      "effectif": "3 c 2 + gardien",
+      "objectif": "Exploiter rapidement une supériorité numérique après la récupération du ballon.",
+      "consignes": [
+        "Le porteur conduit vite dans l'axe pour fixer un défenseur",
+        "Les ailiers restent larges, puis attaquent le but",
+        "Passer au moment où le défenseur s'engage",
+        "Finir l'action en moins de 8 secondes"
+      ],
+      "source": "Bibliothèque Temps De Jeu",
+      "acteurs": [
+        {
+          "id": "m8",
+          "camp": "equipe",
+          "numero": "8",
+          "poste": "Milieu",
+          "nom": "Porteur axial"
+        },
+        {
+          "id": "a7",
+          "camp": "equipe",
+          "numero": "7",
+          "poste": "Attaquant",
+          "nom": "Ailier droit"
+        },
+        {
+          "id": "a11",
+          "camp": "equipe",
+          "numero": "11",
+          "poste": "Attaquant",
+          "nom": "Ailier gauche"
+        },
+        {
+          "id": "o4",
+          "camp": "adversaire",
+          "numero": "4",
+          "nom": "Central"
+        },
+        {
+          "id": "o5",
+          "camp": "adversaire",
+          "numero": "5",
+          "nom": "Central"
+        },
+        {
+          "id": "o1",
+          "camp": "adversaire",
+          "numero": "1",
+          "nom": "Gardien",
+          "poste": "Gardien"
+        }
+      ],
+      "materiel": [
+        {
+          "type": "plot",
+          "pos": [0.176, 0.476],
+          "couleur": "jaune"
+        },
+        {
+          "type": "plot",
+          "pos": [0.824, 0.476],
+          "couleur": "jaune"
+        }
+      ],
+      "etapes": [
+        {
+          "titre": "Mise en place",
+          "texte": "Ballon récupéré au milieu : trois attaquants contre deux défenseurs qui reculent. Départ à hauteur des plots.",
+          "positions": {
+            "m8": [0.5, 0.476],
+            "a7": [0.765, 0.457],
+            "a11": [0.235, 0.457],
+            "o4": [0.426, 0.343],
+            "o5": [0.574, 0.343],
+            "o1": [0.5, 0.038]
+          },
+          "porteur": "m8"
+        },
+        {
+          "titre": "Conduite axiale, ailiers larges",
+          "texte": "Le porteur attaque vite dans l'axe. Les ailiers sprintent en restant larges pour écarter les deux défenseurs.",
+          "positions": {
+            "m8": [0.5, 0.343],
+            "o4": [0.426, 0.267],
+            "o5": [0.574, 0.267],
+            "a7": [0.794, 0.305],
+            "a11": [0.206, 0.305]
+          },
+          "duree": 2.6,
+          "focus": ["m8"]
+        },
+        {
+          "titre": "Fixer un défenseur",
+          "texte": "Le porteur continue vers le central droit pour l'obliger à sortir. Les deux défenseurs ne peuvent plus couvrir les deux ailiers.",
+          "positions": {
+            "m8": [0.529, 0.257],
+            "o5": [0.574, 0.224],
+            "o4": [0.456, 0.19],
+            "a7": [0.765, 0.2],
+            "a11": [0.235, 0.2]
+          },
+          "duree": 2.0,
+          "focus": ["m8", "o5"]
+        },
+        {
+          "titre": "Passe au joueur libre",
+          "texte": "Dès que le défenseur s'engage, passe pour l'ailier droit libre. Le porteur poursuit sa course vers le but.",
+          "positions": {
+            "a7": [0.735, 0.152],
+            "o4": [0.485, 0.133],
+            "o5": [0.618, 0.171],
+            "m8": [0.544, 0.181],
+            "a11": [0.324, 0.114]
+          },
+          "duree": 1.8,
+          "porteur": "a7",
+          "focus": ["m8", "a7"]
+        },
+        {
+          "titre": "Déborder et attirer",
+          "texte": "L'ailier conduit vers la surface et attire le dernier défenseur. L'ailier gauche file au second poteau.",
+          "positions": {
+            "a7": [0.706, 0.086],
+            "o5": [0.662, 0.105],
+            "m8": [0.529, 0.114],
+            "o4": [0.485, 0.095],
+            "a11": [0.412, 0.076],
+            "o1": [0.529, 0.033]
+          },
+          "duree": 1.8,
+          "focus": ["a7"]
+        },
+        {
+          "titre": "Centre à ras de terre",
+          "texte": "Centre en retrait devant le but : l'ailier opposé, oublié au second poteau, est seul.",
+          "positions": {
+            "a11": [0.426, 0.067]
+          },
+          "duree": 1.6,
+          "porteur": "a11",
+          "focus": ["a7", "a11"]
+        },
+        {
+          "titre": "Finition",
+          "texte": "Reprise du plat du pied, côté opposé au gardien. L'action doit durer moins de 8 secondes.",
+          "positions": {
+            "o1": [0.507, 0.024]
+          },
+          "duree": 1.4,
+          "ballon": [0.463, 0.003],
+          "action": "tir",
+          "focus": ["a11"]
+        }
+      ]
+    },
+    {
+      "id": "biblio-contre-pressing",
+      "titre": "Contre-pressing après la perte",
+      "categorie": "transition",
+      "niveau": "U15+",
+      "duree": "15 min",
+      "effectif": "6 c 5",
+      "objectif": "Récupérer le ballon dans les 5 secondes qui suivent la perte, puis attaquer immédiatement.",
+      "consignes": [
+        "Règle des 5 secondes : les trois joueurs les plus proches pressent",
+        "Encercler le porteur et fermer les lignes de passe proches",
+        "Si la récupération échoue, se replacer vite derrière le ballon",
+        "Récupération = attaque immédiate vers l'avant"
+      ],
+      "source": "Bibliothèque Temps De Jeu",
+      "acteurs": [
+        {
+          "id": "m8",
+          "camp": "equipe",
+          "numero": "8",
+          "poste": "Milieu",
+          "nom": "Relayeur"
+        },
+        {
+          "id": "m10",
+          "camp": "equipe",
+          "numero": "10",
+          "poste": "Milieu",
+          "nom": "Milieu offensif"
+        },
+        {
+          "id": "a9",
+          "camp": "equipe",
+          "numero": "9",
+          "poste": "Attaquant",
+          "nom": "Avant-centre"
+        },
+        {
+          "id": "a7",
+          "camp": "equipe",
+          "numero": "7",
+          "poste": "Attaquant",
+          "nom": "Ailier droit"
+        },
+        {
+          "id": "a11",
+          "camp": "equipe",
+          "numero": "11",
+          "poste": "Attaquant",
+          "nom": "Ailier gauche"
+        },
+        {
+          "id": "m6",
+          "camp": "equipe",
+          "numero": "6",
+          "poste": "Milieu",
+          "nom": "Milieu défensif"
+        },
+        {
+          "id": "o6",
+          "camp": "adversaire",
+          "numero": "6",
+          "nom": "Milieu"
+        },
+        {
+          "id": "o8",
+          "camp": "adversaire",
+          "numero": "8",
+          "nom": "Milieu"
+        },
+        {
+          "id": "o10",
+          "camp": "adversaire",
+          "numero": "10",
+          "nom": "Meneur"
+        },
+        {
+          "id": "o4",
+          "camp": "adversaire",
+          "numero": "4",
+          "nom": "Central"
+        },
+        {
+          "id": "o2",
+          "camp": "adversaire",
+          "numero": "2",
+          "nom": "Latéral"
+        }
+      ],
+      "materiel": [],
+      "etapes": [
+        {
+          "titre": "Mise en place",
+          "texte": "Nous attaquons dans le camp adverse. Le relayeur a le ballon au milieu, pressé par le 6 adverse.",
+          "positions": {
+            "m8": [0.588, 0.381],
+            "m10": [0.456, 0.343],
+            "a9": [0.529, 0.257],
+            "a7": [0.838, 0.324],
+            "a11": [0.206, 0.305],
+            "m6": [0.471, 0.495],
+            "o6": [0.618, 0.357],
+            "o8": [0.382, 0.419],
+            "o10": [0.735, 0.476],
+            "o4": [0.544, 0.21],
+            "o2": [0.794, 0.248]
+          },
+          "porteur": "m8"
+        },
+        {
+          "titre": "Perte du ballon",
+          "texte": "Le relayeur perd le ballon. C'est le déclencheur : pas de temps mort, tout le monde réagit immédiatement.",
+          "positions": {
+            "o6": [0.61, 0.362]
+          },
+          "duree": 1.4,
+          "porteur": "o6",
+          "focus": ["m8", "o6"]
+        },
+        {
+          "titre": "Réaction immédiate : encercler",
+          "texte": "Les trois joueurs les plus proches encerclent le porteur ; les autres ferment les passes courtes vers ses partenaires.",
+          "positions": {
+            "m8": [0.632, 0.386],
+            "m10": [0.566, 0.352],
+            "a9": [0.603, 0.324],
+            "m6": [0.412, 0.429],
+            "a7": [0.721, 0.429],
+            "a11": [0.324, 0.362]
+          },
+          "duree": 1.8,
+          "focus": ["m8", "m10", "a9"]
+        },
+        {
+          "titre": "Récupérer en moins de 5 secondes",
+          "texte": "Enfermé, le porteur tente une passe vers son meneur : l'ailier droit, placé sur la ligne de passe, intercepte.",
+          "positions": {
+            "a7": [0.691, 0.41]
+          },
+          "duree": 1.4,
+          "porteur": "a7",
+          "focus": ["a7"]
+        },
+        {
+          "titre": "Attaquer immédiatement",
+          "texte": "La défense adverse, qui s'était projetée, est désorganisée : passe tout de suite vers l'avant pour l'avant-centre qui a pivoté.",
+          "positions": {
+            "a9": [0.647, 0.229],
+            "a11": [0.353, 0.21]
+          },
+          "duree": 1.8,
+          "porteur": "a9",
+          "focus": ["a7", "a9"]
+        }
+      ]
+    },
+    {
+      "id": "biblio-corner-premier-poteau",
+      "titre": "Corner : appel premier poteau et déviation",
+      "categorie": "cpa",
+      "niveau": "U15+",
+      "duree": "15 min",
+      "effectif": "6 c 6 + gardien",
+      "objectif": "Marquer sur corner grâce à une déviation au premier poteau reprise au second.",
+      "consignes": [
+        "Le joueur du premier poteau attaque le ballon devant son défenseur",
+        "Déviation légère de la tête vers l'arrière, sans chercher le but",
+        "Le joueur du second poteau part tard, dans le dos de son marqueur",
+        "Deux joueurs restent hors de la surface pour le second ballon"
+      ],
+      "source": "Bibliothèque Temps De Jeu",
+      "acteurs": [
+        {
+          "id": "a7",
+          "camp": "equipe",
+          "numero": "7",
+          "poste": "Attaquant",
+          "nom": "Tireur du corner"
+        },
+        {
+          "id": "a9",
+          "camp": "equipe",
+          "numero": "9",
+          "poste": "Attaquant",
+          "nom": "Appel premier poteau"
+        },
+        {
+          "id": "d4",
+          "camp": "equipe",
+          "numero": "4",
+          "poste": "Défenseur",
+          "nom": "Second poteau"
+        },
+        {
+          "id": "d5",
+          "camp": "equipe",
+          "numero": "5",
+          "poste": "Défenseur",
+          "nom": "Point de penalty"
+        },
+        {
+          "id": "m10",
+          "camp": "equipe",
+          "numero": "10",
+          "poste": "Milieu",
+          "nom": "Second ballon"
+        },
+        {
+          "id": "m8",
+          "camp": "equipe",
+          "numero": "8",
+          "poste": "Milieu",
+          "nom": "Second ballon"
+        },
+        {
+          "id": "o1",
+          "camp": "adversaire",
+          "numero": "1",
+          "nom": "Gardien",
+          "poste": "Gardien"
+        },
+        {
+          "id": "o2",
+          "camp": "adversaire",
+          "numero": "2",
+          "nom": "Premier poteau"
+        },
+        {
+          "id": "o4",
+          "camp": "adversaire",
+          "numero": "4",
+          "nom": "Zone"
+        },
+        {
+          "id": "o5",
+          "camp": "adversaire",
+          "numero": "5",
+          "nom": "Zone"
+        },
+        {
+          "id": "o3",
+          "camp": "adversaire",
+          "numero": "3",
+          "nom": "Marque le 4"
+        },
+        {
+          "id": "o8",
+          "camp": "adversaire",
+          "numero": "8",
+          "nom": "Marque le 9"
+        },
+        {
+          "id": "o6",
+          "camp": "adversaire",
+          "numero": "6",
+          "nom": "Marque le 5"
+        }
+      ],
+      "materiel": [],
+      "etapes": [
+        {
+          "titre": "Mise en place",
+          "texte": "Corner côté droit. Les grands gabarits sont regroupés au point de penalty, deux joueurs restent à l'entrée de la surface pour le second ballon.",
+          "positions": {
+            "a7": [0.985, 0.01],
+            "a9": [0.603, 0.124],
+            "d4": [0.485, 0.143],
+            "d5": [0.397, 0.133],
+            "m10": [0.647, 0.19],
+            "m8": [0.441, 0.2],
+            "o1": [0.5, 0.014],
+            "o2": [0.55, 0.011],
+            "o4": [0.559, 0.052],
+            "o5": [0.485, 0.057],
+            "o8": [0.603, 0.105],
+            "o3": [0.485, 0.124],
+            "o6": [0.404, 0.114]
+          },
+          "porteur": "a7"
+        },
+        {
+          "titre": "Mouvements avant le centre",
+          "texte": "Le tireur lève le bras : le 9 démarre vers le premier poteau, le 4 feinte vers l'avant pour fixer son marqueur.",
+          "positions": {
+            "a9": [0.61, 0.086],
+            "o8": [0.588, 0.071],
+            "d4": [0.463, 0.114],
+            "o3": [0.478, 0.095],
+            "d5": [0.507, 0.105],
+            "o6": [0.493, 0.124]
+          },
+          "duree": 1.6,
+          "focus": ["a9", "d4"]
+        },
+        {
+          "titre": "Centre au premier poteau",
+          "texte": "Centre tendu au premier poteau : le 9 attaque le ballon devant son défenseur. Le 4 part tard, dans le dos de son marqueur, vers le second poteau.",
+          "positions": {
+            "a9": [0.581, 0.043],
+            "o8": [0.603, 0.062],
+            "o1": [0.522, 0.017],
+            "d4": [0.434, 0.043],
+            "o3": [0.463, 0.081],
+            "m10": [0.632, 0.162],
+            "m8": [0.441, 0.171]
+          },
+          "duree": 2.2,
+          "porteur": "a9",
+          "action": "centre",
+          "aerien": true,
+          "focus": ["a7", "a9"]
+        },
+        {
+          "titre": "Déviation vers le second poteau",
+          "texte": "Le 9 dévie de la tête vers l'arrière, sans chercher le but : le ballon file au second poteau, hors de portée du gardien.",
+          "positions": {
+            "o1": [0.5, 0.017]
+          },
+          "duree": 1.4,
+          "porteur": "d4",
+          "action": "passe",
+          "aerien": true,
+          "focus": ["a9", "d4"]
+        },
+        {
+          "titre": "Reprise au second poteau",
+          "texte": "Le 4, seul au second poteau, reprend de la tête vers le but.",
+          "positions": {
+            "o1": [0.485, 0.014]
+          },
+          "duree": 1.4,
+          "ballon": [0.453, 0.003],
+          "action": "tir",
+          "focus": ["d4"]
+        }
+      ]
+    }
+  ]
+}
