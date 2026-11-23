@@ -1,0 +1,5 @@
+User-agent: *
+Allow: /
+Disallow: /kit/affiche.html
+Disallow: /kit/visuel.html
+Sitemap: https://boboul-cloud.github.io/Temps-De-Jeu/sitemap.xml
