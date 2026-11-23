@@ -1,0 +1,88 @@
+/* Présences : liste des entraînements, pointage, statistiques, sondage */
+
+/* État vide (orange, comme l'app) */
+.presences-vide { display: flex; flex-direction: column; align-items: center; text-align: center; gap: 10px; padding: 72px 24px; }
+.presences-vide-icone { font-size: 56px; color: var(--orange); line-height: 1; }
+.presences-vide-titre { margin: 0; font-size: 17px; font-weight: 600; color: var(--texte-2); }
+.presences-vide-message { margin: 0 0 8px; font-size: 15px; color: var(--texte-3); }
+.presences-vide .bouton { padding: 12px 24px; }
+
+/* Ligne d'un entraînement */
+.ligne-seance { padding: 0; gap: 0; align-items: stretch; }
+.seance-principale { flex: 1; min-width: 0; display: flex; align-items: center; gap: 12px; padding: 12px 8px 12px 16px; text-align: left; }
+.seance-principale:active { background: var(--remplissage-2); }
+.seance-date { font-weight: 600; font-size: 17px; }
+.seance-compteurs { display: flex; gap: 12px; font-size: 15px; align-items: center; }
+.seance-compteurs .ic { width: 15px; height: 15px; }
+.seance-notes { font-size: 12px; color: var(--texte-3); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.seance-lieu { display: flex; align-items: center; gap: 4px; font-size: 12px; color: var(--texte-2); min-width: 0; }
+.seance-lieu span { white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.seance-lieu .ic { width: 13px; height: 13px; flex: none; }
+.seance-reponses { display: flex; align-items: center; gap: 4px; font-size: 12px; color: var(--orange); }
+.seance-reponses .ic { width: 11px; height: 11px; }
+.ligne-seance .ligne-textes { gap: 4px; }
+.bouton-icone {
+  display: inline-flex; align-items: center; justify-content: center; width: 44px; min-height: 44px; flex: none; color: var(--teinte); font-size: 20px;
+  border-radius: 10px;
+}
+.bouton-icone .ic { width: 21px; height: 21px; }
+.bouton-icone:active { opacity: 0.4; }
+.seance-supprimer { color: var(--rouge); width: 48px; border-left: 0.5px solid var(--separateur); border-radius: 0; opacity: 0.75; }
+.seance-supprimer:hover { opacity: 1; }
+
+/* Pointage */
+.ligne-presence { gap: 12px; }
+.section-corps > .ligne-presence + .ligne-presence::before { left: 64px; }
+.coche-presence { font-size: 26px; color: var(--gris); display: inline-flex; flex: none; }
+.coche-presence .ic { width: 26px; height: 26px; }
+.coche-presence.present { color: var(--vert); }
+.ligne-presents .ligne-titre { flex: 1; }
+.petit-lien { font-size: 13px; padding: 4px 0 4px 6px; }
+.petit-titre { font-size: 15px; }
+.disclosure .chevron-disclosure { color: var(--teinte); display: inline-flex; transition: transform 0.2s; }
+.disclosure .chevron-disclosure .ic { width: 14px; height: 14px; }
+.disclosure.ouvert .chevron-disclosure { transform: rotate(90deg); }
+.categorie-invites { --c: var(--vert); min-height: 0; padding-top: 14px; padding-bottom: 4px; gap: 6px; font-size: 12px; font-weight: 700; color: var(--c); }
+.section-corps > .categorie-invites::before { display: none; }
+.point-categorie { width: 8px; height: 8px; border-radius: 50%; background: var(--c); flex: none; }
+.icone-rouge .ligne-icone { color: var(--rouge); }
+
+/* Statistiques */
+.resume-stats { justify-content: space-between; padding-top: 14px; padding-bottom: 14px; }
+.resume-stats > div { display: flex; flex-direction: column; gap: 2px; }
+.resume-stats .a-droite { align-items: flex-end; }
+.grand-nombre { font-size: 28px; font-weight: 700; font-variant-numeric: tabular-nums; }
+.taux-joueur { font-weight: 600; font-variant-numeric: tabular-nums; flex: none; }
+.etiquette-categorie {
+  --c: var(--vert); display: inline-block; margin-left: 6px; padding: 2px 5px; border-radius: 4px; font-size: 10px; font-weight: 600;
+  color: var(--c); background: color-mix(in srgb, var(--c) 15%, transparent); vertical-align: 2px;
+}
+.ligne-titre.ligne-flex { display: flex; align-items: center; gap: 0; flex-wrap: wrap; }
+.segmente-plein { flex: 1; margin: 0; }
+.centre-ligne { justify-content: center; gap: 6px; }
+.centre-ligne .ic { width: 20px; height: 20px; }
+.ligne:disabled { opacity: 0.38; }
+
+/* Sondage */
+.resume-sondage { display: flex; flex-direction: column; align-items: center; gap: 12px; padding: 16px 12px; text-align: center; }
+.resume-date { margin: 0; font-weight: 600; font-size: 17px; }
+.resume-lieu { margin: 0; display: flex; align-items: center; gap: 6px; font-size: 15px; color: var(--texte-2); }
+.resume-lieu .ic { width: 16px; height: 16px; }
+.badges-sondage { display: grid; grid-template-columns: repeat(4, 1fr); gap: 8px; width: 100%; }
+.badge-sondage { display: flex; flex-direction: column; align-items: center; gap: 3px; }
+.badge-sondage .ic { width: 24px; height: 24px; }
+.badge-sondage b { font-size: 20px; font-variant-numeric: tabular-nums; }
+.badge-sondage small { font-size: 11px; color: var(--texte-2); }
+.une-ligne { white-space: nowrap; overflow: hidden; text-overflow: ellipsis; font-size: 11px; }
+.lien-individuel { padding-top: 4px; padding-bottom: 4px; gap: 4px; }
+.lien-individuel .ligne-titre { flex: 1; min-width: 0; }
+.ligne-reponse { gap: 12px; }
+.icone-statut { display: inline-flex; flex: none; }
+.icone-statut .ic { width: 26px; height: 26px; }
+.date-relative { font-size: 11px; color: var(--texte-3); }
+.en-attente { font-size: 12px; color: var(--texte-3); flex: none; }
+.rouage {
+  width: 18px; height: 18px; border-radius: 50%; border: 2.5px solid var(--remplissage-2); border-top-color: var(--texte-2);
+  animation: tourner 0.9s linear infinite; flex: none;
+}
+@keyframes tourner { to { transform: rotate(360deg); } }

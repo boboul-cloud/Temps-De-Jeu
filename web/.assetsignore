@@ -1,0 +1,15 @@
+# wrangler files
+.wrangler
+.dev.vars*
+.env*
+node_modules
+.git
+.DS_Store
+
+# fichiers locaux à ne pas publier
+Temps De Jeu Web.app
+*.app
+README.md
+wrangler.jsonc
+.assetsignore
+tests

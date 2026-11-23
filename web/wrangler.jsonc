@@ -1,0 +1,9 @@
+{
+  "name": "tempsdejeu",
+  "compatibility_date": "2026-11-23",
+  // Site statique : tous les fichiers sont servis tels quels (pas de serveur).
+  "assets": { "directory": "." },
+  "workers_dev": true,
+  "preview_urls": false,
+  "observability": { "enabled": false }
+}

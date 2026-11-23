@@ -1,0 +1,217 @@
+/* Atelier : éditeur d'exercice (plein écran) et séances. Portrait : terrain au milieu, réglages,
+   vignettes et tiroir en bas. Paysage large : terrain à gauche, panneau latéral à droite. */
+
+.defile.ed-defile { padding: 0 !important; overflow: hidden; display: flex; flex-direction: column; }
+.defile.ed-defile > :first-child { margin-top: 0; }
+
+.editeur {
+  flex: 1; min-height: 0; position: relative; display: grid; background: var(--fond);
+  grid-template-columns: minmax(0, 1fr);
+  grid-template-rows: auto auto minmax(0, 1fr) auto auto auto;
+  grid-template-areas: "entete" "evolutions" "terrain" "contexte" "vignettes" "outils";
+}
+.ed-entete { grid-area: entete; }
+.ed-evolutions { grid-area: evolutions; }
+.ed-terrain { grid-area: terrain; }
+.ed-contexte { grid-area: contexte; }
+.ed-vignettes { grid-area: vignettes; }
+.ed-outils { grid-area: outils; }
+
+/* Barre du haut */
+.ed-entete {
+  display: grid; grid-template-columns: auto minmax(0, 1fr) auto; grid-template-areas: "enr titre fiche"; align-items: center; gap: 8px;
+  padding: calc(6px + var(--haut)) calc(12px + var(--droite)) 6px calc(12px + var(--gauche));
+}
+.ed-enregistrer { grid-area: enr; }
+.ed-bouton-fiche { grid-area: fiche; }
+.ed-titre { grid-area: titre; display: flex; flex-direction: column; align-items: center; gap: 1px; min-width: 0; padding: 2px 4px; text-align: center; }
+.ed-nom { display: inline-flex; align-items: center; gap: 4px; max-width: 100%; font-weight: 600; font-size: 17px; }
+.ed-nom > span { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.ed-nom .ic { width: 13px; height: 13px; color: var(--texte-2); flex: none; }
+.ed-statut { display: inline-flex; align-items: center; gap: 3px; font-size: 11px; color: var(--texte-2); white-space: nowrap; max-width: 100%; overflow: hidden; text-overflow: ellipsis; }
+.ed-statut .ic { width: 11px; height: 11px; }
+.ed-statut.ok { color: var(--vert); }
+
+/* Puces (évolutions, sortes de ballon) */
+.ed-evolutions { display: flex; gap: 6px; overflow-x: auto; padding: 4px calc(12px + var(--droite)) 4px calc(12px + var(--gauche)); scrollbar-width: none; }
+.ed-evolutions::-webkit-scrollbar, .ed-bande::-webkit-scrollbar, .ed-outils::-webkit-scrollbar, .ed-defilant::-webkit-scrollbar { display: none; }
+.ed-puce {
+  flex: none; display: inline-flex; align-items: center; gap: 4px; padding: 6px 10px; border-radius: 99px;
+  font-size: 12px; font-weight: 700; background: var(--remplissage); color: var(--texte); white-space: nowrap; max-width: 220px;
+}
+.ed-puce span { overflow: hidden; text-overflow: ellipsis; }
+.ed-puce .ic { width: 12px; height: 12px; }
+.ed-puce.choisie { background: var(--teinte); color: #fff; }
+.ed-pointilles { background: transparent; color: var(--teinte); outline: 1.2px dashed var(--teinte); outline-offset: -1.2px; }
+
+/* Terrain */
+.ed-terrain { position: relative; min-height: 180px; overflow: hidden; }
+.ed-canvas { position: absolute; inset: 0; width: 100%; height: 100%; display: block; touch-action: none; cursor: crosshair; user-select: none; -webkit-user-select: none; }
+.editeur.en-apercu .ed-canvas { cursor: default; }
+.ed-surcouche { position: absolute; top: 0; left: 0; right: 0; display: flex; align-items: flex-start; gap: 8px; padding: 8px; pointer-events: none; }
+.ed-surcouche > * { pointer-events: auto; }
+.ed-espace { flex: 1; pointer-events: none !important; }
+.ed-capsule {
+  display: inline-flex; align-items: center; gap: 6px; border-radius: 99px; color: var(--texte);
+  background: color-mix(in srgb, var(--fond-carte) 72%, transparent); backdrop-filter: blur(16px); -webkit-backdrop-filter: blur(16px);
+  box-shadow: 0 1px 4px rgba(0, 0, 0, 0.18);
+}
+.ed-bouton-rond { width: 40px; height: 36px; display: inline-flex; align-items: center; justify-content: center; color: var(--texte); }
+.ed-bouton-rond .ic { width: 18px; height: 18px; }
+.ed-bouton-cadrage { width: 40px; height: 36px; justify-content: center; }
+.ed-bouton-cadrage .ic { width: 19px; height: 19px; }
+.ed-arret { padding: 8px 12px; font-size: 12px; font-weight: 700; }
+.ed-arret .ic { width: 13px; height: 13px; }
+
+/* Réglages de l'objet choisi */
+.ed-contexte { min-height: 50px; display: flex; align-items: center; padding: 6px 0; background: var(--fond-carte); border-top: 0.5px solid var(--separateur); }
+.ed-rangee { display: flex; align-items: center; gap: 8px; width: 100%; padding: 0 calc(12px + var(--droite)) 0 calc(12px + var(--gauche)); }
+.ed-defilant { overflow-x: auto; scrollbar-width: none; }
+.ed-defilant > * { flex: none; }
+.ed-conseil { display: flex; align-items: center; gap: 10px; padding: 0 calc(12px + var(--droite)) 0 calc(12px + var(--gauche)); }
+.ed-conseil-icone { color: var(--teinte); font-size: 20px; flex: none; display: inline-flex; }
+.ed-conseil p { margin: 0; font-size: 13px; color: var(--texte-2); }
+.ed-texte-outil { margin: 0; flex: 1; min-width: 120px; font-size: 13px; font-weight: 600; line-height: 1.25; }
+.ed-texte-outil.secondaire { font-weight: 400; flex: none; max-width: 70vw; white-space: normal; }
+.ed-nom-objet { font-size: 13px; font-weight: 700; white-space: nowrap; }
+.ed-fermer-outil { color: var(--texte-2); font-size: 22px; display: inline-flex; flex: none; }
+.ed-couleurs { display: flex; gap: 5px; flex: none; }
+.ed-pastille-couleur {
+  width: 26px; height: 26px; margin: 3px; border-radius: 50%; background: var(--c); box-shadow: inset 0 0 0 1px rgba(0, 0, 0, 0.2); flex: none;
+}
+.ed-pastille-couleur.choisie { outline: 3px solid var(--teinte); outline-offset: 2px; }
+.ed-separateur { width: 1px; height: 30px; background: var(--separateur); flex: none; }
+.ed-bouton-contexte {
+  display: inline-flex; flex-direction: column; align-items: center; justify-content: center; gap: 2px; min-width: 52px; min-height: 40px;
+  color: var(--texte); font-size: 10px; font-weight: 600; white-space: nowrap; padding: 0 2px;
+}
+.ed-bouton-contexte .ic { width: 17px; height: 17px; }
+.ed-bouton-contexte.detruire { color: var(--rouge); }
+
+/* Vignettes */
+.ed-vignettes {
+  display: flex; align-items: center; gap: 6px; padding: 6px calc(10px + var(--droite)) 6px calc(10px + var(--gauche));
+  background: var(--fond-carte); border-top: 0.5px solid var(--separateur);
+}
+.ed-lecture {
+  width: 38px; height: 34px; border-radius: 50%; flex: none; display: inline-flex; align-items: center; justify-content: center;
+  color: var(--teinte); background: color-mix(in srgb, var(--teinte) 15%, transparent);
+}
+.ed-lecture .ic { width: 15px; height: 15px; }
+.ed-bande { flex: 1; min-width: 0; display: flex; gap: 5px; overflow-x: auto; padding: 2px; scrollbar-width: none; }
+.ed-vignette {
+  flex: none; display: inline-flex; align-items: center; justify-content: center; gap: 3px; min-width: 38px; height: 34px; padding: 0 10px;
+  border-radius: 9px; background: var(--remplissage); font-size: 12px; font-weight: 700;
+}
+.ed-vignette .ic { width: 11px; height: 11px; }
+.ed-vignette.choisie { background: var(--teinte); color: #fff; }
+.ed-vignette.ed-pointilles { background: transparent; }
+.ed-cinema {
+  flex: none; width: 50px; height: 38px; border-radius: 9px; display: inline-flex; flex-direction: column; align-items: center; justify-content: center; gap: 1px;
+  color: var(--violet); background: color-mix(in srgb, var(--violet) 15%, transparent); font-size: 9px; font-weight: 700;
+}
+.ed-cinema .ic { width: 15px; height: 15px; }
+
+/* Tiroir de matériel */
+.ed-outils {
+  display: flex; gap: 6px; overflow-x: auto; padding: 8px calc(10px + var(--droite)) calc(8px + var(--bas)) calc(10px + var(--gauche));
+  background: var(--fond-carte); border-top: 0.5px solid var(--separateur); scrollbar-width: none;
+}
+.ed-tuile { flex: none; width: 62px; display: flex; flex-direction: column; align-items: center; gap: 3px; }
+.ed-tuile-fond {
+  width: 50px; height: 40px; border-radius: 10px; background: rgb(48, 148, 69); display: grid; place-items: center; overflow: hidden;
+  box-shadow: inset 0 0 0 3px transparent;
+}
+.ed-tuile.choisie .ed-tuile-fond { box-shadow: inset 0 0 0 3px var(--teinte); }
+.ed-tuile-titre { font-size: 10px; font-weight: 500; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; max-width: 62px; }
+.ed-tuile.choisie .ed-tuile-titre { color: var(--teinte); font-weight: 700; }
+.ed-glyphe { width: 50px; height: 40px; display: block; }
+.ed-etincelles { color: var(--jaune); font-size: 22px; display: inline-flex; }
+
+/* Menus (cadrage, raccourcis) */
+.ed-menu-voile { position: absolute; inset: 0; z-index: 5; background: rgba(0, 0, 0, 0.12); animation: apparaitre 0.15s ease; }
+.ed-menu {
+  position: absolute; width: min(290px, calc(100% - 24px)); max-height: calc(100% - 40px); overflow-y: auto; border-radius: 14px;
+  background: color-mix(in srgb, var(--fond-carte) 94%, transparent); backdrop-filter: blur(30px); -webkit-backdrop-filter: blur(30px);
+  box-shadow: 0 10px 40px rgba(0, 0, 0, 0.3);
+}
+.ed-menu-cadrage { top: calc(140px + var(--haut)); right: 12px; max-height: calc(100% - 152px - var(--haut)); }
+.ed-menu-raccourcis { left: 12px; bottom: calc(80px + var(--bas)); max-height: calc(100% - 92px - var(--bas) - var(--haut)); }
+.ed-menu-section + .ed-menu-section { border-top: 6px solid var(--separateur); }
+.ed-menu-titre { margin: 0; padding: 8px 16px 4px; font-size: 12px; color: var(--texte-2); }
+.ed-menu-entree {
+  display: flex; align-items: center; justify-content: space-between; gap: 10px; width: 100%; padding: 11px 16px; font-size: 16px; text-align: left;
+}
+.ed-menu-entree + .ed-menu-entree { border-top: 0.5px solid var(--separateur); }
+.ed-menu-entree:hover { background: var(--remplissage); }
+.ed-menu-entree .ic { width: 18px; height: 18px; flex: none; }
+.ed-menu-entree.detruire { color: var(--rouge); }
+
+/* Paysage large : terrain à gauche, panneau à droite */
+@media (min-aspect-ratio: 1/1) and (min-width: 601px) {
+  .editeur {
+    grid-template-columns: minmax(0, 1fr) clamp(300px, 30vw, 360px);
+    grid-template-rows: auto auto auto auto minmax(0, 1fr);
+    grid-template-areas: "terrain entete" "terrain evolutions" "terrain vignettes" "terrain contexte" "terrain outils";
+  }
+  .ed-entete, .ed-evolutions, .ed-vignettes, .ed-contexte, .ed-outils { border-left: 0.5px solid var(--separateur); background: var(--fond-carte); }
+  .ed-entete { grid-template-columns: auto 1fr auto; grid-template-areas: "enr . fiche" "titre titre titre"; padding-top: calc(10px + var(--haut)); }
+  .ed-titre { align-items: flex-start; text-align: left; padding: 6px 0 0; }
+  .ed-evolutions { padding-bottom: 8px; border-bottom: 0.5px solid var(--separateur); }
+  .ed-vignettes { border-top: 0; }
+  .ed-contexte { min-height: 56px; }
+  .ed-rangee.ed-defilant { flex-wrap: wrap; overflow: visible; row-gap: 4px; }
+  .ed-outils {
+    display: grid; grid-template-columns: repeat(auto-fill, minmax(66px, 1fr)); align-content: start; overflow-x: hidden; overflow-y: auto; padding: 10px;
+  }
+  .ed-tuile { width: auto; }
+  .ed-menu-cadrage { top: 52px; right: calc(clamp(300px, 30vw, 360px) + 8px); max-height: calc(100% - 64px); }
+  .ed-menu-raccourcis { left: auto; right: calc(clamp(300px, 30vw, 360px) + 8px); bottom: 12px; max-height: calc(100% - 24px - var(--haut)); }
+}
+
+/* Lignes de matériel (EquipmentRow) */
+.materiel-pastille { width: 24px; display: inline-flex; justify-content: center; flex: none; }
+.materiel-maillot { display: inline-flex; font-size: 20px; filter: drop-shadow(0 0 0.6px rgba(0, 0, 0, 0.6)); }
+.materiel-rond { width: 14px; height: 14px; border-radius: 50%; box-shadow: inset 0 0 0 1px rgba(0, 0, 0, 0.25); }
+
+/* Schémas (vignettes de la bibliothèque, des séances) */
+canvas.diagramme { display: block; width: 100%; aspect-ratio: 68 / 60; border-radius: inherit; }
+
+/* Séance */
+.seance-total { color: var(--texte); font-weight: 700; text-transform: none; font-size: 15px; }
+.seance-enregistree { display: inline-flex; align-items: center; gap: 5px; color: var(--vert); }
+.seance-enregistree .ic { width: 14px; height: 14px; }
+.seance-exercice { align-items: flex-start; gap: 12px; padding-top: 12px; padding-bottom: 12px; }
+.seance-vignette { position: relative; flex: none; width: 60px; height: 60px; border-radius: 10px; overflow: hidden; }
+canvas.diagramme.seance-schema { width: 60px; height: 60px; aspect-ratio: auto; }
+.seance-lecture {
+  position: absolute; right: 3px; bottom: 3px; font-size: 18px; color: var(--violet); display: inline-flex;
+  background: #fff; border-radius: 50%; line-height: 0;
+}
+.seance-textes { gap: 4px; }
+.seance-minutes { display: flex; align-items: center; justify-content: space-between; gap: 10px; font-size: 15px; }
+.seance-note { font-size: 13px; padding: 4px 0; border-bottom: 0.5px solid var(--separateur); }
+.seance-actions { display: flex; flex-wrap: wrap; gap: 6px; margin-top: 4px; }
+.seance-actions .bouton.petit { min-height: 28px; padding: 4px 10px; font-size: 13px; }
+.seance-ordre { display: flex; flex-direction: column; gap: 4px; flex: none; }
+.seance-ordre .ed-bouton-rond { background: var(--remplissage); border-radius: 8px; width: 36px; height: 32px; }
+.seance-manquant .bouton { flex: none; }
+.seance-choix { gap: 12px; }
+.seance-choix canvas.diagramme { flex: none; }
+canvas.diagramme.seance-schema-petit { width: 50px; height: 50px; aspect-ratio: auto; border-radius: 8px; }
+.seance-plus { color: var(--teinte); font-size: 22px; display: inline-flex; flex: none; }
+.seance-equipe { align-items: flex-start; }
+.seance-equipe .materiel-maillot { width: 24px; justify-content: center; flex: none; }
+.petit-titre { font-size: 15px; }
+.seance-coche { color: var(--teinte); display: inline-flex; }
+.equipes-couleurs { gap: 8px; overflow-x: auto; scrollbar-width: none; }
+.equipes-couleur {
+  flex: none; width: 58px; height: 54px; border-radius: 10px; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 3px;
+  font-size: 11px; font-weight: 700; box-shadow: inset 0 0 0 1px color-mix(in srgb, var(--texte-2) 40%, transparent);
+}
+.equipes-couleur .materiel-maillot { font-size: 22px; }
+.equipes-couleur.choisie { box-shadow: inset 0 0 0 3px var(--teinte); }
+.ligne.gras .ligne-titre { font-weight: 600; }
+
+/* Pages de l'Atelier : l'icône d'une ligne rouge est rouge aussi */
+.atelier-page .ligne.detruire .ligne-icone { color: inherit; }

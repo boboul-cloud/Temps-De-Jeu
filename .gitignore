@@ -73,3 +73,9 @@ build/
 *.swp
 *.swo
 *~
+
+# Version web (Cloudflare)
+.wrangler/
+node_modules/
+.dev.vars*
+.env*

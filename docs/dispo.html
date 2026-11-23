@@ -299,6 +299,10 @@
                 📲 Ouvrir Temps De Jeu
             </button>
             <p style="font-size:13px;color:var(--text-muted);margin-top:16px">Si l'app ne s'ouvre pas automatiquement, appuyez sur le bouton ci-dessus.</p>
+            <a class="share-btn copy" id="btnOpenWeb" style="max-width:320px;margin:24px auto 0" href="https://tempsdejeu.riskelo-salon.workers.dev/">
+                🌐 Ouvrir la version web
+            </a>
+            <p style="font-size:13px;color:var(--text-muted);margin-top:12px">Coach sur Android ou sur ordinateur : la réponse s'ajoute dans Temps De Jeu, version web.</p>
         </div>
     </div>
 
@@ -341,6 +345,9 @@
         document.getElementById('btnOpenApp').onclick = function() {
             window.location.href = deepLink;
         };
+
+        // Version web (Android, ordinateur) : même réponse, transmise dans l'adresse (#r=)
+        document.getElementById('btnOpenWeb').href = 'https://tempsdejeu.riskelo-salon.workers.dev/#r=' + responseData;
 
         return true;
     }

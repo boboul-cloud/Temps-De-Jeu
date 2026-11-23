@@ -1,0 +1,50 @@
+<!doctype html>
+<html lang="fr">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+  <title>Essai — zone Effectif</title>
+  <link rel="icon" type="image/png" href="../icons/favicon-32.png">
+  <link rel="stylesheet" href="../css/app.css">
+  <link rel="stylesheet" href="../css/joueurs.css">
+</head>
+<body>
+  <div id="app"></div>
+  <!-- Page d'essai (non publiée) : seuls les écrans Joueurs, Catégories, Encadrement, Cartons et Saisons,
+       dans une coque réduite, pour tester la zone même si un autre écran est en cours d'écriture. -->
+  <script type="module">
+    import { store } from '../js/store.js';
+    import * as M from '../js/model.js';
+    import { etat, onglets, definirOnglet, demarrer, rendrePage, rendreCadre, rendreSurcouches, rafraichir, h } from '../js/ui.js';
+    import '../js/ecrans/joueurs.js';
+    import '../js/ecrans/categories.js';
+    import '../js/ecrans/encadrement.js';
+    import '../js/ecrans/cartons.js';
+    import '../js/ecrans/saisons.js';
+
+    for (const [id, titre, page] of [['joueurs', 'Joueurs', 'joueurs.racine'], ['categories', 'Catégories', 'categories.racine'],
+      ['encadrement', 'Encadrement', 'encadrement.racine'], ['cartons', 'Cartons', 'cartons.racine'], ['saisons', 'Saisons', 'saisons.racine']]) {
+      definirOnglet(id, { titre, icone: 'circle', page });
+    }
+    etat.onglet = 'joueurs';
+    function shell() {
+      const o = onglets.find((x) => x.id === etat.onglet) ?? onglets[0];
+      const pile = etat.piles[o.id] ?? [];
+      const haut = pile[pile.length - 1];
+      const def = haut ? rendrePage(haut.page, haut.params) : rendrePage(o.page, {});
+      const feuilles = etat.feuilles.map((f, i) => {
+        const hf = f.pile[f.pile.length - 1];
+        const d = hf ? rendrePage(hf.page, hf.params) : rendrePage(f.page, f.params);
+        return `<div class="couche-feuille" data-key="feuille-${i}" style="position:absolute;inset:0;z-index:10">${f.plein ? '' : '<div class="voile-feuille"></div>'}
+          <div class="feuille${f.plein ? ' plein' : ''}">${rendreCadre(d, { retourPossible: f.pile.length > 0, feuille: true })}</div></div>`;
+      }).join('');
+      return `<div class="app" style="--teinte:${M.couleur(store.couleurActive())}"><div class="principal"><div class="zone-pages">
+        <div class="couche" data-key="onglet-${o.id}">${rendreCadre(def, { retourPossible: pile.length > 0 })}</div>${feuilles}
+      </div></div>${rendreSurcouches()}</div>`;
+    }
+    store.ecouter(() => rafraichir());
+    demarrer(document.getElementById('app'), shell);
+    window.__essai = { store, M, ui: await import('../js/ui.js') };
+  </script>
+</body>
+</html>

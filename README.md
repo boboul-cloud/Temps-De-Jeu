@@ -2,6 +2,19 @@
 
 Application iOS complète pour gérer le temps de jeu, les cartons, l'encadrement, les entraînements et les statistiques de vos équipes de football. Idéale pour les entraîneurs de clubs amateurs qui veulent assurer une répartition équitable du temps de jeu.
 
+## 🌐 Version web (gratuite)
+
+**En ligne : https://tempsdejeu.riskelo-salon.workers.dev** — toute l'app dans un navigateur (Android,
+ordinateur, iPhone), installable sur l'écran d'accueil, utilisable hors ligne, **entièrement gratuite**
+(pas de limite de matchs). Le code est dans [`web/`](web/) (PWA sans compilation) ; voir
+[`web/README.md`](web/README.md) pour la publier, la lancer en local et ce qui change par rapport à l'iPhone.
+
+**Fichier partagé** : la sauvegarde complète `.tdjb` (Réglages et Exports ▸ Export / Import) a le même
+format dans les deux versions — `{ version, exportDate, appVersion, players, staffMembers, staffRoles,
+profilesData, tactics, trainingPlans }`, dates ISO 8601 sans fractions de seconde. Elle passe de l'iPhone
+au web et inversement ; les fichiers `.tdj`, `.tdjm`, `.tdjt` et les `.json` (joueurs, encadrement,
+présences) aussi. L'échange est vérifié en compilant les modèles Swift (`web/tests/echange-swift.test.mjs`).
+
 ## Fonctionnalités
 
 ### ⏱️ Gestion du Match

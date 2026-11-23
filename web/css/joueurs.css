@@ -1,0 +1,169 @@
+/* Zone Effectif : Joueurs, Catégories, Encadrement, Cartons, Saisons (préfixe eff-). */
+
+.tertiaire { color: var(--texte-3); }
+.eff-recherche { margin-top: 2px; }
+.eff-recherche input::-webkit-search-cancel-button { display: none; }
+.eff-effacer { display: inline-flex; color: var(--texte-3); padding: 4px; }
+.eff-effacer .ic { width: 17px; height: 17px; }
+
+/* Lignes */
+.eff-ligne { gap: 12px; padding-top: 8px; padding-bottom: 8px; }
+.eff-ligne[role="button"] { cursor: pointer; }
+.eff-ligne:focus-visible { outline: 2px solid var(--teinte); outline-offset: -2px; }
+.section-corps > .ligne.eff-avec-avatar + .ligne::before, .section-corps > .ligne + .ligne.eff-avec-avatar::before { left: 68px; }
+.eff-nom { font-size: 15px; }
+.eff-petit-titre { font-size: 15px; }
+.eff-ligne .gras { font-weight: 600; }
+.eff-sous { display: flex; align-items: center; flex-wrap: wrap; gap: 4px; font-size: 12px; color: var(--texte-2); }
+.eff-sous.attenue { color: var(--texte-3); }
+.eff-point { color: var(--texte-3); }
+.eff-nom.barre { color: var(--texte-2); text-decoration: line-through; font-weight: 400; }
+.eff-puce-cat {
+  --c: var(--gris); display: inline-flex; padding: 1px 5px; border-radius: 4px; font-size: 10px; font-weight: 600;
+  color: var(--c); background: color-mix(in srgb, var(--c) 15%, transparent);
+}
+.eff-etiquette {
+  --c: var(--gris); flex: none; display: inline-flex; align-items: center; padding: 4px 8px; border-radius: 8px;
+  font-size: 11px; font-weight: 700; color: var(--c); background: color-mix(in srgb, var(--c) 15%, transparent); white-space: nowrap;
+}
+
+/* Avatars */
+.eff-avatar {
+  flex: none; position: relative; display: inline-flex; align-items: center; justify-content: center; border-radius: 50%;
+  background: var(--av); color: #fff; font-weight: 600; font-family: var(--police-chiffres); overflow: hidden;
+}
+.eff-avatar > span { width: 100%; height: 100%; display: flex; align-items: center; justify-content: center; background: var(--av); }
+.eff-avatar img { width: 100%; height: 100%; object-fit: cover; }
+.eff-avatar.anneau { box-shadow: 0 0 0 2px color-mix(in srgb, var(--av) 30%, transparent); }
+.eff-avatar.anneau-gris { box-shadow: 0 0 0 2px color-mix(in srgb, var(--gris) 30%, transparent); }
+.eff-avatar.attenue { opacity: 0.6; }
+.eff-avatar-statut { position: relative; flex: none; display: inline-flex; }
+.eff-statut {
+  position: absolute; right: -4px; bottom: -4px; width: 22px; height: 22px; border-radius: 50%; color: #fff;
+  display: inline-flex; align-items: center; justify-content: center; font-size: 12px;
+}
+.eff-statut .ic { width: 13px; height: 13px; }
+
+/* Boutons de ligne */
+.eff-appel {
+  flex: none; display: inline-flex; align-items: center; justify-content: center; width: 28px; height: 28px; border-radius: 50%;
+  color: var(--vert); background: color-mix(in srgb, var(--vert) 12%, transparent);
+}
+.eff-appel .ic { width: 14px; height: 14px; }
+.eff-appel.grand { width: 30px; height: 30px; background: none; }
+.eff-appel.grand .ic { width: 28px; height: 28px; }
+.eff-menu, .eff-crayon, .eff-poubelle, .eff-copier {
+  flex: none; display: inline-flex; align-items: center; justify-content: center; min-width: 32px; min-height: 32px;
+  color: var(--texte-2); border-radius: 50%;
+}
+.eff-menu .ic, .eff-crayon .ic { width: 22px; height: 22px; }
+.eff-menu:hover, .eff-crayon:hover, .eff-poubelle:hover { background: var(--remplissage); }
+.eff-poubelle { color: var(--rouge); }
+.eff-poubelle .ic { width: 19px; height: 19px; }
+.eff-copier .ic { width: 15px; height: 15px; }
+
+/* Badges */
+.eff-badges { display: flex; gap: 20px; padding: 4px 0 18px; }
+.ligne .eff-badges { width: 100%; padding: 4px 0; }
+.eff-badge { flex: 1; min-width: 0; display: flex; flex-direction: column; align-items: center; gap: 4px; }
+.eff-badge-valeur {
+  display: inline-flex; align-items: center; gap: 4px; font-size: 22px; font-weight: 700; font-variant-numeric: tabular-nums;
+}
+.eff-badge-libelle { font-size: 11px; color: var(--texte-2); text-align: center; }
+.eff-cartons { display: inline-flex; align-items: center; gap: 4px; flex: none; }
+.eff-cartons.large { gap: 6px; }
+.eff-carton-badge { display: inline-flex; align-items: center; gap: 2px; font-size: 10px; font-weight: 700; color: var(--texte-2); }
+.eff-carton-mini { display: inline-block; width: 10px; height: 14px; border-radius: 2px; }
+.eff-carton-stat { display: inline-block; width: 14px; height: 20px; border-radius: 2px; }
+.eff-carton-grand { position: relative; flex: none; display: inline-block; width: 20px; height: 28px; border-radius: 3px; overflow: hidden; }
+.eff-carton-grand > span { position: absolute; top: 0; right: 0; width: 10px; height: 100%; }
+.eff-carton-droite { display: flex; flex-direction: column; align-items: flex-end; gap: 2px; font-size: 11px; color: var(--texte-2); max-width: 38%; text-align: right; }
+.eff-carton-droite > * { max-width: 100%; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.eff-purger {
+  flex: none; display: inline-flex; align-items: center; gap: 4px; padding: 6px 10px; border-radius: 9px; font-size: 13px; font-weight: 600;
+  color: var(--vert); background: color-mix(in srgb, var(--vert) 13%, transparent);
+}
+.eff-purger .ic { width: 15px; height: 15px; }
+@media (max-width: 420px) { .eff-purger span { display: none; } .eff-purger { padding: 7px; } }
+
+/* États vides */
+.eff-vide .vide-message { white-space: pre-line; }
+.eff-vide-section {
+  display: flex; flex-direction: column; align-items: center; gap: 8px; padding: 20px 16px; text-align: center; color: var(--texte-2); font-size: 15px;
+}
+.eff-vide-section .ic { width: 40px; height: 40px; }
+.eff-vide-section.petite .ic { width: 26px; height: 26px; }
+.eff-vide-section b { color: var(--texte-2); font-size: 17px; }
+.eff-vide-section span { color: var(--texte-3); }
+.eff-vide-section.petite span { color: var(--texte-2); }
+.eff-vide-icone .ic { width: 44px; height: 44px; }
+.eff-section-transparente .section-corps { background: transparent; }
+
+/* Fiches (photo, couleurs, codes) */
+.eff-photo { display: flex; flex-direction: column; align-items: center; gap: 12px; padding: 4px 0 4px; }
+.eff-photo-grande {
+  width: 100px; height: 100px; border-radius: 50%; overflow: hidden; display: flex; align-items: center; justify-content: center;
+  color: var(--texte-2); box-shadow: 0 0 0 2px color-mix(in srgb, var(--gris) 30%, transparent);
+}
+.eff-photo-grande .ic { width: 100px; height: 100px; }
+.eff-photo-grande img { width: 100%; height: 100%; object-fit: cover; }
+.eff-photo-boutons { display: flex; gap: 16px; }
+.eff-couleurs-ligne .ligne-textes { gap: 8px; }
+.eff-couleurs { display: flex; flex-wrap: wrap; gap: 8px; }
+@media (min-width: 430px) { .eff-couleurs { gap: 12px; } }
+.eff-pastille-couleur { width: 32px; height: 32px; border-radius: 50%; box-shadow: 0 0 0 3px transparent; transition: box-shadow 0.15s; }
+.eff-pastille-couleur.actif { box-shadow: 0 0 0 2px var(--fond-carte), 0 0 0 5px var(--texte); }
+.eff-colonne { flex-direction: column; align-items: flex-start; gap: 8px; }
+.eff-sans-bas { padding-bottom: 0; min-height: 0; }
+.section-corps > .eff-sans-bas + .ligne::before { display: none; }
+.eff-lien { display: inline-flex; align-items: center; gap: 8px; color: var(--teinte); font-size: 17px; }
+.eff-lien .ic { width: 20px; height: 20px; }
+.eff-code-ligne { display: flex; align-items: center; gap: 10px; width: 100%; }
+.eff-code { font: 700 22px/1.2 ui-monospace, "SF Mono", Menlo, Consolas, monospace; letter-spacing: 0.04em; }
+.eff-code-ligne .eff-code { flex: 1; }
+.eff-code-champ { font: 500 20px ui-monospace, "SF Mono", Menlo, Consolas, monospace; text-transform: uppercase; letter-spacing: 0.04em; }
+.eff-code-champ::placeholder { text-transform: none; }
+.eff-code-mini { font-size: 12px; font-weight: 700; color: var(--c); }
+
+/* Catégories */
+.eff-profil.actif { background: color-mix(in srgb, var(--c) 8%, transparent); }
+.eff-rond-profil {
+  flex: none; width: 36px; height: 36px; border-radius: 50%; background: var(--c); color: #fff; font-weight: 700;
+  display: inline-flex; align-items: center; justify-content: center; font-size: 17px; margin: 0 2px;
+}
+.eff-coche { color: var(--vert); display: inline-flex; }
+.eff-coche .ic { width: 24px; height: 24px; }
+.eff-coche-affect { display: inline-flex; flex: none; }
+.eff-coche-affect .ic { width: 22px; height: 22px; }
+.eff-point-cat { display: inline-block; flex: none; width: 10px; height: 10px; border-radius: 50%; }
+.ligne .eff-point-cat { width: 8px; height: 8px; }
+.section-entete .eff-point-cat { width: 10px; height: 10px; }
+.eff-barre-bas { display: flex; justify-content: space-between; }
+
+/* Encadrement */
+.eff-tel { display: inline-flex; align-items: center; gap: 4px; font-size: 11px; color: var(--bleu); }
+.eff-tel .ic { width: 9px; height: 9px; }
+.eff-contact { gap: 10px; }
+.eff-contact-icone { width: 24px; display: inline-flex; justify-content: center; flex: none; }
+.eff-contact-icone .ic { width: 18px; height: 18px; }
+.eff-ajout-role { color: var(--vert); display: inline-flex; flex: none; }
+.eff-ajout-role .ic { width: 24px; height: 24px; }
+.eff-role .ligne-valeur { font-size: 12px; }
+
+/* Saisons */
+.eff-saison { align-items: flex-start; gap: 14px; padding-top: 12px; padding-bottom: 12px; }
+.eff-saison .ligne-textes { gap: 4px; }
+.eff-saison-icone { width: 40px; display: inline-flex; justify-content: center; flex: none; }
+.eff-saison-icone .ic { width: 28px; height: 28px; }
+.eff-saison-club { font-size: 17px; }
+.eff-sans-saison { display: flex; flex-direction: column; align-items: center; gap: 12px; padding: 20px 16px; text-align: center; }
+.eff-sans-saison b { font-size: 17px; }
+.eff-sans-saison .secondaire { font-size: 15px; }
+.eff-archive-icone { width: 30px; display: inline-flex; justify-content: center; flex: none; }
+.eff-archive-icone .ic { width: 22px; height: 22px; }
+.eff-archive-titre { display: flex; align-items: center; flex-wrap: wrap; gap: 6px; font-size: 15px; }
+.eff-archive-titre .eff-etiquette { padding: 2px 6px; border-radius: 4px; }
+.eff-poste-plein {
+  flex: none; width: 32px; height: 22px; border-radius: 6px; color: #fff; font-size: 11px; font-weight: 700; opacity: 0.85;
+  display: inline-flex; align-items: center; justify-content: center;
+}

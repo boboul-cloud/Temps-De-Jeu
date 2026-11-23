@@ -1,0 +1,193 @@
+/* Zone Historique et exports : liste des matchs, rapport de match, Export / Import,
+   mode d'emploi, textes légaux. Préfixes : hist-, exp-, guide-, legal-. */
+
+/* MARK: Liste de l'historique (MatchHistoryRow) */
+.hist-vide { min-height: 60vh; display: flex; align-items: center; justify-content: center; }
+.hist-ligne { display: flex; align-items: stretch; padding: 12px 16px; gap: 10px; }
+.hist-ligne.en-edition { align-items: center; }
+.hist-contenu { flex: 1; min-width: 0; display: flex; flex-direction: column; gap: 8px; text-align: left; }
+.hist-supprimer { color: var(--rouge); display: inline-flex; flex: none; }
+.hist-supprimer .ic { width: 24px; height: 24px; }
+.hist-equipes { display: flex; align-items: center; gap: 8px; }
+.hist-equipe { flex: 1; min-width: 0; display: flex; flex-direction: column; gap: 2px; text-align: left; }
+.hist-equipe b { display: block; font-size: 17px; font-weight: 600; overflow-wrap: anywhere; }
+.hist-equipe.droite { text-align: right; }
+.hist-mon-equipe { display: block; font-size: 9px; font-weight: 700; color: var(--bleu); }
+.hist-score { flex: none; font-family: var(--police-chiffres); font-size: 20px; font-weight: 700; font-variant-numeric: tabular-nums; }
+.hist-infos { display: flex; justify-content: space-between; gap: 8px; font-size: 12px; color: var(--texte-2); }
+.hist-infos > span:last-child { flex: none; white-space: nowrap; }
+.hist-competition { display: inline-flex; align-items: center; gap: 5px; min-width: 0; overflow: hidden; white-space: nowrap; text-overflow: ellipsis; }
+.hist-competition .ic { width: 12px; height: 12px; flex: none; }
+.hist-stats { display: flex; gap: 16px; }
+.hist-statmini { display: flex; flex-direction: column; align-items: center; gap: 2px; }
+.hist-statmini b { font: 700 12px ui-monospace, "SF Mono", Menlo, monospace; }
+.hist-statmini small { font-size: 9px; color: var(--texte-3); }
+
+/* MARK: Rapport de match (MatchReportView) */
+.hist-rapport { background: var(--fond-page); }
+.hist-rapport .colonne { display: flex; flex-direction: column; gap: 20px; padding-top: 4px; }
+.hist-rapport-entete { display: flex; flex-direction: column; align-items: center; gap: 8px; padding: 16px 0 0; text-align: center; }
+.hist-rapport-entete .hist-equipes { width: 100%; }
+.hist-equipes.grand .hist-equipe b { font-size: 22px; font-weight: 700; }
+.hist-equipes.grand .hist-mon-equipe { font-size: 10px; }
+.hist-equipes.grand .hist-score { font-size: 34px; }
+.hist-competition-titre { margin: 0; font-size: 15px; color: var(--texte-2); }
+.hist-date { margin: 0; font-size: 12px; color: var(--texte-3); }
+.hist-carte { background: var(--gris6); border-radius: 16px; padding: 16px; display: flex; flex-direction: column; gap: 12px; }
+.hist-entete-section { display: flex; align-items: center; gap: 8px; font-size: 17px; }
+.hist-entete-section b { font-weight: 600; }
+.hist-entete-icone { color: var(--vert); display: inline-flex; }
+.hist-anneau { position: relative; width: 120px; height: 120px; align-self: center; }
+.hist-anneau svg { width: 100%; height: 100%; }
+.hist-anneau circle { fill: none; stroke-width: 16; }
+.hist-anneau .fond { stroke: color-mix(in srgb, var(--rouge) 20%, transparent); }
+.hist-anneau .plein { stroke: var(--vert); stroke-linecap: round; }
+.hist-anneau > span { position: absolute; inset: 0; display: flex; flex-direction: column; align-items: center; justify-content: center; }
+.hist-anneau b { font: 700 28px var(--police-chiffres); color: var(--vert); font-variant-numeric: tabular-nums; }
+.hist-anneau small { font-size: 11px; color: var(--texte-2); }
+.hist-statboxes { display: flex; gap: 20px; }
+.hist-statbox {
+  --c: var(--bleu); flex: 1; display: flex; flex-direction: column; align-items: center; gap: 4px; padding: 8px 4px; border-radius: 10px;
+  background: color-mix(in srgb, var(--c) 10%, transparent); text-align: center;
+}
+.hist-statbox b { font: 600 17px ui-monospace, "SF Mono", Menlo, monospace; color: var(--c); }
+.hist-statbox small { font-size: 11px; color: var(--texte-2); }
+@media (max-width: 380px) { .hist-statboxes { gap: 8px; } .hist-statbox b { font-size: 15px; } }
+
+.hist-type { display: flex; flex-direction: column; gap: 4px; padding: 2px 0; }
+.hist-type-ligne { display: flex; align-items: center; gap: 6px; }
+.hist-type-icone { width: 24px; display: inline-flex; justify-content: center; flex: none; }
+.hist-type-nom { flex: 1; font-size: 15px; }
+.hist-type-nombre { font-size: 12px; font-weight: 700; color: var(--texte-2); }
+.hist-type-temps { width: 60px; text-align: right; font-size: 15px; font-weight: 700; font-variant-numeric: tabular-nums; }
+.hist-type-equipes { display: flex; gap: 8px; padding-left: 30px; }
+.hist-puce { display: inline-flex; align-items: center; gap: 3px; padding: 2px 6px; border-radius: 4px; font-size: 9px; font-weight: 700; white-space: nowrap; flex: none; }
+.hist-puce i { font-style: normal; font-family: ui-monospace, "SF Mono", Menlo, monospace; }
+.hist-puce.dom { background: color-mix(in srgb, var(--bleu) 15%, transparent); }
+.hist-puce.ext { background: color-mix(in srgb, var(--orange) 15%, transparent); }
+.hist-puce.periode { background: color-mix(in srgb, var(--vert) 15%, transparent); font-weight: 400; font-size: 11px; }
+.hist-puce.minute { background: color-mix(in srgb, var(--bleu) 15%, transparent); padding: 2px 5px; font-family: ui-monospace, "SF Mono", Menlo, monospace; }
+.hist-puce.gris { background: var(--gris4); color: var(--texte-2); font-size: 11px; }
+
+.hist-periode { display: flex; align-items: center; gap: 10px; }
+.hist-periode-nom { padding: 4px 8px; border-radius: 6px; background: var(--vert); color: #fff; font-size: 12px; font-weight: 700; }
+.hist-periode-textes { flex: 1; display: flex; flex-direction: column; gap: 2px; font-size: 15px; }
+.hist-periode-textes small { font-size: 12px; color: var(--rouge); }
+.hist-periode-duree { font: 12px ui-monospace, "SF Mono", Menlo, monospace; color: var(--texte-2); }
+
+.hist-but { display: flex; align-items: center; gap: 10px; }
+.hist-minute { width: 35px; text-align: right; font: 700 12px ui-monospace, "SF Mono", Menlo, monospace; color: var(--texte-2); flex: none; }
+.hist-but-icone { display: inline-flex; font-size: 12px; }
+.hist-but-textes { flex: 1; min-width: 0; display: flex; flex-direction: column; gap: 1px; font-size: 15px; }
+.hist-but-textes b { font-weight: 600; }
+.hist-but-textes small { font-size: 12px; color: var(--texte-2); }
+.hist-separateur { height: 0.5px; background: var(--separateur); }
+.hist-buteurs { display: flex; flex-direction: column; gap: 4px; }
+.hist-buteurs > small { font-size: 12px; font-weight: 700; color: var(--texte-2); }
+.hist-buteur { display: flex; justify-content: space-between; font-size: 15px; }
+.hist-buteur b { font-size: 12px; color: var(--vert); }
+
+.hist-passeur { display: flex; align-items: center; gap: 10px; font-size: 15px; }
+.hist-passeur-icone { color: var(--bleu); display: inline-flex; font-size: 12px; }
+.hist-passeur b { font-weight: 600; flex: 1; min-width: 0; }
+.hist-passeur-minutes { display: flex; gap: 4px; flex-wrap: wrap; justify-content: flex-end; }
+.hist-passeur-nombre { font-size: 12px; font-weight: 700; color: var(--bleu); }
+
+.hist-joueur { display: flex; align-items: center; gap: 10px; padding: 2px 0; }
+.hist-numero {
+  width: 30px; height: 30px; border-radius: 50%; display: inline-flex; align-items: center; justify-content: center; flex: none;
+  color: #fff; font: 700 12px var(--police-chiffres);
+}
+.hist-joueur-textes { flex: 1; min-width: 0; display: flex; flex-direction: column; gap: 2px; }
+.hist-joueur-textes b { font-size: 15px; font-weight: 600; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.hist-joueur-textes small { font-size: 11px; color: var(--texte-2); display: flex; align-items: center; gap: 4px; }
+.hist-tit { font-size: 8px; font-weight: 700; padding: 1px 4px; border-radius: 3px; background: color-mix(in srgb, var(--vert) 20%, transparent); color: var(--vert); }
+.hist-joueur-temps { display: flex; flex-direction: column; align-items: flex-end; gap: 2px; }
+.hist-joueur-temps b { font: 700 15px ui-monospace, "SF Mono", Menlo, monospace; }
+.hist-joueur-temps small { font: 11px ui-monospace, "SF Mono", Menlo, monospace; color: var(--vert); }
+
+.hist-remplacement { display: flex; align-items: center; gap: 10px; padding: 4px 0; }
+.hist-rempl-minute {
+  width: 44px; height: 28px; border-radius: 6px; background: color-mix(in srgb, var(--violet) 80%, transparent); color: #fff; flex: none;
+  display: inline-flex; align-items: center; justify-content: center; font: 700 12px ui-monospace, "SF Mono", Menlo, monospace;
+}
+.hist-rempl-textes { flex: 1; min-width: 0; display: flex; flex-direction: column; gap: 3px; }
+.hist-rempl-textes > span { display: flex; align-items: center; gap: 4px; }
+.hist-rempl-textes .ic { width: 12px; height: 12px; }
+.hist-rempl-textes b { font-size: 15px; font-weight: 600; }
+.hist-rempl-textes small { font-size: 12px; color: var(--texte-2); }
+
+/* MARK: Export / Import */
+.exp-ligne .ligne-titre { font-size: 15px; }
+.exp-ligne.teinte { color: var(--texte); }
+.exp-ligne:disabled .ligne-titre, .exp-ligne:disabled .ligne-sous-titre { opacity: 0.6; }
+.exp-match { gap: 14px; padding-top: 8px; padding-bottom: 8px; }
+.exp-match-textes { flex: 1; min-width: 0; display: flex; flex-direction: column; gap: 2px; text-align: left; }
+.exp-match-textes b { font-size: 15px; font-weight: 600; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.exp-match-textes small { font-size: 12px; color: var(--texte-2); }
+.exp-match-bouton { display: inline-flex; padding: 6px; border-radius: 8px; flex: none; }
+.exp-match-bouton .ic { width: 20px; height: 20px; }
+.exp-match-bouton:active, .exp-match-textes:active { opacity: 0.5; }
+
+/* MARK: Mode d'emploi (UserGuideView) */
+.guide { display: flex; flex-direction: column; gap: 24px; }
+.guide-filet { border: 0; height: 0.5px; background: var(--separateur); margin: 0; }
+.guide-intro { display: flex; flex-direction: column; gap: 12px; }
+.guide-intro p { margin: 0; }
+.guide-bienvenue { display: flex; align-items: center; gap: 12px; }
+.guide-ballon { font-size: 50px; line-height: 1; }
+.guide-bienvenue > span:last-child { display: flex; flex-direction: column; }
+.guide-bienvenue small { font-size: 15px; color: var(--texte-2); }
+.guide-bienvenue b { font-size: 28px; font-weight: 700; }
+.guide-section { --c: var(--vert); display: flex; flex-direction: column; gap: 16px; }
+.guide-tete { display: flex; align-items: center; gap: 12px; }
+.guide-numero {
+  width: 44px; height: 44px; border-radius: 50%; flex: none; display: inline-flex; align-items: center; justify-content: center;
+  background: color-mix(in srgb, var(--c) 15%, transparent); color: var(--c); font-weight: 700; font-size: 17px;
+}
+.guide-titres { display: flex; flex-direction: column; gap: 2px; }
+.guide-titres b { font-size: 17px; font-weight: 600; }
+.guide-titres small { display: inline-flex; align-items: center; gap: 4px; color: var(--c); font-size: 12px; }
+.guide-titres small .ic { width: 12px; height: 12px; }
+.guide-etapes { list-style: none; margin: 0; padding: 0; display: flex; flex-direction: column; gap: 10px; }
+.guide-etapes li { display: flex; align-items: flex-start; gap: 10px; font-size: 15px; color: var(--texte-2); line-height: 1.35; }
+.guide-etapes strong { color: var(--texte-2); font-weight: 700; }
+.guide-coche { color: color-mix(in srgb, var(--c) 70%, transparent); display: inline-flex; padding-top: 1px; }
+.lecture .guide-texte { margin: 0; font-size: 15px; color: var(--texte-2); }
+.guide-cascade { list-style: none; margin: 0; padding: 0; display: flex; flex-direction: column; gap: 8px; }
+.guide-cascade li { display: flex; align-items: flex-start; gap: 12px; font-size: 15px; }
+.guide-cascade-n {
+  width: 20px; height: 20px; border-radius: 4px; flex: none; display: inline-flex; align-items: center; justify-content: center;
+  background: color-mix(in srgb, var(--cyan) 20%, transparent); font-size: 12px; font-weight: 700;
+}
+.guide-partages { display: flex; gap: 8px; flex-wrap: wrap; }
+.guide-partage { --c: var(--vert); display: flex; flex-direction: column; align-items: center; gap: 4px; }
+.guide-partage-pilule {
+  display: inline-flex; align-items: center; gap: 4px; padding: 6px 10px; border-radius: 8px; font-size: 11px;
+  background: color-mix(in srgb, var(--c) 12%, transparent); color: var(--c);
+}
+.guide-partage-pilule .ic { width: 11px; height: 11px; }
+.guide-partage small { font-size: 11px; color: var(--texte-2); }
+.guide-astuces { padding: 16px; border-radius: 16px; background: color-mix(in srgb, var(--jaune) 8%, transparent); display: flex; flex-direction: column; gap: 16px; }
+.guide-numero.astuce { --c: var(--jaune); }
+.guide-astuces ul { list-style: none; margin: 0; padding: 0; display: flex; flex-direction: column; gap: 12px; }
+.guide-astuces li { display: flex; align-items: flex-start; gap: 12px; font-size: 15px; color: var(--texte-2); }
+.guide-astuce-icone { color: var(--jaune); width: 20px; display: inline-flex; justify-content: center; flex: none; padding-top: 1px; }
+
+/* MARK: Textes légaux (LegalView) */
+.legal { display: flex; flex-direction: column; gap: 10px; }
+.legal-titre { margin: 10px 0 0; font-size: 17px; font-weight: 600; }
+.lecture .legal-texte { margin: 0; font-size: 15px; color: var(--texte-2); white-space: pre-line; }
+.legal-resume {
+  display: flex; gap: 12px; align-items: center; padding: 16px; border-radius: 12px; margin-bottom: 10px;
+  background: color-mix(in srgb, var(--vert) 10%, transparent);
+}
+.legal-resume-icone { color: var(--vert); font-size: 24px; display: inline-flex; }
+.legal-resume > span:last-child { display: flex; flex-direction: column; gap: 4px; }
+.legal-resume b { font-size: 17px; font-weight: 600; }
+.legal-resume small { font-size: 15px; color: var(--texte-2); }
+.legal-web {
+  margin-top: 10px; display: flex; align-items: center; justify-content: center; gap: 8px; width: 100%; padding: 16px;
+  border-radius: 12px; background: color-mix(in srgb, var(--vert) 10%, transparent); color: var(--vert); font-size: 17px;
+}
+.lecture .legal-maj { margin: 10px 0 0; font-size: 11px; color: var(--texte-3); }
