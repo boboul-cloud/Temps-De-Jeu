@@ -113,7 +113,7 @@ Système unique pour les clubs avec plusieurs équipes (A, B, C, D…) :
 
 ## Installation
 
-L'application est disponible sur l'[App Store](https://apps.apple.com/app/temps-de-jeu/id6742602498).
+L'application est disponible sur l'[App Store](https://apps.apple.com/fr/app/temps-de-jeu/id6758916303).
 
 ### Développement
 
@@ -145,6 +145,16 @@ tools/
 ## Site Web & Support
 
 - 🌐 [Site web](https://boboul-cloud.github.io/Temps-De-Jeu/)
+
+Le site est publié par GitHub Pages depuis le dossier `docs/` de la branche `main` :
+
+- `index.html` : page d'accueil animée (stade 3D, démo de l'Atelier, séances, bibliothèque 3D interactive, match en direct, cascade)
+- `assets/terrain3d.js` : moteur 3D (Three.js 0.170, hébergé dans `assets/vendor/`, aucun appel à un service tiers) qui rejoue les exercices avec les mêmes règles que l'app (positions héritées, ballon collé au porteur, flèches course / conduite / passe / tir)
+- `assets/exercices.json` : **copie** de `Temps De Jeu/Resources/TactiquesEntrainement.json` ; à recopier quand la bibliothèque change (`cp "Temps De Jeu/Resources/TactiquesEntrainement.json" docs/assets/exercices.json`)
+- `assets/atelier-demo.js` : démonstration animée de l'Atelier ; `assets/site.js` et `assets/site.css` : animations et mise en page
+- `assets/img/` : captures de `soumission/captures/` converties en WebP ; `og-image.png` : aperçu des liens partagés
+- `dispo.html`, `privacy.html`, `terms.html` : pages ouvertes par l'app, à garder à la même adresse
+- Après une modification des fichiers `assets/`, changer `?v=17` dans `index.html` et `site.js` pour forcer le rechargement
 - 📧 [bob.oulhen@gmail.com](mailto:bob.oulhen@gmail.com)
 - 🐛 [Issues GitHub](https://github.com/boboul-cloud/Temps-De-Jeu/issues)
 
